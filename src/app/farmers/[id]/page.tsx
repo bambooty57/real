@@ -11,12 +11,14 @@ import Link from 'next/link'
 interface Farmer {
   id: string
   name: string
+  companyName: string
   address: string
   phone: string
   ageGroup: string
   memo: string
   mainCrop: string
-  equipment: {
+  equipments: {
+    id: string
     type: string
     manufacturer: string
     model: string
@@ -25,9 +27,14 @@ interface Farmer {
     rating: string
     forSale: boolean
     desiredPrice: string
+    saleStatus?: 'available' | 'reserved' | 'sold'
+    saleDate?: string
     forPurchase: boolean
     purchasePrice: string
+    purchaseStatus?: 'searching' | 'completed'
+    purchaseDate?: string
     attachments?: {
+      [key: string]: string;  // Add index signature for dynamic access
       loader: string
       loaderModel: string
       loaderRating: string
@@ -56,11 +63,17 @@ interface Farmer {
       bucketModel: string
       bucketRating: string
     }
-  }
+  }[]
   images?: string[]
 }
 
-export default async function FarmerDetail({ params }: { params: { id: string } }) {
+interface Props {
+  params: {
+    id: string
+  }
+}
+
+export default function FarmerDetail({ params }: Props) {
   const router = useRouter()
   const [farmer, setFarmer] = useState<Farmer | null>(null)
   const [loading, setLoading] = useState(true)
@@ -69,7 +82,8 @@ export default async function FarmerDetail({ params }: { params: { id: string } 
   useEffect(() => {
     const fetchFarmer = async () => {
       try {
-        const docRef = doc(db, 'farmers', params.id)
+        const id = await Promise.resolve(params.id)
+        const docRef = doc(db, 'farmers', id)
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
@@ -87,7 +101,7 @@ export default async function FarmerDetail({ params }: { params: { id: string } 
     }
 
     fetchFarmer()
-  }, [params.id, router])
+  }, [params, router])
 
   const handleDelete = async () => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return
@@ -137,35 +151,313 @@ export default async function FarmerDetail({ params }: { params: { id: string } 
   if (!farmer) return null
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">농민 상세 정보</h1>
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <h1 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">농민 상세 정보</h1>
       
-      {/* 기본 정보 */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">기본 정보</h2>
-        <div className="space-y-2">
-          <p><span className="font-semibold">이름:</span> {farmer.name}</p>
-          <p><span className="font-semibold">연령대:</span> {farmer.ageGroup}</p>
-          <p><span className="font-semibold">전화번호:</span> {farmer.phone}</p>
-          <div>
-            <span className="font-semibold">주소:</span>
-            <p>{farmer.address}</p>
+      {/* 기본 정보 카드 */}
+      <div className="bg-gray-50 rounded-lg p-6 mb-8">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-700">기본 정보</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <p className="flex items-center">
+              <span className="font-semibold w-24 text-gray-600">이름:</span>
+              <span className="text-gray-800">{farmer.name}</span>
+            </p>
+            <p className="flex items-center">
+              <span className="font-semibold w-24 text-gray-600">상호:</span>
+              <span className="text-gray-800">{farmer.companyName || '-'}</span>
+            </p>
+            <p className="flex items-center">
+              <span className="font-semibold w-24 text-gray-600">연령대:</span>
+              <span className="text-gray-800">{farmer.ageGroup}</span>
+            </p>
+          </div>
+          <div className="space-y-3">
+            <p className="flex items-center">
+              <span className="font-semibold w-24 text-gray-600">전화번호:</span>
+              <a href={`tel:${farmer.phone}`} className="text-blue-600 hover:underline">
+                {farmer.phone}
+              </a>
+            </p>
+            <div className="flex">
+              <span className="font-semibold w-24 text-gray-600">주소:</span>
+              <a 
+                href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {farmer.address}
+              </a>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 농민 사진 */}
+      {/* 농업 형태 및 작물 정보 카드 */}
+      <div className="bg-gray-50 rounded-lg p-6 mb-8">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-700">농업 정보</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* 농업 형태 */}
+          <div>
+            <h3 className="text-xl font-medium mb-3 text-gray-600">농업 형태</h3>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <p className="text-gray-800">{farmer.mainCrop}</p>
+            </div>
+          </div>
+          
+          {/* 주요 작물 */}
+          <div>
+            <h3 className="text-xl font-medium mb-3 text-gray-600">주요 작물</h3>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              {farmer.mainCrop === '벼' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">벼</span>}
+              {farmer.mainCrop === '보리' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">보리</span>}
+              {farmer.mainCrop === '콩' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">콩</span>}
+              {farmer.mainCrop === '수수' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">수수</span>}
+              {farmer.mainCrop === '고구마' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">고구마</span>}
+              {farmer.mainCrop === '배' && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">배</span>}
+              {farmer.mainCrop === '감' && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">감</span>}
+              {farmer.mainCrop === '자두' && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">자두</span>}
+              {farmer.mainCrop === '한우' && <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">한우</span>}
+              {farmer.mainCrop === '염소' && <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">염소</span>}
+              {farmer.mainCrop === '기타 작물' && <span className="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">기타 작물</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 보유 농기계 현황 */}
+      {farmer.equipments && farmer.equipments.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-6 mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold text-gray-700">보유 농기계 현황</h2>
+            <div className="flex gap-2">
+              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                총 {farmer.equipments.length}대
+              </span>
+              {farmer.equipments.some(eq => eq.forSale) && (
+                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                  판매 {farmer.equipments.filter(eq => eq.forSale).length}대
+                </span>
+              )}
+              {farmer.equipments.some(eq => eq.forPurchase) && (
+                <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                  구매 {farmer.equipments.filter(eq => eq.forPurchase).length}대
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* 농기계 목록 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {farmer.equipments.map((equipment) => (
+              <div 
+                key={equipment.id} 
+                className={`bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow border-l-4 ${
+                  equipment.forSale ? 'border-green-500' : 
+                  equipment.forPurchase ? 'border-purple-500' : 
+                  'border-gray-300'
+                }`}
+              >
+                {/* 헤더 섹션 */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-start gap-3">
+                    {/* 제조사 로고 */}
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                      {equipment.manufacturer === '대동' && (
+                        <img src="/logos/daedong.png" alt="대동" className="w-10 h-10 object-contain" />
+                      )}
+                      {equipment.manufacturer === '국제' && (
+                        <img src="/logos/kukje.png" alt="국제" className="w-10 h-10 object-contain" />
+                      )}
+                      {equipment.manufacturer === '엘에스' && (
+                        <img src="/logos/ls.png" alt="엘에스" className="w-10 h-10 object-contain" />
+                      )}
+                      {/* 로고가 없는 경우 제조사명 표시 */}
+                      {!['대동', '국제', '엘에스'].includes(equipment.manufacturer) && (
+                        <span className="text-sm font-medium text-gray-600">{equipment.manufacturer}</span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">{equipment.type}</h3>
+                      <p className="text-sm text-gray-600">{equipment.model}</p>
+                    </div>
+                  </div>
+                  {/* 거래 상태 뱃지 */}
+                  <div className="flex flex-col items-end gap-2">
+                    {equipment.forSale && (
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          판매가능
+                        </span>
+                        {equipment.saleStatus && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            equipment.saleStatus === 'available' ? 'bg-blue-100 text-blue-800' :
+                            equipment.saleStatus === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {equipment.saleStatus === 'available' ? '상담가능' :
+                             equipment.saleStatus === 'reserved' ? '상담중' :
+                             '계약완료'}
+                          </span>
+                        )}
+                        {equipment.desiredPrice && (
+                          <span className="text-lg font-bold text-green-600">
+                            {parseInt(equipment.desiredPrice).toLocaleString()}원
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {equipment.forPurchase && (
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                          구매희망
+                        </span>
+                        {equipment.purchaseStatus && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            equipment.purchaseStatus === 'searching' ? 'bg-blue-100 text-blue-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {equipment.purchaseStatus === 'searching' ? '구매중' : '구매완료'}
+                          </span>
+                        )}
+                        {equipment.purchasePrice && (
+                          <span className="text-lg font-bold text-purple-600">
+                            {parseInt(equipment.purchasePrice).toLocaleString()}원
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 상세 정보 섹션 */}
+                <div className="space-y-3 mb-3">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">연식:</span>
+                      <span className="font-medium">{equipment.year}</span>
+                    </div>
+                  </div>
+                  
+                  {/* 사용시간 게이지 바 */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">사용시간:</span>
+                      <span className="font-medium">{equipment.usageHours}시간</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${
+                          parseInt(equipment.usageHours) < 1000 ? 'bg-green-500' :
+                          parseInt(equipment.usageHours) < 3000 ? 'bg-yellow-500' :
+                          'bg-red-500'
+                        }`}
+                        style={{
+                          width: `${Math.min(parseInt(equipment.usageHours) / 50, 100)}%`
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>0시간</span>
+                      <span>5,000시간</span>
+                    </div>
+                  </div>
+
+                  {/* 상태등급 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500 text-sm">상태등급:</span>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span
+                          key={star}
+                          className={`text-lg ${
+                            parseInt(equipment.rating) >= star
+                              ? 'text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 부착장비 정보 */}
+                {equipment.attachments && Object.entries(equipment.attachments).some(([key, value]) => 
+                  !key.includes('Model') && !key.includes('Rating') && value
+                ) && (
+                  <div className="border-t pt-3">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">부착장비</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries({
+                        loader: '로더',
+                        rotary: '로터리',
+                        frontWheel: '전륜',
+                        rearWheel: '후륜',
+                        cutter: '커터',
+                        rows: '열수',
+                        tonnage: '톤수',
+                        size: '규격',
+                        bucketSize: '버켓규격'
+                      }).map(([key, label]) => 
+                        equipment.attachments?.[key] ? (
+                          <div key={key} className="text-sm">
+                            <span className="text-gray-500">{label}:</span>
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">{equipment.attachments[key]}</span>
+                              {equipment.attachments?.[`${key}Rating`] && (
+                                <div className="flex gap-0.5">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <span
+                                      key={star}
+                                      className={`text-xs ${
+                                        parseInt(equipment.attachments?.[`${key}Rating`] || '0') >= star
+                                          ? 'text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    >
+                                      ★
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 메모 카드 */}
+      {farmer.memo && (
+        <div className="bg-gray-50 rounded-lg p-6 mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-700">메모</h2>
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <p className="whitespace-pre-wrap text-gray-800">{farmer.memo}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 이미지 갤러리 */}
       {farmer.images && farmer.images.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">농민 사진</h2>
+        <div className="bg-gray-50 rounded-lg p-6 mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-700">이미지 갤러리</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {farmer.images.map((url, index) => (
-              <div key={index} className="relative">
+              <div key={index} className="relative aspect-square">
                 <Image
                   src={url}
                   alt={`농민 사진 ${index + 1}`}
                   fill
-                  className="object-cover rounded"
+                  className="object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
                 />
               </div>
             ))}
@@ -173,231 +465,23 @@ export default async function FarmerDetail({ params }: { params: { id: string } 
         </div>
       )}
 
-      {/* 농업 형태 */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">농업 형태</h2>
-        <div className="space-y-2">
-          {farmer.mainCrop === '논농사' && <p>논농사</p>}
-          {farmer.mainCrop === '밭농사' && <p>밭농사</p>}
-          {farmer.mainCrop === '축산업' && <p>축산업</p>}
-          {farmer.mainCrop === '과수원' && <p>과수원</p>}
-          {farmer.mainCrop === '조사료' && <p>조사료</p>}
-        </div>
-      </div>
-
-      {/* 주요 작물 */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">주요 작물</h2>
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-medium mb-2">식량작물</h3>
-            <div className="space-y-1">
-              {farmer.mainCrop === '벼' && <p>벼</p>}
-              {farmer.mainCrop === '보리' && <p>보리</p>}
-              {farmer.mainCrop === '콩' && <p>콩</p>}
-              {farmer.mainCrop === '수수' && <p>수수</p>}
-              {farmer.mainCrop === '고구마' && <p>고구마</p>}
-            </div>
-          </div>
-          
-          <div>
-            <h3 className="font-medium mb-2">과수</h3>
-            <div className="space-y-1">
-              {farmer.mainCrop === '배' && <p>배</p>}
-              {farmer.mainCrop === '감' && <p>감</p>}
-              {farmer.mainCrop === '자두' && <p>자두</p>}
-            </div>
-          </div>
-          
-          <div>
-            <h3 className="font-medium mb-2">축산</h3>
-            <div className="space-y-1">
-              {farmer.mainCrop === '한우' && <p>한우</p>}
-              {farmer.mainCrop === '염소' && <p>염소</p>}
-            </div>
-          </div>
-          
-          {farmer.mainCrop === '기타 작물' && (
-            <div>
-              <h3 className="font-medium mb-2">기타</h3>
-              <p>기타 작물</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 농기계 정보 */}
-      {farmer.equipment && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">농기계 정보</h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium mb-2">본기 정보</h3>
-              <div className="space-y-2">
-                <p><span className="font-semibold">종류:</span> {farmer.equipment.type}</p>
-                <p><span className="font-semibold">제조사:</span> {farmer.equipment.manufacturer}</p>
-                <p><span className="font-semibold">모델:</span> {farmer.equipment.model}</p>
-                <p><span className="font-semibold">연식:</span> {farmer.equipment.year}</p>
-                <p><span className="font-semibold">사용시간:</span> {farmer.equipment.usageHours}시간</p>
-                <p><span className="font-semibold">상태:</span> {farmer.equipment.rating}점</p>
-                {farmer.equipment.forSale && (
-                  <>
-                    <p><span className="font-semibold">판매여부:</span> 판매희망</p>
-                    <p><span className="font-semibold">판매희망가격:</span> {farmer.equipment.desiredPrice}원</p>
-                  </>
-                )}
-                {farmer.equipment.forPurchase && (
-                  <>
-                    <p><span className="font-semibold">구입여부:</span> 구입희망</p>
-                    <p><span className="font-semibold">구입희망가격:</span> {farmer.equipment.purchasePrice}원</p>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* 본기 사진 */}
-            {farmer.images && farmer.images.length > 0 && (
-              <div className="mt-4">
-                <h3 className="font-medium mb-2">본기 사진</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {farmer.images.map((url, index) => (
-                    <div key={index} className="relative">
-                      <Image
-                        src={url}
-                        alt={`본기 사진 ${index + 1}`}
-                        fill
-                        className="object-cover rounded"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 작업기 정보 - 트랙터 */}
-            {farmer.equipment.type === '트랙터' && farmer.equipment.attachments && (
-              <div className="space-y-4">
-                {/* 로더 */}
-                {farmer.equipment.attachments.loader && (
-                  <div>
-                    <h3 className="font-medium mb-2">로더</h3>
-                    <div className="space-y-2">
-                      <p><span className="font-semibold">제조사:</span> {farmer.equipment.attachments.loader}</p>
-                      <p><span className="font-semibold">모델:</span> {farmer.equipment.attachments.loaderModel}</p>
-                      <p><span className="font-semibold">상태:</span> {farmer.equipment.attachments.loaderRating}점</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* 로타리 */}
-                {farmer.equipment.attachments.rotary && (
-                  <div>
-                    <h3 className="font-medium mb-2">로타리</h3>
-                    <div className="space-y-2">
-                      <p><span className="font-semibold">제조사:</span> {farmer.equipment.attachments.rotary}</p>
-                      <p><span className="font-semibold">모델:</span> {farmer.equipment.attachments.rotaryModel}</p>
-                      <p><span className="font-semibold">상태:</span> {farmer.equipment.attachments.rotaryRating}점</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* 전륜 */}
-                {farmer.equipment.attachments.frontWheel && (
-                  <div>
-                    <h3 className="font-medium mb-2">전륜</h3>
-                    <div className="space-y-2">
-                      <p><span className="font-semibold">제조사:</span> {farmer.equipment.attachments.frontWheel}</p>
-                      <p><span className="font-semibold">모델:</span> {farmer.equipment.attachments.frontWheelModel}</p>
-                      <p><span className="font-semibold">상태:</span> {farmer.equipment.attachments.frontWheelRating}점</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* 후륜 */}
-                {farmer.equipment.attachments.rearWheel && (
-                  <div>
-                    <h3 className="font-medium mb-2">후륜</h3>
-                    <div className="space-y-2">
-                      <p><span className="font-semibold">제조사:</span> {farmer.equipment.attachments.rearWheel}</p>
-                      <p><span className="font-semibold">모델:</span> {farmer.equipment.attachments.rearWheelModel}</p>
-                      <p><span className="font-semibold">상태:</span> {farmer.equipment.attachments.rearWheelRating}점</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 작업기 정보 - 콤바인 */}
-            {farmer.equipment.type === '콤바인' && farmer.equipment.attachments && (
-              <div>
-                <h3 className="font-medium mb-2">예취부</h3>
-                <div className="space-y-2">
-                  <p><span className="font-semibold">규격:</span> {farmer.equipment.attachments.cutter}</p>
-                </div>
-              </div>
-            )}
-
-            {/* 작업기 정보 - 이앙기 */}
-            {farmer.equipment.type === '이앙기' && farmer.equipment.attachments && (
-              <div>
-                <h3 className="font-medium mb-2">작업열</h3>
-                <div className="space-y-2">
-                  <p><span className="font-semibold">규격:</span> {farmer.equipment.attachments.rows}</p>
-                </div>
-              </div>
-            )}
-
-            {/* 작업기 정보 - 지게차 */}
-            {farmer.equipment.type === '지게차' && farmer.equipment.attachments && (
-              <div>
-                <h3 className="font-medium mb-2">톤수</h3>
-                <div className="space-y-2">
-                  <p><span className="font-semibold">규격:</span> {farmer.equipment.attachments.tonnage}</p>
-                </div>
-              </div>
-            )}
-
-            {/* 작업기 정보 - 굴삭기 */}
-            {farmer.equipment.type === '굴삭기' && farmer.equipment.attachments && (
-              <div>
-                <h3 className="font-medium mb-2">규격</h3>
-                <div className="space-y-2">
-                  <p><span className="font-semibold">규격:</span> {farmer.equipment.attachments.size}</p>
-                </div>
-              </div>
-            )}
-
-            {/* 작업기 정보 - 스키로더 */}
-            {farmer.equipment.type === '스키로더' && farmer.equipment.attachments && (
-              <div>
-                <h3 className="font-medium mb-2">버켓용량</h3>
-                <div className="space-y-2">
-                  <p><span className="font-semibold">규격:</span> {farmer.equipment.attachments.bucketSize}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 메모 */}
-      {farmer.memo && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">메모</h2>
-          <p className="whitespace-pre-wrap">{farmer.memo}</p>
-        </div>
-      )}
-
+      {/* 하단 버튼 */}
       <div className="flex justify-end space-x-4">
         <Link
           href={`/farmers/${params.id}/edit`}
-          className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="py-2 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors"
         >
           수정하기
         </Link>
+        <button
+          onClick={handleDelete}
+          className="py-2 px-6 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 transition-colors"
+        >
+          삭제하기
+        </button>
         <Link
-          href="/"
-          className="py-2 px-4 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          href="/farmers"
+          className="py-2 px-6 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors"
         >
           목록으로
         </Link>

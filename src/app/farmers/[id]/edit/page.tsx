@@ -11,6 +11,7 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
+    companyName: '',
     address: '',
     phone: '',
     ageGroup: '',
@@ -70,6 +71,7 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
           const data = docSnap.data()
           setFormData({
             name: data.name || '',
+            companyName: data.companyName || '',
             address: data.address || '',
             phone: data.phone || '',
             ageGroup: data.ageGroup || '',
@@ -196,6 +198,18 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
               onChange={handleChange}
               className="w-full p-2 border rounded"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2">상호(업체명)</label>
+            <input
+              type="text"
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              placeholder="상호 또는 업체명을 입력하세요"
             />
           </div>
 

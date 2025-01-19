@@ -20,6 +20,14 @@ export default function Navigation() {
               홈
             </Link>
             <Link 
+              href="/farmers/new" 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                pathname === '/farmers/new' ? 'bg-gray-900' : 'hover:bg-gray-700'
+              }`}
+            >
+              농민 등록
+            </Link>
+            <Link 
               href="/farmers" 
               className={`px-3 py-2 rounded-md text-sm font-medium ${
                 pathname === '/farmers' ? 'bg-gray-900' : 'hover:bg-gray-700'
@@ -28,12 +36,12 @@ export default function Navigation() {
               농민 목록
             </Link>
             <Link 
-              href="/farmers/new" 
+              href="/farmers/trade" 
               className={`px-3 py-2 rounded-md text-sm font-medium ${
-                pathname === '/farmers/new' ? 'bg-gray-900' : 'hover:bg-gray-700'
+                pathname === '/farmers/trade' ? 'bg-gray-900' : 'hover:bg-gray-700'
               }`}
             >
-              농민 등록
+              농기계 거래
             </Link>
           </div>
         </div>
