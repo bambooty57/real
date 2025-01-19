@@ -11,12 +11,49 @@ interface Farmer {
   address: string;
   phone: string;
   ageGroup: string;
-  mainCrop: string;
-  equipment: {
+  mainCrop: {
+    rice: boolean;
+    barley: boolean;
+    hanwoo: boolean;
+    soybean: boolean;
+    sweetPotato: boolean;
+    persimmon: boolean;
+    pear: boolean;
+    plum: boolean;
+    sorghum: boolean;
+    goat: boolean;
+    other: boolean;
+  };
+  equipments: Array<{
     type: string;
     manufacturer: string;
-  };
+  }>;
 }
+
+const getMainCropText = (mainCrop: Farmer['mainCrop']) => {
+  if (!mainCrop) return '없음';
+  
+  const selectedCrops = Object.entries(mainCrop)
+    .filter(([_, value]) => value)
+    .map(([key, _]) => {
+      const cropNames = {
+        rice: '벼',
+        barley: '보리',
+        hanwoo: '한우',
+        soybean: '콩',
+        sweetPotato: '고구마',
+        persimmon: '감',
+        pear: '배',
+        plum: '자두',
+        sorghum: '수수',
+        goat: '염소',
+        other: '기타'
+      };
+      return cropNames[key];
+    });
+  
+  return selectedCrops.length > 0 ? selectedCrops.join(', ') : '없음';
+};
 
 export default function Home() {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
@@ -84,9 +121,9 @@ export default function Home() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-500">{farmer.ageGroup}</p>
-                  <p className="text-sm text-gray-500">{farmer.mainCrop}</p>
+                  <p className="text-sm text-gray-500">{getMainCropText(farmer.mainCrop)}</p>
                   <p className="text-sm text-gray-500">
-                    {farmer.equipment.type} ({farmer.equipment.manufacturer})
+                    {farmer.equipments?.[0]?.type} ({farmer.equipments?.[0]?.manufacturer})
                   </p>
                 </div>
               </div>

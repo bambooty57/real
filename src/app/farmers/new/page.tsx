@@ -15,14 +15,13 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     companyName: '',
     zipCode: '',
     roadAddress: '',
-    roadAddressDetail: '',
     jibunAddress: '',
-    jibunAddressDetail: '',
+    addressDetail: '',
     canReceiveMail: false,
     phone: '',
     ageGroup: '',
     memo: '',
-    farmerImages: [],
+    images: [],
     mainImages: [],
     attachmentImages: {
       loader: [],
@@ -72,21 +71,31 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
   }
 
   const formatPhoneNumber = (value: string) => {
-    const numbers = value.replace(/[^\d]/g, '');
+    // 숫자만 추출
+    const numbers = value.replace(/[^\d]/g, '').slice(0, 8);
     
-    if (numbers.length <= 3) {
-      return numbers;
-    } else if (numbers.length <= 7) {
-      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-    } else {
-      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+    if (numbers.length === 0) return "010-";
+    if (numbers.length <= 4) {
+      return `010-${numbers}`;
     }
+    return `010-${numbers.slice(0, 4)}-${numbers.slice(4)}`;
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneNumber(e.target.value);
-    if (formatted.length <= 13) {
-      setFormData({...formData, phone: formatted});
+    // 입력된 값에서 숫자만 추출
+    const numbers = e.target.value.replace(/[^\d]/g, '').slice(0, 8);
+    
+    // 숫자가 없으면 빈 값으로
+    if (numbers.length === 0) {
+      setFormData({...formData, phone: ''});
+      return;
+    }
+    
+    // 4자리 이상이면 하이픈 추가
+    if (numbers.length > 4) {
+      setFormData({...formData, phone: `010-${numbers.slice(0, 4)}-${numbers.slice(4)}`});
+    } else {
+      setFormData({...formData, phone: `010-${numbers}`});
     }
   };
 
@@ -147,7 +156,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           if (type === 'farmer') {
             return {
               ...prev,
-              farmerImages: [...prev.farmerImages, url].slice(0, 4)
+              images: [...(prev.images || []), url].slice(0, 4)
             };
           } else if (type === 'main') {
             return {
@@ -155,11 +164,12 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               mainImages: [...prev.mainImages, url].slice(0, 4)
             };
           } else if (type === 'attachment' && subType) {
+            const key = subType.split('-')[0];
             return {
               ...prev,
               attachmentImages: {
                 ...prev.attachmentImages,
-                [subType]: [...prev.attachmentImages[subType], url].slice(0, 4)
+                [key]: [...(prev.attachmentImages[key] || []), url].slice(0, 4)
               }
             };
           } else if (type === 'equipment' && subType) {
@@ -188,30 +198,31 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
   const handleImageDelete = (type: string, index: number, subType?: string) => {
     setFormData(prev => {
       if (type === 'farmer') {
-        const newImages = [...prev.farmerImages];
+        const newImages = [...(prev.images || [])];
         newImages.splice(index, 1);
-        return { ...prev, farmerImages: newImages };
+        return { ...prev, images: newImages };
       } else if (type === 'main') {
         const newImages = [...prev.mainImages];
         newImages.splice(index, 1);
         return { ...prev, mainImages: newImages };
       } else if (type === 'attachment' && subType) {
-        const newImages = [...prev.attachmentImages[subType]];
+        const key = subType.split('-')[0];
+        const newImages = [...(prev.attachmentImages[key] || [])];
         newImages.splice(index, 1);
         return {
           ...prev,
           attachmentImages: {
             ...prev.attachmentImages,
-            [subType]: newImages
+            [key]: newImages
           }
         };
       } else if (type === 'equipment' && subType) {
-        const newImages = [...prev.equipments.find(eq => eq.id === subType)?.images || []];
-        newImages.splice(index, 1);
         return {
           ...prev,
           equipments: prev.equipments.map(eq => {
             if (eq.id === subType) {
+              const newImages = [...(eq.images || [])];
+              newImages.splice(index, 1);
               return {
                 ...eq,
                 images: newImages
@@ -308,13 +319,29 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       <h1 className="text-2xl font-bold mb-6">{mode === 'edit' ? '농민 정보 수정' : '새 농민 등록'}</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-2">이름</label>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            이름 *
+          </label>
           <input
             type="text"
+            id="name"
             value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-            className="w-full p-2 border rounded"
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">
+            상호명
+          </label>
+          <input
+            type="text"
+            id="businessName"
+            value={formData.businessName || ''}
+            onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
@@ -332,19 +359,6 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="canReceiveMail"
-            checked={formData.canReceiveMail}
-            onChange={(e) => setFormData({...formData, canReceiveMail: e.target.checked})}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-          <label htmlFor="canReceiveMail" className="text-sm text-gray-700">
-            우편수취 가능
-          </label>
-        </div>
-
         <div>
           <label className="block mb-2">도로명 주소</label>
           <input
@@ -353,17 +367,6 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
             className="w-full p-2 border rounded"
             readOnly
             required
-          />
-        </div>
-
-        <div>
-          <label className="block mb-2">도로명 상세주소</label>
-          <input
-            type="text"
-            value={formData.roadAddressDetail}
-            onChange={(e) => setFormData({...formData, roadAddressDetail: e.target.value})}
-            className="w-full p-2 border rounded"
-            placeholder="상세주소를 입력하세요"
           />
         </div>
 
@@ -378,27 +381,43 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         </div>
 
         <div>
-          <label className="block mb-2">지번 상세주소</label>
+          <label className="block mb-2">상세주소</label>
           <input
             type="text"
-            value={formData.jibunAddressDetail}
-            onChange={(e) => setFormData({...formData, jibunAddressDetail: e.target.value})}
+            value={formData.addressDetail}
+            onChange={(e) => setFormData({...formData, addressDetail: e.target.value})}
             className="w-full p-2 border rounded"
             placeholder="상세주소를 입력하세요"
           />
         </div>
 
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="canReceiveMail"
+            checked={formData.canReceiveMail}
+            onChange={(e) => setFormData({...formData, canReceiveMail: e.target.checked})}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <label htmlFor="canReceiveMail" className="text-sm text-gray-700">
+            우편수취 가능
+          </label>
+        </div>
+
         <div>
           <label className="block mb-2">전화번호</label>
-          <input
-            type="tel"
-            value={formData.phone}
-            onChange={handlePhoneChange}
-            placeholder="000-0000-0000"
-            className="w-full p-2 border rounded"
-            required
-            maxLength={13}
-          />
+          <div className="flex items-center">
+            <span className="bg-gray-100 px-3 py-2 rounded-l border border-r-0">010-</span>
+            <input
+              type="text"
+              value={formData.phone ? formData.phone.replace(/^010-/, '') : ''}
+              onChange={handlePhoneChange}
+              placeholder="0000-0000"
+              className="w-full p-2 border rounded-r"
+              required
+              maxLength={9} // 하이픈 포함 9자리
+            />
+          </div>
         </div>
 
         <div>
@@ -436,7 +455,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               사진 업로드 (최대 4장)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {formData.farmerImages.map((url, index) => (
+              {formData.images.map((url, index) => (
                 <div key={index} className="relative">
                   <img
                     src={url}
@@ -1099,7 +1118,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                                           className="w-full h-24 object-cover rounded"
                                         />
                                         <button
-                                          onClick={() => handleImageDelete('attachment', imgIndex, key)}
+                                          onClick={() => handleImageDelete('attachment', imgIndex, `${key}-${equipment.id}`)}
                                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                                         >
                                           ×

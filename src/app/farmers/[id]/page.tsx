@@ -1,5 +1,6 @@
 'use client'
 
+import { use } from 'react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore'
@@ -12,11 +13,23 @@ interface Farmer {
   id: string
   name: string
   companyName: string
-  address: string
+  addressDetail: string
   phone: string
   ageGroup: string
   memo: string
-  mainCrop: string
+  mainCrop: {
+    rice: boolean
+    barley: boolean
+    hanwoo: boolean
+    soybean: boolean
+    sweetPotato: boolean
+    persimmon: boolean
+    pear: boolean
+    plum: boolean
+    sorghum: boolean
+    goat: boolean
+    other: boolean
+  }
   equipments: {
     id: string
     type: string
@@ -67,47 +80,106 @@ interface Farmer {
   images?: string[]
 }
 
-interface Props {
-  params: {
-    id: string
-  }
+interface PageParams {
+  id: string;
 }
 
-export default function FarmerDetail({ params }: Props) {
-  const router = useRouter()
-  const [farmer, setFarmer] = useState<Farmer | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
+interface ImageWithFallbackProps {
+  src: string;
+  alt: string;
+  className: string;
+}
+
+const ImageWithFallback = ({ src, alt, className }: ImageWithFallbackProps) => {
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className={`relative ${className}`}>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <span className="text-gray-400">로딩중...</span>
+        </div>
+      )}
+      {error ? (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+          <span className="text-gray-400">이미지 없음</span>
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          className={className}
+          onError={() => setError(true)}
+          onLoad={() => setLoading(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+const getMainCropText = (mainCrop: Farmer['mainCrop']) => {
+  if (!mainCrop) return '없음';
+  
+  const cropNames: Record<keyof Farmer['mainCrop'], string> = {
+    rice: '벼',
+    barley: '보리',
+    hanwoo: '한우',
+    soybean: '콩',
+    sweetPotato: '고구마',
+    persimmon: '감',
+    pear: '배',
+    plum: '자두',
+    sorghum: '수수',
+    goat: '염소',
+    other: '기타'
+  };
+
+  const selectedCrops = Object.entries(mainCrop)
+    .filter(([_, value]) => value)
+    .map(([key]) => cropNames[key as keyof Farmer['mainCrop']]);
+
+  return selectedCrops.length > 0 ? selectedCrops.join(', ') : '없음';
+};
+
+export default function FarmerDetailPage({ 
+  params 
+}: { 
+  params: PageParams 
+}) {
+  const { id } = params;
+  const router = useRouter();
+  const [farmer, setFarmer] = useState<Farmer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchFarmer = async () => {
       try {
-        const id = await Promise.resolve(params.id)
         const docRef = doc(db, 'farmers', id)
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
           setFarmer({ id: docSnap.id, ...docSnap.data() } as Farmer)
         } else {
-          alert('농민 정보를 찾을 수 없습니다.')
-          router.push('/farmers')
+          console.log('No such document!')
         }
       } catch (error) {
         console.error('Error fetching farmer:', error)
-        alert('농민 정보를 불러오는 중 오류가 발생했습니다.')
       } finally {
         setLoading(false)
       }
     }
 
     fetchFarmer()
-  }, [params, router])
+  }, [id])
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent, imageUrl: string) => {
+    e.stopPropagation();
     if (!window.confirm('정말 삭제하시겠습니까?')) return
 
     try {
-      await deleteDoc(doc(db, 'farmers', params.id))
+      await deleteDoc(doc(db, 'farmers', id))
       alert('삭제되었습니다.')
       router.push('/farmers')
     } catch (error) {
@@ -123,19 +195,32 @@ export default function FarmerDetail({ params }: Props) {
     setUploading(true)
 
     try {
-      const storageRef = ref(storage, `farmers/${params.id}/${category}/${Date.now()}-${file.name}`)
+      // 파일 확장자 추출
+      const fileExt = file.name.split('.').pop()
+      // 파일명에서 특수문자 제거하고 타임스탬프 추가
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9]/g, '')
+      const fileName = `${sanitizedFileName}-${Date.now()}.${fileExt}`
+      
+      // 스토리지 경로 생성
+      const storageRef = ref(storage, `farmers/${id}/${category}/${fileName}`)
+      
+      // 이미지 업로드
       await uploadBytes(storageRef, file)
       const downloadURL = await getDownloadURL(storageRef)
 
-      const docRef = doc(db, 'farmers', params.id)
-      const images = farmer?.images || []
+      // 현재 이미지 목록 가져오기
+      const currentImages = farmer?.images || []
+
+      // Firestore 문서 업데이트
+      const docRef = doc(db, 'farmers', id)
       await updateDoc(docRef, {
-        images: [...images, downloadURL]
+        images: [...currentImages, downloadURL]
       })
 
+      // 상태 업데이트
       setFarmer(prev => ({
         ...prev!,
-        images: [...(prev?.images || []), downloadURL]
+        images: [...currentImages, downloadURL]
       }))
 
       alert('이미지가 업로드되었습니다.')
@@ -144,6 +229,8 @@ export default function FarmerDetail({ params }: Props) {
       alert('이미지 업로드 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
+      // 파일 입력 초기화
+      e.target.value = ''
     }
   }
 
@@ -182,14 +269,20 @@ export default function FarmerDetail({ params }: Props) {
             <div className="flex">
               <span className="font-semibold w-24 text-gray-600">주소:</span>
               <a 
-                href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.address)}`}
+                href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.addressDetail)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
-                {farmer.address}
+                {farmer.addressDetail}
               </a>
             </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <span className="text-gray-500">주요 작물:</span>
+            <span className="font-medium ml-2">{getMainCropText(farmer.mainCrop)}</span>
           </div>
         </div>
       </div>
@@ -202,7 +295,7 @@ export default function FarmerDetail({ params }: Props) {
           <div>
             <h3 className="text-xl font-medium mb-3 text-gray-600">농업 형태</h3>
             <div className="bg-white p-4 rounded-lg shadow-sm">
-              <p className="text-gray-800">{farmer.mainCrop}</p>
+              <p className="text-gray-800">{farmer.mainCrop.rice ? '벼' : farmer.mainCrop.barley ? '보리' : farmer.mainCrop.soybean ? '콩' : farmer.mainCrop.sweetPotato ? '고구마' : farmer.mainCrop.persimmon ? '감' : farmer.mainCrop.pear ? '배' : farmer.mainCrop.plum ? '자두' : farmer.mainCrop.sorghum ? '수수' : farmer.mainCrop.goat ? '염소' : '기타'}</p>
             </div>
           </div>
           
@@ -210,17 +303,16 @@ export default function FarmerDetail({ params }: Props) {
           <div>
             <h3 className="text-xl font-medium mb-3 text-gray-600">주요 작물</h3>
             <div className="bg-white p-4 rounded-lg shadow-sm">
-              {farmer.mainCrop === '벼' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">벼</span>}
-              {farmer.mainCrop === '보리' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">보리</span>}
-              {farmer.mainCrop === '콩' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">콩</span>}
-              {farmer.mainCrop === '수수' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">수수</span>}
-              {farmer.mainCrop === '고구마' && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">고구마</span>}
-              {farmer.mainCrop === '배' && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">배</span>}
-              {farmer.mainCrop === '감' && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">감</span>}
-              {farmer.mainCrop === '자두' && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">자두</span>}
-              {farmer.mainCrop === '한우' && <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">한우</span>}
-              {farmer.mainCrop === '염소' && <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">염소</span>}
-              {farmer.mainCrop === '기타 작물' && <span className="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">기타 작물</span>}
+              {farmer.mainCrop.rice && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">벼</span>}
+              {farmer.mainCrop.barley && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">보리</span>}
+              {farmer.mainCrop.soybean && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">콩</span>}
+              {farmer.mainCrop.sweetPotato && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">고구마</span>}
+              {farmer.mainCrop.persimmon && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">감</span>}
+              {farmer.mainCrop.pear && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">배</span>}
+              {farmer.mainCrop.plum && <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">자두</span>}
+              {farmer.mainCrop.sorghum && <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">수수</span>}
+              {farmer.mainCrop.goat && <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">염소</span>}
+              {farmer.mainCrop.other && <span className="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">기타</span>}
             </div>
           </div>
         </div>
@@ -452,13 +544,18 @@ export default function FarmerDetail({ params }: Props) {
           <h2 className="text-2xl font-semibold mb-4 text-gray-700">이미지 갤러리</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {farmer.images.map((url, index) => (
-              <div key={index} className="relative aspect-square">
-                <Image
+              <div key={index} className="relative">
+                <ImageWithFallback
                   src={url}
                   alt={`농민 사진 ${index + 1}`}
-                  fill
-                  className="object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                  className="w-full h-32 object-cover rounded"
                 />
+                <button
+                  onClick={(e) => handleDelete(e, url)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>
@@ -468,13 +565,13 @@ export default function FarmerDetail({ params }: Props) {
       {/* 하단 버튼 */}
       <div className="flex justify-end space-x-4">
         <Link
-          href={`/farmers/${params.id}/edit`}
+          href={`/farmers/${id}/edit`}
           className="py-2 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors"
         >
           수정하기
         </Link>
         <button
-          onClick={handleDelete}
+          onClick={(e) => handleDelete(e, '')}
           className="py-2 px-6 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 transition-colors"
         >
           삭제하기

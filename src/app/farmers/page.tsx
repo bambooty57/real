@@ -2,11 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { ref, deleteObject, listAll } from 'firebase/storage'
+import { db, storage } from '@/lib/firebase'
 import Link from 'next/link'
 
-// 전라남도 행정구역 데이터
-const JEONNAM_REGIONS = {
+interface AddressData {
+  읍면동: string[];
+  읍면: string[];
+  동리: string[];
+  시군구: string[];
+  시도: string[];
+}
+
+const displayNames = {
+  읍면동: '읍/면/동',
+  읍면: '읍/면',
+  동리: '동/리',
+  시군구: '시/군/구',
+  시도: '시/도'
+} as const;
+
+interface RegionData {
+  읍면동?: string[] | { [key: string]: string[] };
+  읍면?: { [key: string]: string[] } | string[];
+}
+
+interface JeonnamRegions {
+  [city: string]: RegionData;
+}
+
+const JEONNAM_REGIONS: JeonnamRegions = {
   "목포시": {
     "읍면동": ["용당1동", "용당2동", "연동", "산정동", "연산동", "원산동", "대성동", "목원동", "동명동", "삼학동", "만호동", "유달동", "죽교동", "북항동", "용해동", "이로동", "상동", "하당동", "신흥동", "삼향동", "옥암동", "부주동"]
   },
@@ -102,8 +127,11 @@ const JEONNAM_REGIONS = {
   }
 }
 
+const EQUIPMENT_TYPES = ['트랙터', '이앙기', '콤바인', '지게차', '굴삭기', '스키로더'] as const
+type EquipmentType = typeof EQUIPMENT_TYPES[number]
+
 interface Equipment {
-  type: string
+  type: EquipmentType
   manufacturer: string
   forSale?: boolean
   forPurchase?: boolean
@@ -120,31 +148,77 @@ interface Equipment {
     size?: string
     bucketSize?: string
   }
+  images?: string[]
+}
+
+interface AttachmentImages {
+  loader?: string[]
+  rotary?: string[]
+  cutter?: string[]
+  rows?: string[]
+  tonnage?: string[]
+  size?: string[]
+  bucketSize?: string[]
+  frontWheel?: string[]
+  rearWheel?: string[]
 }
 
 interface Farmer {
   id: string
   name: string
-  address: string
+  businessName?: string
+  roadAddress: string      // 도로명 주소
+  jibunAddress: string     // 지번 주소
+  addressDetail?: string   // 상세 주소
   phone: string
   mainCrop: string
   ageGroup: string
-  equipment?: Equipment
-  city: string
-  town: string
-  ri: string
-  images?: string[]
-  equipmentImages?: string[]
-  attachmentImages?: {
-    loader?: string[]
-    rotary?: string[]
-    cutter?: string[]
-    rows?: string[]
-    tonnage?: string[]
-    size?: string[]
-    bucketSize?: string[]
-  }
+  equipments: Equipment[]
+  farmerImages?: string[]
+  attachmentImages?: AttachmentImages
   memo?: string
+}
+
+// 농기계 타입 매핑
+const equipmentTypeMap: { [key: string]: string } = {
+  'tractor': '트랙터',
+  'combine': '콤바인',
+  'rice_transplanter': '이앙기',
+  'forklift': '지게차',
+  'excavator': '굴삭기',
+  'skid_loader': '스키로더'
+}
+
+// 제조사 매핑
+const manufacturerMap: { [key: string]: string } = {
+  'john_deere': '존디어',
+  'kubota': '구보다',
+  'daedong': '대동',
+  'kukje': '국제',
+  'ls': '엘에스',
+  'yanmar': '얀마',
+  'newholland': '뉴홀랜드',
+  'mf': '엠에프',
+  'case': '케이스',
+  'hyundai': '현대',
+  'samsung': '삼성',
+  'volvo': '볼보',
+  'hitachi': '히타치',
+  'doosan': '두산',
+  'claas': '클라스',
+  'agrico': '아그리코',
+  'star': '스타',
+  'chevrolet': '시보레',
+  'valmet': '발메트'
+}
+
+// 한글 변환 함수
+const getKoreanEquipmentType = (type: string): string => {
+  return equipmentTypeMap[type.toLowerCase()] || type
+}
+
+const getKoreanManufacturer = (manufacturer: string): string => {
+  return manufacturerMap[manufacturer.toLowerCase()] || manufacturer
 }
 
 export default function FarmerList() {
@@ -193,10 +267,15 @@ export default function FarmerList() {
   // 시/군 선택 시 읍/면/동 목록 업데이트
   useEffect(() => {
     if (filter.city) {
-      const cityData = JEONNAM_REGIONS[filter.city as keyof typeof JEONNAM_REGIONS]
+      const cityData = JEONNAM_REGIONS[filter.city]
       if (cityData) {
-        const townList = Object.keys(cityData["읍면동"] || cityData["읍면"] || {})
-        setTowns(townList)
+        const townData = cityData["읍면동"] || cityData["읍면"]
+        if (townData) {
+          const townList = Array.isArray(townData) ? townData : Object.keys(townData)
+          setTowns(townList)
+        } else {
+          setTowns([])
+        }
       }
       setFilter(prev => ({ ...prev, town: '', ri: '' }))
       setRis([])
@@ -209,11 +288,14 @@ export default function FarmerList() {
   // 읍/면/동 선택 시 리 목록 업데이트
   useEffect(() => {
     if (filter.city && filter.town) {
-      const cityData = JEONNAM_REGIONS[filter.city as keyof typeof JEONNAM_REGIONS]
+      const cityData = JEONNAM_REGIONS[filter.city]
       if (cityData) {
-        const townData = (cityData["읍면동"] || cityData["읍면"] || {})[filter.town]
-        if (Array.isArray(townData)) {
-          setRis(townData)
+        const townData = cityData["읍면동"] || cityData["읍면"]
+        if (townData && !Array.isArray(townData)) {
+          const riList = townData[filter.town] || []
+          setRis(riList)
+        } else {
+          setRis([])
         }
       }
       setFilter(prev => ({ ...prev, ri: '' }))
@@ -225,35 +307,40 @@ export default function FarmerList() {
   const filteredFarmers = farmers.filter(farmer => {
     const matchesSearch = 
       farmer.name.includes(searchTerm) ||
-      farmer.address.includes(searchTerm) ||
       farmer.phone.includes(searchTerm) ||
       farmer.mainCrop.includes(searchTerm)
 
     const matchesAge = !filter.ageGroup || farmer.ageGroup === filter.ageGroup
-    const matchesEquipment = !filter.equipmentType || farmer.equipment?.type === filter.equipmentType
-    const matchesManufacturer = !filter.manufacturer || farmer.equipment?.manufacturer === filter.manufacturer
+    const matchesEquipment = !filter.equipmentType || farmer.equipments.some(equipment => equipment.type === filter.equipmentType)
+    const matchesManufacturer = !filter.manufacturer || farmer.equipments.some(equipment => equipment.manufacturer === filter.manufacturer)
     
     // 지역 필터링
-    const matchesCity = !filter.city || farmer.city === filter.city
-    const matchesTown = !filter.town || farmer.town === filter.town
-    const matchesRi = !filter.ri || farmer.ri === filter.ri
+    const matchesCity = !filter.city || (
+      (farmer.addressDetail && farmer.addressDetail.includes(filter.city))
+    )
+    const matchesTown = !filter.town || (
+      (farmer.addressDetail && farmer.addressDetail.includes(filter.town))
+    )
+    const matchesRi = !filter.ri || (
+      (farmer.addressDetail && farmer.addressDetail.includes(filter.ri))
+    )
 
     // 거래 유형 필터링
     const matchesTradeType = !filter.tradeType || 
-      (filter.tradeType === 'sale' && farmer.equipment?.forSale) ||
-      (filter.tradeType === 'purchase' && farmer.equipment?.forPurchase)
+      (filter.tradeType === 'sale' && farmer.equipments.some(equipment => equipment.forSale)) ||
+      (filter.tradeType === 'purchase' && farmer.equipments.some(equipment => equipment.forPurchase))
 
     // 작업기 필터링
-    const matchesAttachment = !filter.attachment || (farmer.equipment?.attachments && (
-      (filter.attachment === 'loader' && farmer.equipment.attachments.loader) ||
-      (filter.attachment === 'rotary' && farmer.equipment.attachments.rotary) ||
-      (filter.attachment === 'frontWheel' && farmer.equipment.attachments.frontWheel) ||
-      (filter.attachment === 'rearWheel' && farmer.equipment.attachments.rearWheel) ||
-      (filter.attachment === 'cutter' && farmer.equipment.attachments.cutter) ||
-      (filter.attachment === 'rows' && farmer.equipment.attachments.rows) ||
-      (filter.attachment === 'tonnage' && farmer.equipment.attachments.tonnage) ||
-      (filter.attachment === 'size' && farmer.equipment.attachments.size) ||
-      (filter.attachment === 'bucketSize' && farmer.equipment.attachments.bucketSize)
+    const matchesAttachment = !filter.attachment || (farmer.attachmentImages && (
+      (filter.attachment === 'loader' && farmer.attachmentImages.loader) ||
+      (filter.attachment === 'rotary' && farmer.attachmentImages.rotary) ||
+      (filter.attachment === 'frontWheel' && farmer.attachmentImages.frontWheel) ||
+      (filter.attachment === 'rearWheel' && farmer.attachmentImages.rearWheel) ||
+      (filter.attachment === 'cutter' && farmer.attachmentImages.cutter) ||
+      (filter.attachment === 'rows' && farmer.attachmentImages.rows) ||
+      (filter.attachment === 'tonnage' && farmer.attachmentImages.tonnage) ||
+      (filter.attachment === 'size' && farmer.attachmentImages.size) ||
+      (filter.attachment === 'bucketSize' && farmer.attachmentImages.bucketSize)
     ))
 
     return matchesSearch && matchesAge && matchesEquipment && 
@@ -280,31 +367,56 @@ export default function FarmerList() {
   const getAllImages = (farmer: Farmer) => {
     const images: {url: string, type: string}[] = []
     
-    // 농민 사진
-    farmer.images?.forEach(url => {
-      images.push({ url, type: '농민' })
-    })
-    
-    // 본기 사진
-    farmer.equipmentImages?.forEach(url => {
-      images.push({ url, type: '본기' })
-    })
-    
-    // 작업기 사진
-    if (farmer.attachmentImages) {
-      Object.entries(farmer.attachmentImages).forEach(([type, urls]) => {
-        const displayNames: {[key: string]: string} = {
-          loader: '로더',
-          rotary: '로타리',
-          cutter: '예취부',
-          rows: '작업열',
-          tonnage: '톤수',
-          size: '규격',
-          bucketSize: '버켓용량'
+    // 농민 사진 (가장 먼저 표시)
+    if (farmer.farmerImages && Array.isArray(farmer.farmerImages) && farmer.farmerImages.length > 0) {
+      farmer.farmerImages.forEach(url => {
+        if (url && typeof url === 'string' && url.trim() !== '') {
+          images.push({ url, type: '농민사진' })
         }
-        urls?.forEach(url => {
-          images.push({ url, type: displayNames[type] })
-        })
+      })
+    }
+    
+    // 장비 사진
+    if (farmer.equipments && Array.isArray(farmer.equipments)) {
+      farmer.equipments.forEach((equipment, index) => {
+        if (equipment.images && Array.isArray(equipment.images)) {
+          equipment.images.forEach(url => {
+            if (url && typeof url === 'string' && url.trim() !== '') {
+              images.push({ 
+                url, 
+                type: `${getKoreanEquipmentType(equipment.type)} ${index + 1}`
+              })
+            }
+          })
+        }
+      })
+    }
+    
+    // 부착물 사진
+    if (farmer.attachmentImages) {
+      const displayNames: {[key: string]: string} = {
+        loader: '로더',
+        rotary: '로타리',
+        frontWheel: '전륜',
+        rearWheel: '후륜',
+        cutter: '커터',
+        rows: '열수',
+        tonnage: '톤수',
+        size: '규격',
+        bucketSize: '버켓용량'
+      }
+
+      Object.entries(farmer.attachmentImages).forEach(([key, urls]) => {
+        if (Array.isArray(urls)) {
+          urls.forEach(url => {
+            if (url && typeof url === 'string' && url.trim() !== '') {
+              images.push({ 
+                url, 
+                type: `${displayNames[key] || key}`
+              })
+            }
+          })
+        }
       })
     }
     
@@ -331,7 +443,26 @@ export default function FarmerList() {
 
   const handleBulkDelete = async () => {
     try {
-      await Promise.all(selectedFarmers.map(id => deleteDoc(doc(db, 'farmers', id))))
+      await Promise.all(selectedFarmers.map(async (id) => {
+        // Storage에서 농민 관련 모든 이미지 삭제
+        const storageRef = ref(storage, `farmers/${id}`)
+        const fileList = await listAll(storageRef)
+        
+        // 모든 파일과 하위 폴더의 파일들 삭제
+        const deletePromises = [
+          ...fileList.items.map(fileRef => deleteObject(fileRef)),
+          ...await Promise.all(fileList.prefixes.map(async (folderRef) => {
+            const subFiles = await listAll(folderRef)
+            return Promise.all(subFiles.items.map(fileRef => deleteObject(fileRef)))
+          }))
+        ]
+        
+        await Promise.all(deletePromises)
+        
+        // Firestore 문서 삭제
+        await deleteDoc(doc(db, 'farmers', id))
+      }))
+      
       setFarmers(prev => prev.filter(farmer => !selectedFarmers.includes(farmer.id)))
       alert('선택한 농민 정보가 삭제되었습니다.')
     } catch (error) {
@@ -340,6 +471,35 @@ export default function FarmerList() {
     }
     setDeleteModalOpen(false)
     setSelectedFarmers([])
+  }
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    if (!window.confirm('정말 삭제하시겠습니까?')) return
+
+    try {
+      // Storage에서 농민 관련 모든 이미지 삭제
+      const storageRef = ref(storage, `farmers/${id}`)
+      const fileList = await listAll(storageRef)
+      
+      // 모든 파일 삭제
+      await Promise.all([
+        ...fileList.items.map(fileRef => deleteObject(fileRef)),
+        ...fileList.prefixes.map(async (folderRef) => {
+          const subFiles = await listAll(folderRef)
+          return Promise.all(subFiles.items.map(fileRef => deleteObject(fileRef)))
+        })
+      ])
+
+      // Firestore 문서 삭제
+      await deleteDoc(doc(db, 'farmers', id))
+      
+      setFarmers(prev => prev.filter(farmer => farmer.id !== id))
+      alert('삭제되었습니다.')
+    } catch (error) {
+      console.error('Error deleting farmer:', error)
+      alert('삭제 중 오류가 발생했습니다.')
+    }
   }
 
   if (loading) return (
@@ -437,7 +597,7 @@ export default function FarmerList() {
             className="p-2 border rounded"
           >
             <option value="">농기계 종류 전체</option>
-            {['트랙터', '이앙기', '콤바인', '지게차', '굴삭기', '스키로더'].map(type => (
+            {EQUIPMENT_TYPES.map(type => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
@@ -511,15 +671,20 @@ export default function FarmerList() {
                   onChange={() => handleSelectFarmer(farmer.id)}
                   className="w-4 h-4"
                 />
-                <h2 className="text-lg font-semibold">{farmer.name}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">{farmer.name}</h2>
+                  {farmer.businessName && (
+                    <span className="text-gray-600">({farmer.businessName})</span>
+                  )}
+                </div>
               </div>
               <div className="space-x-2">
-                {farmer.equipment?.forSale && (
+                {farmer.equipments.some(equipment => equipment.forSale) && (
                   <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
                     판매
                   </span>
                 )}
-                {farmer.equipment?.forPurchase && (
+                {farmer.equipments.some(equipment => equipment.forPurchase) && (
                   <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
                     구매
                   </span>
@@ -529,126 +694,154 @@ export default function FarmerList() {
 
             {/* 통합 이미지 갤러리 */}
             <Link href={`/farmers/${farmer.id}`} className="block">
-              <div className="relative h-48 mb-4">
-                <div className="relative h-48">
-                  {(() => {
-                    const allImages = getAllImages(farmer)
-                    return allImages.length > 0 ? (
+              <div className="relative h-48">
+                {(() => {
+                  const allImages = getAllImages(farmer)
+                  const currentIndex = currentImageIndexes[`${farmer.id}-all`] || 0
+                  
+                  if (allImages.length > 0) {
+                    const currentImage = allImages[currentIndex]
+                    return (
                       <>
-                        <img
-                          src={allImages[currentImageIndexes[`${farmer.id}-all`] || 0].url}
-                          alt={`${allImages[currentImageIndexes[`${farmer.id}-all`] || 0].type} 사진`}
-                          className="w-full h-full object-cover rounded"
-                        />
-                        <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                          {allImages[currentImageIndexes[`${farmer.id}-all`] || 0].type} - {(currentImageIndexes[`${farmer.id}-all`] || 0) + 1} / {allImages.length}
+                        <div className="relative h-48">
+                          <img
+                            src={currentImage.url}
+                            alt={`${currentImage.type}`}
+                            className="w-full h-full object-cover rounded"
+                            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                              const target = e.currentTarget;
+                              target.onerror = null;
+                              target.src = '/placeholder.jpg';
+                            }}
+                          />
+                          <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                            {currentImage.type} - {currentIndex + 1} / {allImages.length}
+                          </div>
                         </div>
                         {allImages.length > 1 && (
-                          <>
+                          <div className="absolute inset-0 flex items-center justify-between px-2">
                             <button
                               onClick={(e) => {
                                 e.preventDefault()
+                                e.stopPropagation()
                                 prevImage(farmer.id, 'all', allImages.length)
                               }}
-                              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                              className="bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center"
                             >
                               ←
                             </button>
                             <button
                               onClick={(e) => {
                                 e.preventDefault()
+                                e.stopPropagation()
                                 nextImage(farmer.id, 'all', allImages.length)
                               }}
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                              className="bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center"
                             >
                               →
                             </button>
-                            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                              {allImages.map((_, index) => (
-                                <div
-                                  key={index}
-                                  className={`w-2 h-2 rounded-full ${
-                                    index === (currentImageIndexes[`${farmer.id}-all`] || 0)
-                                      ? 'bg-white'
-                                      : 'bg-gray-400'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </>
+                          </div>
                         )}
                       </>
-                    ) : (
-                      <div className="w-full h-full rounded bg-gray-100 flex items-center justify-center">
-                        <p className="text-gray-400">등록된 사진이 없습니다</p>
-                      </div>
                     )
-                  })()}
-                </div>
+                  }
+                  return (
+                    <div className="w-full h-full rounded bg-gray-100 flex items-center justify-center">
+                      <p className="text-gray-400">등록된 사진이 없습니다</p>
+                    </div>
+                  )
+                })()}
               </div>
             </Link>
 
-            {/* 기존 농민 정보 */}
-            <Link href={`/farmers/${farmer.id}`} className="block">
-              <div className="space-y-2">
-                <div className="space-y-1 text-sm">
-                  <p>
-                    <span className="font-medium">주소:</span>
-                    <a 
-                      href={`https://map.kakao.com/link/search/${farmer.address}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-blue-600 hover:text-blue-800 ml-1"
-                    >
-                      {farmer.address}
-                      <span className="ml-1 text-xs">🗺️</span>
-                    </a>
-                  </p>
-                  <p>
-                    <span className="font-medium">연락처:</span>
-                    <a 
-                      href={`tel:${farmer.phone}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-blue-600 hover:text-blue-800 ml-1"
-                    >
-                      {farmer.phone}
-                      <span className="ml-1 text-xs">📞</span>
-                    </a>
-                  </p>
-                  <p>
-                    <span className="font-medium">보유농기계:</span>
-                    <span className="ml-1">
-                      {farmer.equipment ? (
-                        <>
-                          {farmer.equipment.type} ({farmer.equipment.manufacturer})
-                          {farmer.equipment.forSale && 
-                            <span className="ml-2 text-blue-600">
-                              판매가: {farmer.equipment.desiredPrice}원
-                            </span>
-                          }
-                          {farmer.equipment.forPurchase && 
-                            <span className="ml-2 text-green-600">
-                              구매희망가: {farmer.equipment.purchasePrice}원
-                            </span>
-                          }
-                        </>
-                      ) : (
-                        <span className="text-gray-400">미등록</span>
-                      )}
-                    </span>
-                  </p>
-                  <p>
-                    <span className="font-medium">메모:</span>
-                    <div className="ml-1 max-h-20 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <span className="text-gray-600 block">
-                        {farmer.memo || <span className="text-gray-400">메모 없음</span>}
-                      </span>
-                    </div>
-                  </p>
-                </div>
+            {/* 농민 정보 */}
+            <div className="space-y-1 text-sm">
+              {/* 주소 정보 */}
+              <div className="flex flex-col space-y-1">
+                {(farmer.roadAddress || farmer.jibunAddress) && (
+                  <>
+                    {farmer.roadAddress && (
+                      <div className="truncate">
+                        <a 
+                          href={`https://map.kakao.com/link/search/${farmer.roadAddress}${farmer.addressDetail ? ` ${farmer.addressDetail}` : ''}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          {farmer.roadAddress}
+                          {farmer.addressDetail && <span className="ml-1">({farmer.addressDetail})</span>}
+                        </a>
+                      </div>
+                    )}
+                    {farmer.jibunAddress && (
+                      <div className="truncate">
+                        <a 
+                          href={`https://map.kakao.com/link/search/${farmer.jibunAddress}${farmer.addressDetail ? ` ${farmer.addressDetail}` : ''}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          {farmer.jibunAddress}
+                          {farmer.addressDetail && <span className="ml-1">({farmer.addressDetail})</span>}
+                        </a>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-            </Link>
+
+              {/* 연락처 */}
+              <div className="flex items-center">
+                <a 
+                  href={`tel:${farmer.phone}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  {farmer.phone}
+                </a>
+              </div>
+
+              {/* 보유농기계 */}
+              <div className="flex items-center">
+                <span className="font-medium min-w-[60px]">농기계:</span>
+                <span className="flex-1">
+                  {farmer.equipments && farmer.equipments.length > 0 ? (
+                    <div className="flex flex-col gap-2">
+                      {farmer.equipments.map((equipment, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span>{getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer)})</span>
+                          {equipment.forSale && 
+                            <span className="text-sm bg-blue-100 text-blue-800 px-2 rounded">
+                              판매가: {equipment.desiredPrice}만원
+                            </span>
+                          }
+                          {equipment.forPurchase && 
+                            <span className="text-sm bg-green-100 text-green-800 px-2 rounded">
+                              구매희망가: {equipment.purchasePrice}만원
+                            </span>
+                          }
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">미등록</span>
+                  )}
+                </span>
+              </div>
+
+              {/* 메모 */}
+              {farmer.memo && (
+                <div className="flex items-start">
+                  <span className="font-medium min-w-[60px]">메모:</span>
+                  <div className="flex-1 max-h-16 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                    <span className="text-gray-600 block">{farmer.memo}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="mt-4 flex justify-end">
               <Link 
                 href={`/farmers/${farmer.id}`}

@@ -3,9 +3,8 @@
 interface AddressData {
   zipCode: string;
   roadAddress: string;
-  roadAddressDetail: string;
   jibunAddress: string;
-  jibunAddressDetail: string;
+  addressDetail: string;
 }
 
 interface AddressSearchProps {
@@ -16,12 +15,14 @@ export default function AddressSearch({ onAddressSelect }: AddressSearchProps) {
   const handleClick = () => {
     new (window as any).daum.Postcode({
       oncomplete: function(data: any) {
+        // 건물명이 있는 경우 상세주소로 설정
+        const detail = data.buildingName ? `(${data.buildingName})` : '';
+        
         onAddressSelect({
           zipCode: data.zonecode,
           roadAddress: data.roadAddress,
-          roadAddressDetail: '',
-          jibunAddress: data.jibunAddress,
-          jibunAddressDetail: ''
+          jibunAddress: data.jibunAddress || data.autoJibunAddress || '',
+          addressDetail: detail
         });
       }
     }).open();
