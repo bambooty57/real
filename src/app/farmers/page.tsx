@@ -133,6 +133,9 @@ type EquipmentType = typeof EQUIPMENT_TYPES[number]
 interface Equipment {
   type: EquipmentType
   manufacturer: string
+  year?: string         // 연식 (파이어베이스의 필드명과 일치)
+  model?: string        // 모델명
+  usageHours?: string   // 사용시간
   forSale?: boolean
   forPurchase?: boolean
   desiredPrice?: string
@@ -678,11 +681,20 @@ export default function FarmerList() {
                   )}
                 </div>
               </div>
-              <div className="space-x-2">
+              <div className="flex gap-2">
                 {farmer.equipments.some(equipment => equipment.forSale) && (
-                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    판매
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      판매
+                    </span>
+                    {farmer.equipments.map((equipment, index) => (
+                      equipment.forSale && (
+                        <span key={index} className="text-sm bg-blue-50 text-blue-800 px-2 py-1 rounded">
+                          {equipment.desiredPrice}만원
+                        </span>
+                      )
+                    ))}
+                  </div>
                 )}
                 {farmer.equipments.some(equipment => equipment.forPurchase) && (
                   <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
@@ -693,7 +705,7 @@ export default function FarmerList() {
             </div>
 
             {/* 통합 이미지 갤러리 */}
-            <Link href={`/farmers/${farmer.id}`} className="block">
+            <Link href={`/farmers/${farmer.id}`} className="block mb-6">
               <div className="relative h-48">
                 {(() => {
                   const allImages = getAllImages(farmer)
@@ -755,7 +767,7 @@ export default function FarmerList() {
             </Link>
 
             {/* 농민 정보 */}
-            <div className="space-y-1 text-sm">
+            <div className="space-y-2 text-sm">
               {/* 주소 정보 */}
               <div className="flex flex-col space-y-1">
                 {(farmer.roadAddress || farmer.jibunAddress) && (
@@ -804,24 +816,38 @@ export default function FarmerList() {
               </div>
 
               {/* 보유농기계 */}
-              <div className="flex items-center">
+              <div className="flex items-start">
                 <span className="font-medium min-w-[60px]">농기계:</span>
                 <span className="flex-1">
                   {farmer.equipments && farmer.equipments.length > 0 ? (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-3">
                       {farmer.equipments.map((equipment, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <span>{getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer)})</span>
-                          {equipment.forSale && 
-                            <span className="text-sm bg-blue-100 text-blue-800 px-2 rounded">
-                              판매가: {equipment.desiredPrice}만원
-                            </span>
-                          }
-                          {equipment.forPurchase && 
-                            <span className="text-sm bg-green-100 text-green-800 px-2 rounded">
-                              구매희망가: {equipment.purchasePrice}만원
-                            </span>
-                          }
+                        <div key={index} className="flex flex-col gap-1">
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <span>{getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer)})</span>
+                            {equipment.year && (
+                              <span className="text-sm text-gray-600">
+                                {equipment.year}년식
+                              </span>
+                            )}
+                            {equipment.model && (
+                              <span className="text-sm text-gray-600">
+                                {equipment.model}
+                              </span>
+                            )}
+                            {equipment.usageHours && (
+                              <span className="text-sm text-gray-600">
+                                {equipment.usageHours}시간 사용
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex gap-2 ml-2">
+                            {equipment.forPurchase && 
+                              <span className="text-sm bg-green-100 text-green-800 px-2 rounded">
+                                구매희망가: {equipment.purchasePrice}만원
+                              </span>
+                            }
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -834,9 +860,11 @@ export default function FarmerList() {
               {/* 메모 */}
               {farmer.memo && (
                 <div className="flex items-start">
-                  <span className="font-medium min-w-[60px]">메모:</span>
-                  <div className="flex-1 max-h-16 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                    <span className="text-gray-600 block">{farmer.memo}</span>
+                  <div className="flex-1 border rounded p-2">
+                    <div className="font-medium mb-1">메모</div>
+                    <div className="max-h-24 overflow-y-auto">
+                      <span className="text-gray-600 block whitespace-pre-wrap">{farmer.memo}</span>
+                    </div>
                   </div>
                 </div>
               )}
