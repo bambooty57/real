@@ -5,6 +5,13 @@ import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore'
 import { ref, deleteObject, listAll } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
 import Link from 'next/link'
+import { Farmer, Equipment, MainCrop } from '@/types/farmer'
+import {
+  getKoreanEquipmentType,
+  getKoreanManufacturer,
+  getMainCropDisplay,
+  getFarmingTypeDisplay
+} from '@/utils/mappings'
 
 interface AddressData {
   읍면동: string[];
@@ -130,105 +137,23 @@ const JEONNAM_REGIONS: JeonnamRegions = {
 const EQUIPMENT_TYPES = ['트랙터', '이앙기', '콤바인', '지게차', '굴삭기', '스키로더'] as const
 type EquipmentType = typeof EQUIPMENT_TYPES[number]
 
-interface Equipment {
-  type: EquipmentType
-  manufacturer: string
-  year?: string         // 연식 (파이어베이스의 필드명과 일치)
-  model?: string        // 모델명
-  usageHours?: string   // 사용시간
-  forSale?: boolean
-  forPurchase?: boolean
-  desiredPrice?: string
-  purchasePrice?: string
-  attachments?: {
-    loader?: string
-    rotary?: string
-    frontWheel?: string
-    rearWheel?: string
-    cutter?: string
-    rows?: string
-    tonnage?: string
-    size?: string
-    bucketSize?: string
-  }
-  images?: string[]
-}
-
-interface AttachmentImages {
-  loader?: string[]
-  rotary?: string[]
-  cutter?: string[]
-  rows?: string[]
-  tonnage?: string[]
-  size?: string[]
-  bucketSize?: string[]
-  frontWheel?: string[]
-  rearWheel?: string[]
-}
-
-interface Farmer {
-  id: string
-  name: string
-  businessName?: string
-  roadAddress: string      // 도로명 주소
-  jibunAddress: string     // 지번 주소
-  addressDetail?: string   // 상세 주소
-  phone: string
-  mainCrop: string
+interface Filter {
   ageGroup: string
-  equipments: Equipment[]
-  farmerImages?: string[]
-  attachmentImages?: AttachmentImages
-  memo?: string
-}
-
-// 농기계 타입 매핑
-const equipmentTypeMap: { [key: string]: string } = {
-  'tractor': '트랙터',
-  'combine': '콤바인',
-  'rice_transplanter': '이앙기',
-  'forklift': '지게차',
-  'excavator': '굴삭기',
-  'skid_loader': '스키로더'
-}
-
-// 제조사 매핑
-const manufacturerMap: { [key: string]: string } = {
-  'john_deere': '존디어',
-  'kubota': '구보다',
-  'daedong': '대동',
-  'kukje': '국제',
-  'ls': '엘에스',
-  'yanmar': '얀마',
-  'newholland': '뉴홀랜드',
-  'mf': '엠에프',
-  'case': '케이스',
-  'hyundai': '현대',
-  'samsung': '삼성',
-  'volvo': '볼보',
-  'hitachi': '히타치',
-  'doosan': '두산',
-  'claas': '클라스',
-  'agrico': '아그리코',
-  'star': '스타',
-  'chevrolet': '시보레',
-  'valmet': '발메트'
-}
-
-// 한글 변환 함수
-const getKoreanEquipmentType = (type: string): string => {
-  return equipmentTypeMap[type.toLowerCase()] || type
-}
-
-const getKoreanManufacturer = (manufacturer: string): string => {
-  return manufacturerMap[manufacturer.toLowerCase()] || manufacturer
+  equipmentType: string
+  manufacturer: string
+  city: string
+  town: string
+  ri: string
+  tradeType: string
+  attachment: string
+  mainCrop: string
 }
 
 export default function FarmerList() {
   const [farmers, setFarmers] = useState<Farmer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filter, setFilter] = useState({
+  const [filter, setFilter] = useState<Filter>({
     ageGroup: '',
     equipmentType: '',
     manufacturer: '',
@@ -236,7 +161,8 @@ export default function FarmerList() {
     town: '',
     ri: '',
     tradeType: '',
-    attachment: ''
+    attachment: '',
+    mainCrop: ''
   })
   const [currentImageIndexes, setCurrentImageIndexes] = useState<{[key: string]: number}>({})
   const [selectedFarmers, setSelectedFarmers] = useState<string[]>([])
@@ -307,48 +233,84 @@ export default function FarmerList() {
     }
   }, [filter.city, filter.town])
 
-  const filteredFarmers = farmers.filter(farmer => {
-    const matchesSearch = 
+  const matchesSearch = (farmer: Farmer, searchTerm: string): boolean => {
+    if (!searchTerm) return true;
+    return (
       farmer.name.includes(searchTerm) ||
       farmer.phone.includes(searchTerm) ||
-      farmer.mainCrop.includes(searchTerm)
+      getMainCropDisplay(farmer.mainCrop).includes(searchTerm)
+    );
+  }
 
-    const matchesAge = !filter.ageGroup || farmer.ageGroup === filter.ageGroup
-    const matchesEquipment = !filter.equipmentType || farmer.equipments.some(equipment => equipment.type === filter.equipmentType)
-    const matchesManufacturer = !filter.manufacturer || farmer.equipments.some(equipment => equipment.manufacturer === filter.manufacturer)
-    
-    // 지역 필터링
-    const matchesCity = !filter.city || (
-      (farmer.addressDetail && farmer.addressDetail.includes(filter.city))
-    )
-    const matchesTown = !filter.town || (
-      (farmer.addressDetail && farmer.addressDetail.includes(filter.town))
-    )
-    const matchesRi = !filter.ri || (
-      (farmer.addressDetail && farmer.addressDetail.includes(filter.ri))
-    )
+  const matchesAge = (farmer: Farmer, ageGroup: string): boolean => {
+    if (!ageGroup) return true;
+    return farmer.ageGroup === ageGroup;
+  }
 
-    // 거래 유형 필터링
-    const matchesTradeType = !filter.tradeType || 
-      (filter.tradeType === 'sale' && farmer.equipments.some(equipment => equipment.forSale)) ||
-      (filter.tradeType === 'purchase' && farmer.equipments.some(equipment => equipment.forPurchase))
+  const matchesEquipment = (farmer: Farmer, equipmentType: string): boolean => {
+    if (!equipmentType) return true;
+    return farmer.equipments.some(equipment => equipment.type === equipmentType);
+  }
 
-    // 작업기 필터링
-    const matchesAttachment = !filter.attachment || (farmer.attachmentImages && (
-      (filter.attachment === 'loader' && farmer.attachmentImages.loader) ||
-      (filter.attachment === 'rotary' && farmer.attachmentImages.rotary) ||
-      (filter.attachment === 'frontWheel' && farmer.attachmentImages.frontWheel) ||
-      (filter.attachment === 'rearWheel' && farmer.attachmentImages.rearWheel) ||
-      (filter.attachment === 'cutter' && farmer.attachmentImages.cutter) ||
-      (filter.attachment === 'rows' && farmer.attachmentImages.rows) ||
-      (filter.attachment === 'tonnage' && farmer.attachmentImages.tonnage) ||
-      (filter.attachment === 'size' && farmer.attachmentImages.size) ||
-      (filter.attachment === 'bucketSize' && farmer.attachmentImages.bucketSize)
-    ))
+  const matchesManufacturer = (farmer: Farmer, manufacturer: string): boolean => {
+    if (!manufacturer) return true;
+    return farmer.equipments.some(equipment => equipment.manufacturer === manufacturer);
+  }
 
-    return matchesSearch && matchesAge && matchesEquipment && 
-           matchesManufacturer && matchesCity && matchesTown && 
-           matchesRi && matchesTradeType && matchesAttachment
+  const matchesCity = (farmer: Farmer, city: string): boolean => {
+    if (!city) return true;
+    return Boolean(farmer.addressDetail?.includes(city));
+  }
+
+  const matchesTown = (farmer: Farmer, town: string): boolean => {
+    if (!town) return true;
+    return Boolean(farmer.addressDetail?.includes(town));
+  }
+
+  const matchesRi = (farmer: Farmer, ri: string): boolean => {
+    if (!ri) return true;
+    return Boolean(farmer.addressDetail?.includes(ri));
+  }
+
+  const matchesTradeType = (farmer: Farmer, tradeType: string): boolean => {
+    if (!tradeType) return true;
+    if (tradeType === 'sale') {
+      return farmer.equipments.some(equipment => equipment.forSale === true);
+    }
+    if (tradeType === 'purchase') {
+      return farmer.equipments.some(equipment => equipment.forPurchase === true);
+    }
+    return false;
+  }
+
+  const matchesAttachment = (farmer: Farmer, attachment: string): boolean => {
+    if (!attachment) return true;
+    if (!farmer.attachmentImages) return false;
+
+    const images = farmer.attachmentImages[attachment as keyof typeof farmer.attachmentImages];
+    return Array.isArray(images) && images.length > 0;
+  }
+
+  const matchesMainCrop = (mainCrop: MainCrop, cropFilter: string): boolean => {
+    if (!cropFilter) return true;
+    return Object.entries(mainCrop)
+      .some(([key, value]) => key === cropFilter && value === true);
+  }
+
+  const filteredFarmers = farmers.filter(farmer => {
+    const matches = 
+      matchesSearch(farmer, searchTerm) &&
+      matchesAge(farmer, filter.ageGroup) &&
+      matchesEquipment(farmer, filter.equipmentType) &&
+      matchesManufacturer(farmer, filter.manufacturer) &&
+      matchesCity(farmer, filter.city) &&
+      matchesTown(farmer, filter.town) &&
+      matchesRi(farmer, filter.ri) &&
+      matchesTradeType(farmer, filter.tradeType) &&
+      matchesAttachment(farmer, filter.attachment) &&
+      matchesMainCrop(farmer.mainCrop, filter.mainCrop);
+
+    return matches;
   })
 
   // 이미지 슬라이더 함수

@@ -5,45 +5,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-
-interface Equipment {
-  type: string
-  manufacturer?: string
-  model?: string
-  year?: string
-  serialNumber?: string
-  usageHours?: string
-  forSale?: boolean
-  forPurchase?: boolean
-  desiredPrice?: string
-  purchasePrice?: string
-  rating?: number
-  modelRating?: number
-  memo?: string
-  attachments?: {
-    [key: string]: string | number | undefined
-    loader?: string
-    loaderManufacturer?: string
-    loaderModel?: string
-    loaderRating?: number
-    rotary?: string
-    rotaryManufacturer?: string
-    rotaryModel?: string
-    rotaryWidth?: string
-    rotaryRating?: number
-    frontWheel?: string
-    frontWheelModel?: string
-    frontWheelRating?: number
-    rearWheel?: string
-    rearWheelModel?: string
-    rearWheelRating?: number
-    bucket?: string
-    bucketManufacturer?: string
-    bucketModel?: string
-    bucketSize?: string
-  }
-  images?: string[]
-}
+import { Farmer, Equipment } from '@/types/farmer'
 
 interface AttachmentImages {
   loader?: string[]
@@ -55,29 +17,6 @@ interface AttachmentImages {
   bucketSize?: string[]
   frontWheel?: string[]
   rearWheel?: string[]
-}
-
-interface Farmer {
-  id: string
-  name: string
-  businessName?: string
-  roadAddress: string
-  jibunAddress: string
-  addressDetail?: string
-  phone: string
-  mainCrop: any
-  ageGroup: string
-  farmingTypes: {
-    fieldFarming?: boolean
-    forageCrop?: boolean
-    livestock?: boolean
-    orchard?: boolean
-    paddyFarming?: boolean
-  }
-  equipments: Equipment[]
-  farmerImages?: string[]
-  attachmentImages?: AttachmentImages
-  memo?: string
 }
 
 // 농기계 타입 매핑
@@ -182,19 +121,9 @@ const getFarmingTypeDisplay = (farmingType: any): string => {
   return '없음'
 }
 
-const getRatingStars = (rating: number) => {
-  return (
-    <div className="inline-flex ml-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <span 
-          key={star} 
-          className={`${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
-        >
-          ★
-        </span>
-      ))}
-    </div>
-  )
+const getRatingStars = (rating: string | number) => {
+  const numRating = typeof rating === 'string' ? parseInt(rating, 10) : rating;
+  return '★'.repeat(numRating) + '☆'.repeat(5 - numRating);
 }
 
 export default function FarmerDetailClient({ id }: { id: string }) {
