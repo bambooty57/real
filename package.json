@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "firebase": "^10.7.2",
-    "next": "14.1.0",
-    "react": "^18",
-    "react-dom": "^18"
+    "next": "^15.1.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -22,6 +22,6 @@
     "autoprefixer": "^10.0.1",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "typescript": "5.7.3"
   }
 }

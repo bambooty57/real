@@ -18,10 +18,38 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
     equipment: {
       type: '',
       manufacturer: '',
+      model: '',
+      year: '',
+      usageHours: '',
+      rating: '',
       attachments: {
         loader: '',
+        loaderModel: '',
+        loaderRating: '',
         rotary: '',
-        wheels: ''
+        rotaryModel: '',
+        rotaryRating: '',
+        frontWheel: '',
+        frontWheelModel: '',
+        frontWheelRating: '',
+        rearWheel: '',
+        rearWheelModel: '',
+        rearWheelRating: '',
+        cutter: '',
+        cutterModel: '',
+        cutterRating: '',
+        rows: '',
+        rowsModel: '',
+        rowsRating: '',
+        tonnage: '',
+        tonnageModel: '',
+        tonnageRating: '',
+        size: '',
+        sizeModel: '',
+        sizeRating: '',
+        bucketSize: '',
+        bucketModel: '',
+        bucketRating: ''
       }
     }
   })
@@ -49,10 +77,38 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
             equipment: {
               type: data.equipment?.type || '',
               manufacturer: data.equipment?.manufacturer || '',
+              model: data.equipment?.model || '',
+              year: data.equipment?.year || '',
+              usageHours: data.equipment?.usageHours || '',
+              rating: data.equipment?.rating || '',
               attachments: {
                 loader: data.equipment?.attachments?.loader || '',
+                loaderModel: data.equipment?.attachments?.loaderModel || '',
+                loaderRating: data.equipment?.attachments?.loaderRating || '',
                 rotary: data.equipment?.attachments?.rotary || '',
-                wheels: data.equipment?.attachments?.wheels || ''
+                rotaryModel: data.equipment?.attachments?.rotaryModel || '',
+                rotaryRating: data.equipment?.attachments?.rotaryRating || '',
+                frontWheel: data.equipment?.attachments?.frontWheel || '',
+                frontWheelModel: data.equipment?.attachments?.frontWheelModel || '',
+                frontWheelRating: data.equipment?.attachments?.frontWheelRating || '',
+                rearWheel: data.equipment?.attachments?.rearWheel || '',
+                rearWheelModel: data.equipment?.attachments?.rearWheelModel || '',
+                rearWheelRating: data.equipment?.attachments?.rearWheelRating || '',
+                cutter: data.equipment?.attachments?.cutter || '',
+                cutterModel: data.equipment?.attachments?.cutterModel || '',
+                cutterRating: data.equipment?.attachments?.cutterRating || '',
+                rows: data.equipment?.attachments?.rows || '',
+                rowsModel: data.equipment?.attachments?.rowsModel || '',
+                rowsRating: data.equipment?.attachments?.rowsRating || '',
+                tonnage: data.equipment?.attachments?.tonnage || '',
+                tonnageModel: data.equipment?.attachments?.tonnageModel || '',
+                tonnageRating: data.equipment?.attachments?.tonnageRating || '',
+                size: data.equipment?.attachments?.size || '',
+                sizeModel: data.equipment?.attachments?.sizeModel || '',
+                sizeRating: data.equipment?.attachments?.sizeRating || '',
+                bucketSize: data.equipment?.attachments?.bucketSize || '',
+                bucketModel: data.equipment?.attachments?.bucketModel || '',
+                bucketRating: data.equipment?.attachments?.bucketRating || ''
               }
             }
           })
@@ -200,7 +256,7 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
           <h2 className="text-xl font-semibold">농기계 정보</h2>
           
           <div>
-            <label className="block mb-2">농기계 종류</label>
+            <label className="block mb-2">본기 종류</label>
             <select
               name="equipment.type"
               value={formData.equipment.type}
@@ -229,6 +285,67 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
             </select>
           </div>
 
+          <div>
+            <label className="block mb-2">모델</label>
+            <input
+              type="text"
+              name="equipment.model"
+              value={formData.equipment.model}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              placeholder="모델명을 입력하세요"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2">연식</label>
+            <select
+              name="equipment.year"
+              value={formData.equipment.year}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+            >
+              <option value="">선택하세요</option>
+              {Array.from({length: 24}, (_, i) => {
+                const year = 2024 - i;
+                return (
+                  <option key={year} value={year}>{year}년식</option>
+                );
+              })}
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-2">사용시간</label>
+            <input
+              type="number"
+              name="equipment.usageHours"
+              value={formData.equipment.usageHours}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              placeholder="시간 단위로 입력"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2">상태 평가</label>
+            <div className="flex gap-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <label key={star} className="flex items-center">
+                  <input
+                    type="radio"
+                    name="equipment.rating"
+                    value={star}
+                    checked={formData.equipment.rating === star.toString()}
+                    onChange={handleChange}
+                    className="mr-1"
+                  />
+                  {star}점
+                </label>
+              ))}
+            </div>
+          </div>
+
           {formData.equipment.type === '트랙터' && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">작업기 정보</h3>
@@ -249,6 +366,37 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
               </div>
 
               <div>
+                <label className="block mb-2">로더 모델</label>
+                <input
+                  type="text"
+                  name="equipment.attachments.loaderModel"
+                  value={formData.equipment.attachments.loaderModel}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  placeholder="모델명을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2">로더 상태 평가</label>
+                <div className="flex gap-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <label key={star} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="equipment.attachments.loaderRating"
+                        value={star}
+                        checked={formData.equipment.attachments.loaderRating === star.toString()}
+                        onChange={handleChange}
+                        className="mr-1"
+                      />
+                      {star}점
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <label className="block mb-2">로터리</label>
                 <select
                   name="equipment.attachments.rotary"
@@ -264,16 +412,224 @@ export default function EditFarmer({ params }: { params: { id: string } }) {
               </div>
 
               <div>
-                <label className="block mb-2">바퀴</label>
+                <label className="block mb-2">로터리 모델</label>
+                <input
+                  type="text"
+                  name="equipment.attachments.rotaryModel"
+                  value={formData.equipment.attachments.rotaryModel}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  placeholder="모델명을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2">로터리 상태 평가</label>
+                <div className="flex gap-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <label key={star} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="equipment.attachments.rotaryRating"
+                        value={star}
+                        checked={formData.equipment.attachments.rotaryRating === star.toString()}
+                        onChange={handleChange}
+                        className="mr-1"
+                      />
+                      {star}점
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-2">전륜</label>
                 <select
-                  name="equipment.attachments.wheels"
-                  value={formData.equipment.attachments.wheels}
+                  name="equipment.attachments.frontWheel"
+                  value={formData.equipment.attachments.frontWheel}
                   onChange={handleChange}
                   className="w-full p-2 border rounded"
                 >
                   <option value="">선택하세요</option>
                   {wheelTypes.map(type => (
                     <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-2">전륜 모델</label>
+                <input
+                  type="text"
+                  name="equipment.attachments.frontWheelModel"
+                  value={formData.equipment.attachments.frontWheelModel}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  placeholder="모델명을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2">전륜 상태 평가</label>
+                <div className="flex gap-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <label key={star} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="equipment.attachments.frontWheelRating"
+                        value={star}
+                        checked={formData.equipment.attachments.frontWheelRating === star.toString()}
+                        onChange={handleChange}
+                        className="mr-1"
+                      />
+                      {star}점
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-2">후륜</label>
+                <select
+                  name="equipment.attachments.rearWheel"
+                  value={formData.equipment.attachments.rearWheel}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">선택하세요</option>
+                  {wheelTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-2">후륜 모델</label>
+                <input
+                  type="text"
+                  name="equipment.attachments.rearWheelModel"
+                  value={formData.equipment.attachments.rearWheelModel}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  placeholder="모델명을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2">후륜 상태 평가</label>
+                <div className="flex gap-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <label key={star} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="equipment.attachments.rearWheelRating"
+                        value={star}
+                        checked={formData.equipment.attachments.rearWheelRating === star.toString()}
+                        onChange={handleChange}
+                        className="mr-1"
+                      />
+                      {star}점
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {formData.equipment.type === '콤바인' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">작업기 정보</h3>
+              <div>
+                <label className="block mb-2">예취부</label>
+                <select
+                  name="equipment.attachments.cutter"
+                  value={formData.equipment.attachments?.cutter || ''}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">선택하세요</option>
+                  {['4조', '5조', '6조', '7조', '8조'].map(size => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {formData.equipment.type === '이앙기' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">작업기 정보</h3>
+              <div>
+                <label className="block mb-2">작업열</label>
+                <select
+                  name="equipment.attachments.rows"
+                  value={formData.equipment.attachments?.rows || ''}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">선택하세요</option>
+                  {['4열', '5열', '6열', '7열', '8열'].map(rows => (
+                    <option key={rows} value={rows}>{rows}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {formData.equipment.type === '지게차' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">작업기 정보</h3>
+              <div>
+                <label className="block mb-2">톤수</label>
+                <select
+                  name="equipment.attachments.tonnage"
+                  value={formData.equipment.attachments?.tonnage || ''}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">선택하세요</option>
+                  {['2.0톤', '2.5톤', '3.0톤', '3.5톤', '4.0톤', '4.5톤', '5.0톤'].map(tonnage => (
+                    <option key={tonnage} value={tonnage}>{tonnage}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {formData.equipment.type === '굴삭기' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">작업기 정보</h3>
+              <div>
+                <label className="block mb-2">규격</label>
+                <select
+                  name="equipment.attachments.size"
+                  value={formData.equipment.attachments?.size || ''}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">선택하세요</option>
+                  {['1.0톤', '1.5톤', '2.0톤', '2.5톤', '3.0톤', '3.5톤', '4.0톤', '4.5톤', '5.0톤'].map(size => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {formData.equipment.type === '스키로더' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">작업기 정보</h3>
+              <div>
+                <label className="block mb-2">버켓용량</label>
+                <select
+                  name="equipment.attachments.bucketSize"
+                  value={formData.equipment.attachments?.bucketSize || ''}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">선택하세요</option>
+                  {['0.3㎥', '0.4㎥', '0.5㎥', '0.6㎥'].map(size => (
+                    <option key={size} value={size}>{size}</option>
                   ))}
                 </select>
               </div>
