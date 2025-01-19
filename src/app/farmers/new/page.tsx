@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation'
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import AddressSearch from '@/components/AddressSearch'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from '@/lib/firebase'
 
 export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }) {
   const router = useRouter()
   const [formData, setFormData] = useState(initialData || {
     name: '',
-    companyName: '',
+    businessName: '',
     zipCode: '',
     roadAddress: '',
     jibunAddress: '',
@@ -21,18 +21,13 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     phone: '',
     ageGroup: '',
     memo: '',
-    images: [],
+    farmerImages: [],
     mainImages: [],
     attachmentImages: {
       loader: [],
       rotary: [],
       frontWheel: [],
-      rearWheel: [],
-      cutter: [],
-      rows: [],
-      tonnage: [],
-      size: [],
-      bucketSize: []
+      rearWheel: []
     },
     mainCrop: {
       rice: false,
@@ -102,16 +97,33 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const dataToSave = {
+        ...formData,
+        farmerImages: formData.farmerImages || [],
+        mainImages: formData.mainImages || [],
+        attachmentImages: {
+          loader: formData.attachmentImages?.loader || [],
+          rotary: formData.attachmentImages?.rotary || [],
+          frontWheel: formData.attachmentImages?.frontWheel || [],
+          rearWheel: formData.attachmentImages?.rearWheel || []
+        },
+        equipments: formData.equipments.map(eq => ({
+          ...eq,
+          images: eq.images || []
+        }))
+      }
+
       if (mode === 'edit') {
         const docRef = doc(db, 'farmers', farmerId)
-        await updateDoc(docRef, formData)
+        await updateDoc(docRef, dataToSave)
         router.push(`/farmers/${farmerId}`)
       } else {
-        await addDoc(collection(db, 'farmers'), formData)
+        await addDoc(collection(db, 'farmers'), dataToSave)
         router.push('/')
       }
     } catch (error) {
       console.error('Error saving farmer:', error)
+      alert('저장 중 오류가 발생했습니다.')
     }
   }
 
@@ -146,26 +158,25 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       }
 
       try {
-        // Firebase Storage에 업로드
         const storageRef = ref(storage, `farmers/${Date.now()}_${file.name}`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
 
-        // 상태 업데이트
+        let updatedData;
+        // UI 상태 업데이트
         setFormData(prev => {
           if (type === 'farmer') {
-            return {
-              ...prev,
-              images: [...(prev.images || []), url].slice(0, 4)
-            };
+            const currentImages = prev.farmerImages || [];
+            const newImages = [...currentImages, url].slice(0, 4);
+            updatedData = { ...prev, farmerImages: newImages };
           } else if (type === 'main') {
-            return {
+            updatedData = {
               ...prev,
               mainImages: [...prev.mainImages, url].slice(0, 4)
             };
           } else if (type === 'attachment' && subType) {
             const key = subType.split('-')[0];
-            return {
+            updatedData = {
               ...prev,
               attachmentImages: {
                 ...prev.attachmentImages,
@@ -173,7 +184,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               }
             };
           } else if (type === 'equipment' && subType) {
-            return {
+            updatedData = {
               ...prev,
               equipments: prev.equipments.map(eq => {
                 if (eq.id === subType) {
@@ -186,8 +197,30 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               })
             };
           }
-          return prev;
+          return updatedData;
         });
+
+        // 수정 모드일 때 Firestore 업데이트
+        if (mode === 'edit' && updatedData) {
+          const docRef = doc(db, 'farmers', farmerId);
+          if (type === 'farmer') {
+            updateDoc(docRef, {
+              farmerImages: updatedData.farmerImages
+            });
+          } else if (type === 'main') {
+            updateDoc(docRef, {
+              mainImages: updatedData.mainImages
+            });
+          } else if (type === 'attachment' && subType) {
+            updateDoc(docRef, {
+              [`attachmentImages.${subType.split('-')[0]}`]: updatedData.attachmentImages[subType.split('-')[0]]
+            });
+          } else if (type === 'equipment' && subType) {
+            updateDoc(docRef, {
+              equipments: updatedData.equipments
+            });
+          }
+        }
       } catch (error) {
         console.error('Error uploading image:', error);
         alert('이미지 업로드 중 오류가 발생했습니다.');
@@ -195,45 +228,95 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     }
   };
 
-  const handleImageDelete = (type: string, index: number, subType?: string) => {
-    setFormData(prev => {
+  const handleImageDelete = async (type: string, index: number, subType?: string) => {
+    try {
+      let imageUrl = '';
+      let updatedData;
+      
+      // 삭제할 이미지 URL 가져오기
       if (type === 'farmer') {
-        const newImages = [...(prev.images || [])];
-        newImages.splice(index, 1);
-        return { ...prev, images: newImages };
+        imageUrl = formData.farmerImages[index];
       } else if (type === 'main') {
-        const newImages = [...prev.mainImages];
-        newImages.splice(index, 1);
-        return { ...prev, mainImages: newImages };
+        imageUrl = formData.mainImages[index];
       } else if (type === 'attachment' && subType) {
         const key = subType.split('-')[0];
-        const newImages = [...(prev.attachmentImages[key] || [])];
-        newImages.splice(index, 1);
-        return {
-          ...prev,
-          attachmentImages: {
-            ...prev.attachmentImages,
-            [key]: newImages
-          }
-        };
+        imageUrl = formData.attachmentImages[key][index];
       } else if (type === 'equipment' && subType) {
-        return {
-          ...prev,
-          equipments: prev.equipments.map(eq => {
-            if (eq.id === subType) {
-              const newImages = [...(eq.images || [])];
-              newImages.splice(index, 1);
-              return {
-                ...eq,
-                images: newImages
-              };
-            }
-            return eq;
-          })
-        };
+        const equipment = formData.equipments.find(eq => eq.id === subType);
+        if (equipment && equipment.images) {
+          imageUrl = equipment.images[index];
+        }
       }
-      return prev;
-    });
+
+      if (imageUrl) {
+        // Firebase Storage에서 이미지 삭제
+        const storageRef = ref(storage, 'farmers/' + imageUrl.split('farmers/')[1].split('?')[0]);
+        await deleteObject(storageRef);
+
+        // UI 상태 업데이트
+        setFormData(prev => {
+          if (type === 'farmer') {
+            const newImages = [...(prev.farmerImages || [])];
+            newImages.splice(index, 1);
+            updatedData = { ...prev, farmerImages: newImages };
+          } else if (type === 'main') {
+            const newImages = [...prev.mainImages];
+            newImages.splice(index, 1);
+            updatedData = { ...prev, mainImages: newImages };
+          } else if (type === 'attachment' && subType) {
+            const key = subType.split('-')[0];
+            const newImages = [...(prev.attachmentImages[key] || [])];
+            newImages.splice(index, 1);
+            updatedData = {
+              ...prev,
+              attachmentImages: {
+                ...prev.attachmentImages,
+                [key]: newImages
+              }
+            };
+          } else if (type === 'equipment' && subType) {
+            const newEquipments = prev.equipments.map(eq => {
+              if (eq.id === subType) {
+                const newImages = [...(eq.images || [])];
+                newImages.splice(index, 1);
+                return {
+                  ...eq,
+                  images: newImages
+                };
+              }
+              return eq;
+            });
+            updatedData = { ...prev, equipments: newEquipments };
+          }
+          return updatedData;
+        });
+
+        // 수정 모드일 때만 Firestore 업데이트
+        if (mode === 'edit' && updatedData) {
+          const docRef = doc(db, 'farmers', farmerId);
+          if (type === 'farmer') {
+            updateDoc(docRef, {
+              farmerImages: updatedData.farmerImages
+            });
+          } else if (type === 'main') {
+            updateDoc(docRef, {
+              mainImages: updatedData.mainImages
+            });
+          } else if (type === 'attachment' && subType) {
+            updateDoc(docRef, {
+              [`attachmentImages.${subType.split('-')[0]}`]: updatedData.attachmentImages[subType.split('-')[0]]
+            });
+          } else if (type === 'equipment' && subType) {
+            updateDoc(docRef, {
+              equipments: updatedData.equipments
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert('이미지 삭제 중 오류가 발생했습니다.');
+    }
   };
 
   const addNewEquipment = () => {
@@ -455,7 +538,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               사진 업로드 (최대 4장)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {formData.images.map((url, index) => (
+              {(formData.farmerImages || []).map((url, index) => (
                 <div key={index} className="relative">
                   <img
                     src={url}
@@ -1110,7 +1193,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                                     {labels[key]} 사진 업로드 (최대 4장)
                                   </label>
                                   <div className="grid grid-cols-2 gap-2">
-                                    {formData.attachmentImages[key]?.map((url, imgIndex) => (
+                                    {(formData.attachmentImages[key] || []).map((url, imgIndex) => (
                                       <div key={imgIndex} className="relative">
                                         <img
                                           src={url}
@@ -1118,6 +1201,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                                           className="w-full h-24 object-cover rounded"
                                         />
                                         <button
+                                          type="button"
                                           onClick={() => handleImageDelete('attachment', imgIndex, `${key}-${equipment.id}`)}
                                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                                         >

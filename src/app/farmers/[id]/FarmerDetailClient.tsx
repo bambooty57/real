@@ -8,9 +8,10 @@ import { useRouter } from 'next/navigation'
 
 interface Equipment {
   type: string
-  manufacturer: string
-  year?: string
+  manufacturer?: string
   model?: string
+  year?: string
+  serialNumber?: string
   usageHours?: string
   forSale?: boolean
   forPurchase?: boolean
@@ -20,6 +21,7 @@ interface Equipment {
   modelRating?: number
   memo?: string
   attachments?: {
+    [key: string]: string | number | undefined
     loader?: string
     loaderManufacturer?: string
     loaderModel?: string
@@ -27,13 +29,17 @@ interface Equipment {
     rotary?: string
     rotaryManufacturer?: string
     rotaryModel?: string
+    rotaryWidth?: string
     rotaryRating?: number
     frontWheel?: string
+    frontWheelModel?: string
+    frontWheelRating?: number
     rearWheel?: string
-    cutter?: string
-    rows?: string
-    tonnage?: string
-    size?: string
+    rearWheelModel?: string
+    rearWheelRating?: number
+    bucket?: string
+    bucketManufacturer?: string
+    bucketModel?: string
     bucketSize?: string
   }
   images?: string[]
@@ -112,12 +118,7 @@ const attachmentDisplayNames: { [key: string]: string } = {
   loader: '로더',
   rotary: '로타리',
   frontWheel: '전륜',
-  rearWheel: '후륜',
-  cutter: '예취부',
-  rows: '작업열',
-  tonnage: '톤수',
-  size: '규격',
-  bucketSize: '버켓용량'
+  rearWheel: '후륜'
 }
 
 // 작물 한글명 매핑
@@ -181,6 +182,21 @@ const getFarmingTypeDisplay = (farmingType: any): string => {
   return '없음'
 }
 
+const getRatingStars = (rating: number) => {
+  return (
+    <div className="inline-flex ml-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span 
+          key={star} 
+          className={`${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+        >
+          ★
+        </span>
+      ))}
+    </div>
+  )
+}
+
 export default function FarmerDetailClient({ id }: { id: string }) {
   const [farmer, setFarmer] = useState<Farmer | null>(null)
   const [loading, setLoading] = useState(true)
@@ -229,14 +245,50 @@ export default function FarmerDetailClient({ id }: { id: string }) {
   }
 
   const getAttachmentInfo = (equipment: Equipment) => {
-    if (!equipment.attachments) return []
-    
-    return Object.entries(equipment.attachments)
-      .filter(([_, value]) => value)
-      .map(([key, value]) => ({
-        name: attachmentDisplayNames[key] || key,
-        value: value
-      }))
+    const attachments = equipment.attachments || {};
+    const result = [];
+
+    // 로더
+    if (attachments.loader) {
+      result.push({
+        name: '로더',
+        manufacturer: attachments.loader,
+        model: attachments.loaderModel,
+        rating: attachments.loaderRating
+      });
+    }
+
+    // 로터리
+    if (attachments.rotary) {
+      result.push({
+        name: '로터리',
+        manufacturer: attachments.rotary,
+        model: attachments.rotaryModel,
+        rating: attachments.rotaryRating
+      });
+    }
+
+    // 전륜
+    if (attachments.frontWheel) {
+      result.push({
+        name: '전륜',
+        manufacturer: attachments.frontWheel,
+        model: attachments.frontWheelModel,
+        rating: attachments.frontWheelRating
+      });
+    }
+
+    // 후륜
+    if (attachments.rearWheel) {
+      result.push({
+        name: '후륜',
+        manufacturer: attachments.rearWheel,
+        model: attachments.rearWheelModel,
+        rating: attachments.rearWheelRating
+      });
+    }
+
+    return result;
   }
 
   if (loading) return (
@@ -366,7 +418,7 @@ export default function FarmerDetailClient({ id }: { id: string }) {
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap gap-2 items-center">
                       <span className="font-medium">
-                        {getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer)})
+                        {getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer || '')})
                       </span>
                       {equipment.model && (
                         <span className="text-sm text-gray-600">{equipment.model}</span>
@@ -384,14 +436,7 @@ export default function FarmerDetailClient({ id }: { id: string }) {
                       <div className="flex items-center">
                         <span className="text-sm text-gray-600 mr-1">상태:</span>
                         <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <span 
-                              key={star} 
-                              className={`text-lg ${star <= equipment.rating! ? 'text-yellow-400' : 'text-gray-300'}`}
-                            >
-                              ★
-                            </span>
-                          ))}
+                          {getRatingStars(equipment.rating!)}
                         </div>
                       </div>
                     )}
@@ -430,122 +475,21 @@ export default function FarmerDetailClient({ id }: { id: string }) {
                     <div className="border-t pt-3">
                       <h4 className="font-medium mb-2">작업기 정보</h4>
                       <div className="flex flex-wrap gap-2">
-                        {equipment.attachments.loader && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">로더:</span>
-                                <span>{equipment.attachments.loader}</span>
-                              </div>
-                              {equipment.attachments.loaderManufacturer && (
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">제조사:</span>
-                                  <span>{equipment.attachments.loaderManufacturer}</span>
-                                </div>
-                              )}
-                              {equipment.attachments.loaderModel && (
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">모델:</span>
-                                  <span>{equipment.attachments.loaderModel}</span>
-                                </div>
-                              )}
-                              {equipment.attachments.loaderRating && (
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">상태:</span>
-                                  <div className="flex">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <span 
-                                        key={star} 
-                                        className={`text-sm ${star <= equipment.attachments!.loaderRating! ? 'text-yellow-400' : 'text-gray-300'}`}
-                                      >
-                                        ★
-                                      </span>
-                                    ))}
-                                  </div>
+                        {getAttachmentInfo(equipment).map((info, index) => (
+                          <div key={index} className="text-sm bg-gray-50 p-2 rounded">
+                            <div className="font-medium mb-1">{info.name}</div>
+                            <div className="ml-2 space-y-1">
+                              <div>제조사: {info.manufacturer}</div>
+                              <div>모델: {info.model}</div>
+                              {info.rating && (
+                                <div className="flex items-center">
+                                  <span>상태:</span>
+                                  {getRatingStars(info.rating)}
                                 </div>
                               )}
                             </div>
                           </div>
-                        )}
-                        {equipment.attachments.rotary && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">로타리:</span>
-                                <span>{equipment.attachments.rotary}</span>
-                              </div>
-                              {equipment.attachments.rotaryManufacturer && (
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">제조사:</span>
-                                  <span>{equipment.attachments.rotaryManufacturer}</span>
-                                </div>
-                              )}
-                              {equipment.attachments.rotaryModel && (
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">모델:</span>
-                                  <span>{equipment.attachments.rotaryModel}</span>
-                                </div>
-                              )}
-                              {equipment.attachments.rotaryRating && (
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">상태:</span>
-                                  <div className="flex">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <span 
-                                        key={star} 
-                                        className={`text-sm ${star <= equipment.attachments!.rotaryRating! ? 'text-yellow-400' : 'text-gray-300'}`}
-                                      >
-                                        ★
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        {equipment.attachments.frontWheel && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <span className="font-medium">전륜:</span>
-                            <span className="ml-2">{equipment.attachments.frontWheel}</span>
-                          </div>
-                        )}
-                        {equipment.attachments.rearWheel && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <span className="font-medium">후륜:</span>
-                            <span className="ml-2">{equipment.attachments.rearWheel}</span>
-                          </div>
-                        )}
-                        {equipment.attachments.cutter && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <span className="font-medium">예취부:</span>
-                            <span className="ml-2">{equipment.attachments.cutter}</span>
-                          </div>
-                        )}
-                        {equipment.attachments.rows && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <span className="font-medium">작업열:</span>
-                            <span className="ml-2">{equipment.attachments.rows}</span>
-                          </div>
-                        )}
-                        {equipment.attachments.tonnage && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <span className="font-medium">톤수:</span>
-                            <span className="ml-2">{equipment.attachments.tonnage}</span>
-                          </div>
-                        )}
-                        {equipment.attachments.size && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <span className="font-medium">규격:</span>
-                            <span className="ml-2">{equipment.attachments.size}</span>
-                          </div>
-                        )}
-                        {equipment.attachments.bucketSize && (
-                          <div className="text-sm bg-gray-50 p-2 rounded">
-                            <span className="font-medium">버켓용량:</span>
-                            <span className="ml-2">{equipment.attachments.bucketSize}</span>
-                          </div>
-                        )}
+                        ))}
                       </div>
                     </div>
                   )}
@@ -587,10 +531,10 @@ export default function FarmerDetailClient({ id }: { id: string }) {
             equipment.images && equipment.images.length > 0 && (
               <div key={equipIndex}>
                 <h3 className="text-lg font-bold mb-4">
-                  {getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer)}) 사진
+                  {getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer || '')}) 사진
                 </h3>
                 <div className="grid grid-cols-4 gap-4">
-                  {equipment.images.map((url, imgIndex) => (
+                  {equipment.images.map((url: string, imgIndex: number) => (
                     <div key={imgIndex} className="aspect-square">
                       <img
                         src={url}
@@ -610,7 +554,7 @@ export default function FarmerDetailClient({ id }: { id: string }) {
               <div key={key}>
                 <h3 className="text-lg font-bold mb-4">{attachmentDisplayNames[key] || key} 사진</h3>
                 <div className="grid grid-cols-4 gap-4">
-                  {images.map((url, index) => (
+                  {images.map((url: string, index: number) => (
                     <div key={index} className="aspect-square">
                       <img
                         src={url}

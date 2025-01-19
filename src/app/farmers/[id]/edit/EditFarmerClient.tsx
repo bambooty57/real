@@ -7,18 +7,48 @@ import NewFarmer from '../../new/page'
 
 const defaultFormData = {
   name: '',
+  companyName: '',
   zipCode: '',
-  address: '',
+  roadAddress: '',
+  jibunAddress: '',
   addressDetail: '',
+  canReceiveMail: false,
   phone: '',
   ageGroup: '',
   memo: '',
-  farmerImages: [],
-  paddyFarming: false,
-  fieldFarming: false,
-  facilityFarming: false,
-  livestock: false,
-  fruitFarming: false,
+  images: [],
+  mainImages: [],
+  attachmentImages: {
+    loader: [],
+    rotary: [],
+    frontWheel: [],
+    rearWheel: [],
+    cutter: [],
+    rows: [],
+    tonnage: [],
+    size: [],
+    bucketSize: []
+  },
+  mainCrop: {
+    rice: false,
+    barley: false,
+    hanwoo: false,
+    soybean: false,
+    sweetPotato: false,
+    persimmon: false,
+    pear: false,
+    plum: false,
+    sorghum: false,
+    goat: false,
+    other: false
+  },
+  farmingTypes: {
+    paddyFarming: false,
+    fieldFarming: false,
+    orchard: false,
+    livestock: false,
+    forageCrop: false,
+  },
   equipments: []
 }
 
@@ -41,7 +71,8 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
           setInitialData({
             ...defaultFormData,
             ...data,
-            equipments: data.equipments?.map((equipment: any) => ({
+            images: data.farmerImages || [],
+            equipments: (data.equipments || []).map((equipment: any) => ({
               ...equipment,
               images: equipment.images || [],
               attachments: {
@@ -51,7 +82,7 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
                 frontWheelImages: equipment.attachments?.frontWheelImages || [],
                 rearWheelImages: equipment.attachments?.rearWheelImages || []
               }
-            })) || []
+            }))
           })
         }
       } catch (error) {
