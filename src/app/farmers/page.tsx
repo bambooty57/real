@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import Link from 'next/link'
 
@@ -144,6 +144,7 @@ interface Farmer {
     size?: string[]
     bucketSize?: string[]
   }
+  memo?: string
 }
 
 export default function FarmerList() {
@@ -161,6 +162,8 @@ export default function FarmerList() {
     attachment: ''
   })
   const [currentImageIndexes, setCurrentImageIndexes] = useState<{[key: string]: number}>({})
+  const [selectedFarmers, setSelectedFarmers] = useState<string[]>([])
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
   // 지역 데이터
   const [cities] = useState<string[]>(Object.keys(JEONNAM_REGIONS))
@@ -308,6 +311,37 @@ export default function FarmerList() {
     return images
   }
 
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedFarmers(filteredFarmers.map(farmer => farmer.id))
+    } else {
+      setSelectedFarmers([])
+    }
+  }
+
+  const handleSelectFarmer = (id: string) => {
+    setSelectedFarmers(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(farmerId => farmerId !== id)
+      } else {
+        return [...prev, id]
+      }
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedFarmers.map(id => deleteDoc(doc(db, 'farmers', id))))
+      setFarmers(prev => prev.filter(farmer => !selectedFarmers.includes(farmer.id)))
+      alert('선택한 농민 정보가 삭제되었습니다.')
+    } catch (error) {
+      console.error('Error deleting farmers:', error)
+      alert('농민 정보 삭제 중 오류가 발생했습니다.')
+    }
+    setDeleteModalOpen(false)
+    setSelectedFarmers([])
+  }
+
   if (loading) return (
     <div className="p-8">
       <div className="animate-pulse text-center">데이터를 불러오는 중...</div>
@@ -315,9 +349,28 @@ export default function FarmerList() {
   )
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">농민 목록</h1>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold">농민 목록</h1>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={selectedFarmers.length === filteredFarmers.length && filteredFarmers.length > 0}
+              onChange={handleSelectAll}
+              className="w-4 h-4"
+            />
+            <span>전체 선택</span>
+          </div>
+          {selectedFarmers.length > 0 && (
+            <button
+              onClick={() => setDeleteModalOpen(true)}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              선택 삭제 ({selectedFarmers.length})
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mb-6 space-y-4">
@@ -450,11 +503,34 @@ export default function FarmerList() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredFarmers.map(farmer => (
           <div key={farmer.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={selectedFarmers.includes(farmer.id)}
+                  onChange={() => handleSelectFarmer(farmer.id)}
+                  className="w-4 h-4"
+                />
+                <h2 className="text-lg font-semibold">{farmer.name}</h2>
+              </div>
+              <div className="space-x-2">
+                {farmer.equipment?.forSale && (
+                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    판매
+                  </span>
+                )}
+                {farmer.equipment?.forPurchase && (
+                  <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
+                    구매
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* 통합 이미지 갤러리 */}
-            <div className="mb-4">
-              <div className="relative h-48">
-                <h3 className="text-sm font-medium mb-2">사진 갤러리</h3>
-                <div className="relative h-40">
+            <Link href={`/farmers/${farmer.id}`} className="block">
+              <div className="relative h-48 mb-4">
+                <div className="relative h-48">
                   {(() => {
                     const allImages = getAllImages(farmer)
                     return allImages.length > 0 ? (
@@ -510,87 +586,107 @@ export default function FarmerList() {
                   })()}
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* 기존 농민 정보 */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-start">
-                <h2 className="text-lg font-semibold">{farmer.name}</h2>
-                <div className="space-x-2">
-                  {farmer.equipment?.forSale && (
-                    <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                      판매
+            <Link href={`/farmers/${farmer.id}`} className="block">
+              <div className="space-y-2">
+                <div className="space-y-1 text-sm">
+                  <p>
+                    <span className="font-medium">주소:</span>
+                    <a 
+                      href={`https://map.kakao.com/link/search/${farmer.address}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-blue-600 hover:text-blue-800 ml-1"
+                    >
+                      {farmer.address}
+                      <span className="ml-1 text-xs">🗺️</span>
+                    </a>
+                  </p>
+                  <p>
+                    <span className="font-medium">연락처:</span>
+                    <a 
+                      href={`tel:${farmer.phone}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-blue-600 hover:text-blue-800 ml-1"
+                    >
+                      {farmer.phone}
+                      <span className="ml-1 text-xs">📞</span>
+                    </a>
+                  </p>
+                  <p>
+                    <span className="font-medium">보유농기계:</span>
+                    <span className="ml-1">
+                      {farmer.equipment ? (
+                        <>
+                          {farmer.equipment.type} ({farmer.equipment.manufacturer})
+                          {farmer.equipment.forSale && 
+                            <span className="ml-2 text-blue-600">
+                              판매가: {farmer.equipment.desiredPrice}원
+                            </span>
+                          }
+                          {farmer.equipment.forPurchase && 
+                            <span className="ml-2 text-green-600">
+                              구매희망가: {farmer.equipment.purchasePrice}원
+                            </span>
+                          }
+                        </>
+                      ) : (
+                        <span className="text-gray-400">미등록</span>
+                      )}
                     </span>
-                  )}
-                  {farmer.equipment?.forPurchase && (
-                    <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
-                      구매
-                    </span>
-                  )}
+                  </p>
+                  <p>
+                    <span className="font-medium">메모:</span>
+                    <div className="ml-1 max-h-20 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                      <span className="text-gray-600 block">
+                        {farmer.memo || <span className="text-gray-400">메모 없음</span>}
+                      </span>
+                    </div>
+                  </p>
                 </div>
               </div>
-              <div className="space-y-1 text-sm">
-                <p><span className="font-medium">지역:</span> {farmer.city} {farmer.town} {farmer.ri}</p>
-                <p>
-                  <span className="font-medium">주소:</span>
-                  <a 
-                    href={`https://map.kakao.com/link/search/${farmer.address}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-blue-600 hover:text-blue-800 ml-1"
-                  >
-                    {farmer.address}
-                    <span className="ml-1 text-xs">🗺️</span>
-                  </a>
-                </p>
-                <p>
-                  <span className="font-medium">연락처:</span>
-                  <a 
-                    href={`tel:${farmer.phone}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-blue-600 hover:text-blue-800 ml-1"
-                  >
-                    {farmer.phone}
-                    <span className="ml-1 text-xs">📞</span>
-                  </a>
-                </p>
-                <p><span className="font-medium">연령대:</span> {farmer.ageGroup}</p>
-                <p><span className="font-medium">주작물:</span> {farmer.mainCrop}</p>
-                {farmer.equipment && (
-                  <>
-                    <p>
-                      <span className="font-medium">농기계:</span> {farmer.equipment.type} ({farmer.equipment.manufacturer})
-                      {farmer.equipment.forSale && <span className="ml-2">판매가: {farmer.equipment.desiredPrice}원</span>}
-                      {farmer.equipment.forPurchase && <span className="ml-2">구매희망가: {farmer.equipment.purchasePrice}원</span>}
-                    </p>
-                    {farmer.equipment.attachments && (
-                      <p>
-                        <span className="font-medium">작업기:</span>
-                        {farmer.equipment.attachments.loader && <span className="ml-2">로더</span>}
-                        {farmer.equipment.attachments.rotary && <span className="ml-2">로타리</span>}
-                        {farmer.equipment.attachments.frontWheel && <span className="ml-2">전륜</span>}
-                        {farmer.equipment.attachments.rearWheel && <span className="ml-2">후륜</span>}
-                        {farmer.equipment.attachments.cutter && <span className="ml-2">예취부</span>}
-                        {farmer.equipment.attachments.rows && <span className="ml-2">작업열</span>}
-                        {farmer.equipment.attachments.tonnage && <span className="ml-2">톤수</span>}
-                        {farmer.equipment.attachments.size && <span className="ml-2">규격</span>}
-                        {farmer.equipment.attachments.bucketSize && <span className="ml-2">버켓용량</span>}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
+            </Link>
+            <div className="mt-4 flex justify-end">
               <Link 
                 href={`/farmers/${farmer.id}`}
-                className="block mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
               >
-                상세보기 →
+                상세보기
+                <span className="ml-1">→</span>
               </Link>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">농민 정보 삭제</h3>
+            <p>{selectedFarmers.length}명의 농민 정보를 삭제하시겠습니까?</p>
+            <div className="flex justify-end mt-4 space-x-2">
+              <button
+                onClick={handleBulkDelete}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                삭제
+              </button>
+              <button
+                onClick={() => {
+                  setDeleteModalOpen(false)
+                }}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 

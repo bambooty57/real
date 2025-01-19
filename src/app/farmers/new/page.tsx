@@ -2,15 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { collection, addDoc } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import AddressSearch from '@/components/AddressSearch'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase'
 
-export default function NewFarmer() {
+export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }) {
   const router = useRouter()
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(initialData || {
     name: '',
     companyName: '',
     zipCode: '',
@@ -22,18 +22,18 @@ export default function NewFarmer() {
     phone: '',
     ageGroup: '',
     memo: '',
-    farmerImages: [] as string[],
-    mainImages: [] as string[],
+    farmerImages: [],
+    mainImages: [],
     attachmentImages: {
-      loader: [] as string[],
-      rotary: [] as string[],
-      frontWheel: [] as string[],
-      rearWheel: [] as string[],
-      cutter: [] as string[],
-      rows: [] as string[],
-      tonnage: [] as string[],
-      size: [] as string[],
-      bucketSize: [] as string[]
+      loader: [],
+      rotary: [],
+      frontWheel: [],
+      rearWheel: [],
+      cutter: [],
+      rows: [],
+      tonnage: [],
+      size: [],
+      bucketSize: []
     },
     mainCrop: {
       rice: false,
@@ -55,45 +55,7 @@ export default function NewFarmer() {
       livestock: false,
       forageCrop: false,
     },
-    equipments: [] as Array<{
-      id: string;
-      type: string;
-      manufacturer: string;
-      model: string;
-      year: string;
-      usageHours: string;
-      rating: string;
-      forSale: boolean;
-      desiredPrice: string;
-      saleStatus: string;
-      saleDate: string;
-      forPurchase: boolean;
-      purchasePrice: string;
-      purchaseStatus: string;
-      purchaseDate: string;
-      images?: string[];
-      attachments: {
-        loader: string;
-        loaderModel: string;
-        loaderRating: string;
-        rotary: string;
-        rotaryModel: string;
-        rotaryRating: string;
-        frontWheel: string;
-        frontWheelModel: string;
-        frontWheelRating: string;
-        rearWheel: string;
-        rearWheelModel: string;
-        rearWheelRating: string;
-        rows: string;
-        rowsModel: string;
-        rowsRating: string;
-        tonnage: string;
-        tonnageModel: string;
-        tonnageRating: string;
-      };
-      memo?: string;
-    }>
+    equipments: []
   })
 
   const handleAddressSelect = (data: {
@@ -131,10 +93,16 @@ export default function NewFarmer() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await addDoc(collection(db, 'farmers'), formData)
-      router.push('/')
+      if (mode === 'edit') {
+        const docRef = doc(db, 'farmers', farmerId)
+        await updateDoc(docRef, formData)
+        router.push(`/farmers/${farmerId}`)
+      } else {
+        await addDoc(collection(db, 'farmers'), formData)
+        router.push('/')
+      }
     } catch (error) {
-      console.error('Error adding farmer:', error)
+      console.error('Error saving farmer:', error)
     }
   }
 
@@ -337,7 +305,7 @@ export default function NewFarmer() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">새 농민 등록</h1>
+      <h1 className="text-2xl font-bold mb-6">{mode === 'edit' ? '농민 정보 수정' : '새 농민 등록'}</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-2">이름</label>
@@ -1218,7 +1186,7 @@ export default function NewFarmer() {
           type="submit"
           className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
         >
-          등록하기
+          {mode === 'edit' ? '수정하기' : '등록하기'}
         </button>
       </form>
     </div>
