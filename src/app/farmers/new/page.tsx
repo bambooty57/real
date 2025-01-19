@@ -250,67 +250,76 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
 
       if (imageUrl) {
         // Firebase Storage에서 이미지 삭제
-        const storageRef = ref(storage, 'farmers/' + imageUrl.split('farmers/')[1].split('?')[0]);
-        await deleteObject(storageRef);
+        try {
+          const urlParts = imageUrl.split('?')[0].split('/o/')[1];
+          if (!urlParts) throw new Error('Invalid image URL format');
+          
+          const decodedPath = decodeURIComponent(urlParts);
+          const storageRef = ref(storage, decodedPath);
+          await deleteObject(storageRef);
 
-        // UI 상태 업데이트
-        setFormData(prev => {
-          if (type === 'farmer') {
-            const newImages = [...(prev.farmerImages || [])];
-            newImages.splice(index, 1);
-            updatedData = { ...prev, farmerImages: newImages };
-          } else if (type === 'main') {
-            const newImages = [...prev.mainImages];
-            newImages.splice(index, 1);
-            updatedData = { ...prev, mainImages: newImages };
-          } else if (type === 'attachment' && subType) {
-            const key = subType.split('-')[0];
-            const newImages = [...(prev.attachmentImages[key] || [])];
-            newImages.splice(index, 1);
-            updatedData = {
-              ...prev,
-              attachmentImages: {
-                ...prev.attachmentImages,
-                [key]: newImages
-              }
-            };
-          } else if (type === 'equipment' && subType) {
-            const newEquipments = prev.equipments.map(eq => {
-              if (eq.id === subType) {
-                const newImages = [...(eq.images || [])];
-                newImages.splice(index, 1);
-                return {
-                  ...eq,
-                  images: newImages
-                };
-              }
-              return eq;
-            });
-            updatedData = { ...prev, equipments: newEquipments };
-          }
-          return updatedData;
-        });
+          // UI 상태 업데이트
+          setFormData(prev => {
+            if (type === 'farmer') {
+              const newImages = [...(prev.farmerImages || [])];
+              newImages.splice(index, 1);
+              updatedData = { ...prev, farmerImages: newImages };
+            } else if (type === 'main') {
+              const newImages = [...prev.mainImages];
+              newImages.splice(index, 1);
+              updatedData = { ...prev, mainImages: newImages };
+            } else if (type === 'attachment' && subType) {
+              const key = subType.split('-')[0];
+              const newImages = [...(prev.attachmentImages[key] || [])];
+              newImages.splice(index, 1);
+              updatedData = {
+                ...prev,
+                attachmentImages: {
+                  ...prev.attachmentImages,
+                  [key]: newImages
+                }
+              };
+            } else if (type === 'equipment' && subType) {
+              const newEquipments = prev.equipments.map(eq => {
+                if (eq.id === subType) {
+                  const newImages = [...(eq.images || [])];
+                  newImages.splice(index, 1);
+                  return {
+                    ...eq,
+                    images: newImages
+                  };
+                }
+                return eq;
+              });
+              updatedData = { ...prev, equipments: newEquipments };
+            }
+            return updatedData;
+          });
 
-        // 수정 모드일 때만 Firestore 업데이트
-        if (mode === 'edit' && updatedData) {
-          const docRef = doc(db, 'farmers', farmerId);
-          if (type === 'farmer') {
-            updateDoc(docRef, {
-              farmerImages: updatedData.farmerImages
-            });
-          } else if (type === 'main') {
-            updateDoc(docRef, {
-              mainImages: updatedData.mainImages
-            });
-          } else if (type === 'attachment' && subType) {
-            updateDoc(docRef, {
-              [`attachmentImages.${subType.split('-')[0]}`]: updatedData.attachmentImages[subType.split('-')[0]]
-            });
-          } else if (type === 'equipment' && subType) {
-            updateDoc(docRef, {
-              equipments: updatedData.equipments
-            });
+          // 수정 모드일 때만 Firestore 업데이트
+          if (mode === 'edit' && updatedData) {
+            const docRef = doc(db, 'farmers', farmerId);
+            if (type === 'farmer') {
+              await updateDoc(docRef, {
+                farmerImages: updatedData.farmerImages
+              });
+            } else if (type === 'main') {
+              await updateDoc(docRef, {
+                mainImages: updatedData.mainImages
+              });
+            } else if (type === 'attachment' && subType) {
+              await updateDoc(docRef, {
+                [`attachmentImages.${subType.split('-')[0]}`]: updatedData.attachmentImages[subType.split('-')[0]]
+              });
+            } else if (type === 'equipment' && subType) {
+              await updateDoc(docRef, {
+                equipments: updatedData.equipments
+              });
+            }
           }
+        } catch (error) {
+          console.error('Error deleting image from storage:', error);
+          throw error;
         }
       }
     } catch (error) {
@@ -546,7 +555,12 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     className="w-full h-32 object-cover rounded"
                   />
                   <button
-                    onClick={() => handleImageDelete('farmer', index)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleImageDelete('farmer', index);
+                    }}
                     className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                   >
                     ×
@@ -938,7 +952,12 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                           className="w-full h-32 object-cover rounded"
                         />
                         <button
-                          onClick={() => handleImageDelete('equipment', imgIndex, equipment.id)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleImageDelete('equipment', imgIndex, equipment.id);
+                          }}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                         >
                           ×
@@ -1039,7 +1058,8 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     onChange={(e) => updateEquipment(equipment.id, 'usageHours', e.target.value)}
                     className="w-full p-2 border rounded"
                     required
-                  />
+                  >
+                  </input>
                 </div>
 
                 <div>
@@ -1202,7 +1222,11 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                                         />
                                         <button
                                           type="button"
-                                          onClick={() => handleImageDelete('attachment', imgIndex, `${key}-${equipment.id}`)}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleImageDelete('attachment', imgIndex, `${key}-${equipment.id}`);
+                                          }}
                                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                                         >
                                           ×

@@ -400,7 +400,7 @@ export default function FarmerDetailClient({ id }: { id: string }) {
                   </div>
 
                   {/* 작업기 정보 */}
-                  {equipment.attachments && Object.keys(equipment.attachments).some(key => equipment.attachments![key]) && (
+                  {equipment.attachments && (
                     <div className="border-t pt-3">
                       <h4 className="font-medium mb-2">작업기 정보</h4>
                       <div className="flex flex-wrap gap-2">

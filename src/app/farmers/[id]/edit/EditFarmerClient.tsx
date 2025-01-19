@@ -16,7 +16,6 @@ const defaultFormData = {
   phone: '',
   ageGroup: '',
   memo: '',
-  images: [],
   mainImages: [],
   attachmentImages: {
     loader: [],
@@ -71,7 +70,6 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
           setInitialData({
             ...defaultFormData,
             ...data,
-            images: data.farmerImages || [],
             equipments: (data.equipments || []).map((equipment: any) => ({
               ...equipment,
               images: equipment.images || [],
