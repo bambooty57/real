@@ -25,6 +25,20 @@ interface Equipment {
   saleType?: string
   tradeType?: string
   tradeStatus?: string
+  attachments?: {
+    loader?: string
+    loaderModel?: string
+    loaderRating?: string
+    rotary?: string
+    rotaryModel?: string
+    rotaryRating?: string
+    frontWheel?: string
+    frontWheelModel?: string
+    frontWheelRating?: string
+    rearWheel?: string
+    rearWheelModel?: string
+    rearWheelRating?: string
+  }
 }
 
 interface Farmer {
@@ -94,6 +108,62 @@ export default function TradePage() {
   // 영문 코드로 변환하는 함수
   const getEquipmentTypeCode = (koreanType: string): string => {
     return Object.entries(equipmentTypeMap).find(([code, korean]) => korean === koreanType)?.[0] || '';
+  };
+
+  // 작업기 한글명 매핑 추가
+  const attachmentDisplayNames: { [key: string]: string } = {
+    loader: '로더',
+    rotary: '로터리',
+    frontWheel: '전륜',
+    rearWheel: '후륜'
+  };
+
+  // 부착작업기 정보 가져오는 함수 추가
+  const getAttachmentInfo = (equipment: Equipment) => {
+    const attachments = equipment.attachments || {};
+    const result = [];
+
+    // 로더
+    if (attachments.loader) {
+      result.push({
+        name: '로더',
+        manufacturer: attachments.loader,
+        model: attachments.loaderModel,
+        rating: attachments.loaderRating
+      });
+    }
+
+    // 로터리
+    if (attachments.rotary) {
+      result.push({
+        name: '로터리',
+        manufacturer: attachments.rotary,
+        model: attachments.rotaryModel,
+        rating: attachments.rotaryRating
+      });
+    }
+
+    // 전륜
+    if (attachments.frontWheel) {
+      result.push({
+        name: '전륜',
+        manufacturer: attachments.frontWheel,
+        model: attachments.frontWheelModel,
+        rating: attachments.frontWheelRating
+      });
+    }
+
+    // 후륜
+    if (attachments.rearWheel) {
+      result.push({
+        name: '후륜',
+        manufacturer: attachments.rearWheel,
+        model: attachments.rearWheelModel,
+        rating: attachments.rearWheelRating
+      });
+    }
+
+    return result;
   };
 
   useEffect(() => {
@@ -232,6 +302,26 @@ export default function TradePage() {
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, '농기계_거래_목록.xlsx');
+  };
+
+  // 별점 표시 함수 추가
+  const getRatingStars = (rating: string) => {
+    const numRating = parseInt(rating);
+    return (
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <svg
+            key={star}
+            className={`h-4 w-4 ${star <= numRating ? 'text-yellow-400' : 'text-gray-300'}`}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        ))}
+        <span className="ml-1 text-sm text-gray-600">({rating}점)</span>
+      </div>
+    );
   };
 
   if (loading) return <div className="p-8">로딩중...</div>
@@ -382,9 +472,9 @@ export default function TradePage() {
                   <p>
                     <span className="font-medium">사용시간:</span> {equipment.usageHours}시간
                   </p>
-                  <p>
-                    <span className="font-medium">상태:</span> {equipment.rating}점
-                  </p>
+                  <div>
+                    <span className="font-medium">상태:</span> {getRatingStars(equipment.rating || '0')}
+                  </div>
                   {equipment.tradeType === 'sale' && (
                     <>
                       <p>
@@ -404,6 +494,30 @@ export default function TradePage() {
                         <span className="font-medium">진행상태:</span> {equipment.tradeStatus || '상담 전'}
                       </p>
                     </>
+                  )}
+                  
+                  {/* 부착작업기 정보 */}
+                  {getAttachmentInfo(equipment).length > 0 && (
+                    <div className="mt-3 border-t pt-3">
+                      <p className="font-medium mb-2">부착작업기</p>
+                      <div className="space-y-2">
+                        {getAttachmentInfo(equipment).map((attachment, idx) => (
+                          <div key={idx} className="bg-gray-50 p-2 rounded">
+                            <p className="font-medium text-gray-700">{attachment.name}</p>
+                            <div className="ml-2">
+                              <p>제조사: {manufacturerMap[attachment.manufacturer] || attachment.manufacturer}</p>
+                              {attachment.model && <p>모델: {attachment.model}</p>}
+                              {attachment.rating && (
+                                <div className="flex items-center">
+                                  <span>상태: </span>
+                                  {getRatingStars(attachment.rating)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
                 <div className="mt-4">
