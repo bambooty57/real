@@ -266,7 +266,12 @@ export default function TradePage() {
       { header: '진행상태', key: 'tradeStatus', width: 12 },
       { header: '농민', key: 'farmerName', width: 15 },
       { header: '연락처', key: 'phone', width: 15 },
-      { header: '주소', key: 'address', width: 30 }
+      { header: '주소', key: 'address', width: 30 },
+      // 부착작업기 컬럼 추가
+      { header: '로더', key: 'loader', width: 30 },
+      { header: '로터리', key: 'rotary', width: 30 },
+      { header: '전륜', key: 'frontWheel', width: 30 },
+      { header: '후륜', key: 'rearWheel', width: 30 }
     ];
 
     // 스타일 설정
@@ -282,6 +287,14 @@ export default function TradePage() {
         ? Number(equipment.desiredPrice || 0).toLocaleString() + '만원'
         : Number(equipment.purchasePrice || 0).toLocaleString() + '만원';
 
+      // 부착작업기 정보 가져오기
+      const attachments = equipment.attachments || {};
+      const getAttachmentText = (type: string, manufacturer?: string, model?: string, rating?: string) => {
+        if (!manufacturer) return '';
+        const mfg = manufacturerMap[manufacturer] || manufacturer;
+        return `${mfg}${model ? ` ${model}` : ''}${rating ? ` (${rating}점)` : ''}`;
+      };
+
       worksheet.addRow({
         tradeType: tradeTypeText,
         equipmentType: equipmentTypeText,
@@ -294,7 +307,12 @@ export default function TradePage() {
         tradeStatus: equipment.tradeStatus || '상담 전',
         farmerName: farmer.name,
         phone: farmer.phone,
-        address: farmer.address || ''
+        address: farmer.address || '',
+        // 부착작업기 정보 추가
+        loader: getAttachmentText('loader', attachments.loader, attachments.loaderModel, attachments.loaderRating),
+        rotary: getAttachmentText('rotary', attachments.rotary, attachments.rotaryModel, attachments.rotaryRating),
+        frontWheel: getAttachmentText('frontWheel', attachments.frontWheel, attachments.frontWheelModel, attachments.frontWheelRating),
+        rearWheel: getAttachmentText('rearWheel', attachments.rearWheel, attachments.rearWheelModel, attachments.rearWheelRating)
       });
     });
 
@@ -343,87 +361,132 @@ export default function TradePage() {
 
       {/* 필터 섹션 */}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">검색 필터</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div>
-            <label className="block mb-2">거래 유형</label>
-            <select
-              value={filters.tradeType}
-              onChange={(e) => setFilters({...filters, tradeType: e.target.value})}
-              className="w-full p-2 border rounded"
-            >
-              <option value="all">전체</option>
-              <option value="sale">판매</option>
-              <option value="purchase">구매</option>
-            </select>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">검색 필터</h2>
+          <button
+            onClick={() => setFilters({
+              tradeType: 'all',
+              status: 'all',
+              equipmentType: '',
+              manufacturer: '',
+              saleType: 'all'
+            })}
+            className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            필터 초기화
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">거래 유형</label>
+            <div className="relative">
+              <select
+                value={filters.tradeType}
+                onChange={(e) => setFilters({...filters, tradeType: e.target.value})}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="all">전체</option>
+                <option value="sale">판매</option>
+                <option value="purchase">구매</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block mb-2">거래 상태</label>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({...filters, status: e.target.value})}
-              className="w-full p-2 border rounded"
-            >
-              <option value="all">전체</option>
-              <option value="가능">가능</option>
-              <option value="계약중">계약중</option>
-              <option value="완료">완료</option>
-            </select>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">거래 상태</label>
+            <div className="relative">
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({...filters, status: e.target.value})}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="all">전체</option>
+                <option value="가능">가능</option>
+                <option value="계약중">계약중</option>
+                <option value="완료">완료</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block mb-2">농기계 종류</label>
-            <select
-              value={filters.equipmentType}
-              onChange={(e) => setFilters({...filters, equipmentType: e.target.value})}
-              className="w-full p-2 border rounded"
-            >
-              <option value="">전체</option>
-              <option value="트랙터">트랙터</option>
-              <option value="콤바인">콤바인</option>
-              <option value="이앙기">이앙기</option>
-              <option value="지게차">지게차</option>
-              <option value="굴삭기">굴삭기</option>
-              <option value="스키로더">스키로더</option>
-              <option value="건조기">건조기</option>
-              <option value="싸일론">싸일론</option>
-              <option value="클라스">클라스</option>
-              <option value="드론">드론</option>
-            </select>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">농기계 종류</label>
+            <div className="relative">
+              <select
+                value={filters.equipmentType}
+                onChange={(e) => setFilters({...filters, equipmentType: e.target.value})}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="">전체</option>
+                <option value="트랙터">트랙터</option>
+                <option value="콤바인">콤바인</option>
+                <option value="이앙기">이앙기</option>
+                <option value="지게차">지게차</option>
+                <option value="굴삭기">굴삭기</option>
+                <option value="스키로더">스키로더</option>
+                <option value="건조기">건조기</option>
+                <option value="싸일론">싸일론</option>
+                <option value="클라스">클라스</option>
+                <option value="드론">드론</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block mb-2">제조사</label>
-            <select
-              value={filters.manufacturer}
-              onChange={(e) => setFilters({...filters, manufacturer: e.target.value})}
-              className="w-full p-2 border rounded"
-            >
-              <option value="">전체</option>
-              <option value="daedong">대동</option>
-              <option value="kukje">국제</option>
-              <option value="ls">LS</option>
-              <option value="dongyang">동양</option>
-              <option value="asia">아세아</option>
-              <option value="yanmar">얀마</option>
-              <option value="iseki">이세키</option>
-              <option value="john_deere">존디어</option>
-              <option value="kubota">구보다</option>
-              <option value="fendt">펜트</option>
-              <option value="case">케이스</option>
-              <option value="new_holland">뉴홀랜드</option>
-              <option value="mf">MF</option>
-              <option value="kumsung">금성</option>
-              <option value="fiat">피아트</option>
-              <option value="hyundai">현대</option>
-              <option value="doosan">두산</option>
-              <option value="volvo">볼보</option>
-              <option value="samsung">삼성</option>
-              <option value="daewoo">대우</option>
-              <option value="hitachi">히타치</option>
-              <option value="claas">클라스</option>
-            </select>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">제조사</label>
+            <div className="relative">
+              <select
+                value={filters.manufacturer}
+                onChange={(e) => setFilters({...filters, manufacturer: e.target.value})}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="">전체</option>
+                <option value="daedong">대동</option>
+                <option value="kukje">국제</option>
+                <option value="ls">LS</option>
+                <option value="dongyang">동양</option>
+                <option value="asia">아세아</option>
+                <option value="yanmar">얀마</option>
+                <option value="iseki">이세키</option>
+                <option value="john_deere">존디어</option>
+                <option value="kubota">구보다</option>
+                <option value="fendt">펜트</option>
+                <option value="case">케이스</option>
+                <option value="new_holland">뉴홀랜드</option>
+                <option value="mf">MF</option>
+                <option value="kumsung">금성</option>
+                <option value="fiat">피아트</option>
+                <option value="hyundai">현대</option>
+                <option value="doosan">두산</option>
+                <option value="volvo">볼보</option>
+                <option value="samsung">삼성</option>
+                <option value="daewoo">대우</option>
+                <option value="hitachi">히타치</option>
+                <option value="claas">클라스</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>

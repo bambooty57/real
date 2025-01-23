@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { collection, getDocs, doc, setDoc, updateDoc, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
@@ -16,6 +16,8 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { google } from 'googleapis';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 ChartJS.register(
   CategoryScale,
@@ -23,7 +25,8 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels
 );
 
 interface Farmer {
@@ -291,25 +294,63 @@ export default function Dashboard() {
     datasets: []
   });
 
-  // 데이터 가져오기
+  // Firebase 데이터 로드
   useEffect(() => {
-    const fetchFarmers = async () => {
+    let isMounted = true;
+    
+    const loadFarmers = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, 'farmers'));
-        const farmerList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Farmer[];
-        setFarmers(farmerList);
-        setLoading(false);
+        console.log('Firebase 데이터 로딩 시작...');
+        
+        // Firebase 연결 테스트
+        if (!db) {
+          throw new Error('Firestore 인스턴스가 초기화되지 않았습니다.');
+        }
+        
+        console.log('Firebase 설정:', {
+          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+          apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? '설정됨' : '미설정'
+        });
+        
+        const farmersRef = collection(db, 'farmers');
+        console.log('farmers 컬렉션 참조 생성');
+        
+        const snapshot = await getDocs(farmersRef);
+        console.log('farmers 컬렉션 조회 완료, 문서 수:', snapshot.size);
+        
+        if (isMounted) {
+          const farmersData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            console.log('농민 데이터:', doc.id, data);
+            return {
+              id: doc.id,
+              ...data
+            };
+          });
+          
+          if (farmersData.length === 0) {
+            console.warn('Firebase에서 가져온 데이터가 없습니다.');
+          }
+          
+          setFarmers(farmersData as Farmer[]);
+          setLoading(false);
+          console.log('총 농민 수:', farmersData.length);
+        }
       } catch (err) {
-        console.error('Error fetching farmers:', err);
-        setError(err instanceof Error ? err.message : '데이터를 불러오는데 실패했습니다');
-        setLoading(false);
+        if (isMounted) {
+          console.error('Firebase 데이터 로딩 에러:', err);
+          setError(err instanceof Error ? err.message : '데이터를 불러오는데 실패했습니다');
+          setLoading(false);
+        }
       }
     };
-    fetchFarmers();
-  }, []);
+    
+    loadFarmers();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // 빈 의존성 배열로 한 번만 실행되도록 설정
 
   const handleExcelDownload = () => {
     const excelData = farmers.map(farmer => {
@@ -708,7 +749,39 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     XLSX.writeFile(wb, "농민등록_양식.xlsx");
   };
 
-  // 차트 데이터 생성
+  const handleGoogleSheetSync = useCallback(async () => {
+    try {
+      setUploadStatus('구글 시트 동기화 중...');
+      
+      const response = await fetch('/api/sheets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify(farmers)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setUploadStatus('구글 시트 동기화가 완료되었습니다.');
+      } else {
+        setUploadStatus('구글 시트 동기화 중 오류가 발생했습니다.');
+        console.error('동기화 오류:', result.error);
+      }
+    } catch (error) {
+      setUploadStatus('구글 시트 동기화 중 오류가 발생했습니다.');
+      console.error('동기화 오류:', error);
+    }
+
+    // 3초 후 상태 메시지 제거
+    setTimeout(() => {
+      setUploadStatus('');
+    }, 3000);
+  }, [farmers]);
+
+  // 차트 데이터 생성 로직을 useEffect로 이동
   useEffect(() => {
     if (!farmers.length) return;
 
@@ -846,7 +919,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         }
       ]
     });
-  }, [farmers, selectedCity]);
+  }, [farmers, selectedCity]); // farmers와 selectedCity가 변경될 때만 차트 업데이트
 
   const options = {
     responsive: true,
@@ -858,6 +931,15 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         display: true,
         text: `${selectedCity} 지역 통계`,
       },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        formatter: (value: number) => value,
+        font: {
+          weight: 'bold'
+        },
+        color: '#333'
+      }
     },
     scales: {
       y: {
@@ -945,6 +1027,15 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         >
           <FaFileExcel />
           엑셀 다운로드
+        </button>
+
+        {/* 구글 시트 동기화 버튼 */}
+        <button
+          onClick={handleGoogleSheetSync}
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FaGoogle />
+          구글 시트 동기화
         </button>
       </div>
 

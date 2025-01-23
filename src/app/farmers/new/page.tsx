@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -11,65 +11,60 @@ import { v4 as uuidv4 } from 'uuid'
 
 export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }) {
   const router = useRouter()
-  const [formData, setFormData] = useState(initialData || {
-    name: '',
-    businessName: '',
-    zipCode: '',
-    roadAddress: '',
-    jibunAddress: '',
-    addressDetail: '',
-    canReceiveMail: false,
-    phone: '',
-    ageGroup: '',
-    memo: '',
-    farmerImages: [],
-    mainImages: [],
-    attachmentImages: {
-      loader: [],
-      rotary: [],
-      frontWheel: [],
-      rearWheel: []
-    },
-    mainCrop: {
-      rice: false,
-      barley: false,
-      hanwoo: false,
-      soybean: false,
-      sweetPotato: false,
-      persimmon: false,
-      pear: false,
-      plum: false,
-      sorghum: false,
-      goat: false,
-      other: false
-    },
-    farmingTypes: {
-      paddyFarming: false,
-      fieldFarming: false,
-      orchard: false,
-      livestock: false,
-      forageCrop: false,
-    },
-    equipments: [{
-      id: uuidv4(),
-      type: '',
-      manufacturer: '',
-      model: '',
-      year: '',
-      usageHours: '',
-      rating: '',
-      images: [],
-      attachments: {},
-      saleType: null,
-      tradeType: '',
-      saleStatus: '',
-      purchaseStatus: '',
-      desiredPrice: '',
-      purchasePrice: ''
-    }]
+  const [formData, setFormData] = useState(() => {
+    if (initialData) {
+      return {
+        ...initialData,
+        equipments: initialData.equipments?.map(eq => ({
+          ...eq,
+          id: eq.id || uuidv4()  // 기존 id가 없으면 새로 생성
+        })) || []
+      };
+    }
+    return {
+      name: '',
+      businessName: '',
+      zipCode: '',
+      roadAddress: '',
+      jibunAddress: '',
+      addressDetail: '',
+      canReceiveMail: false,
+      phone: '',
+      ageGroup: '',
+      memo: '',
+      farmerImages: [],
+      mainImages: [],
+      attachmentImages: {
+        loader: [],
+        rotary: [],
+        frontWheel: [],
+        rearWheel: []
+      },
+      mainCrop: {
+        rice: false,
+        barley: false,
+        hanwoo: false,
+        soybean: false,
+        sweetPotato: false,
+        persimmon: false,
+        pear: false,
+        plum: false,
+        sorghum: false,
+        goat: false,
+        other: false
+      },
+      farmingTypes: {
+        paddyFarming: false,
+        fieldFarming: false,
+        orchard: false,
+        livestock: false,
+        forageCrop: false,
+      },
+      equipments: []  // 빈 배열로 초기화
+    }
   })
 
-  const handleAddressSelect = (data: {
+  const handleAddressSelect = useCallback((data: {
     zipCode: string;
     roadAddress: string;
     roadAddressDetail: string;
@@ -80,9 +75,9 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       ...prev,
       ...data
     }))
-  }
+  }, [])
 
-  const formatPhoneNumber = (value: string) => {
+  const formatPhoneNumber = useCallback((value: string) => {
     // 숫자만 추출
     const numbers = value.replace(/[^\d]/g, '').slice(0, 8);
     
@@ -91,9 +86,9 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       return `010-${numbers}`;
     }
     return `010-${numbers.slice(0, 4)}-${numbers.slice(4)}`;
-  };
+  }, [])
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     // 입력된 값에서 숫자만 추출
     const numbers = e.target.value.replace(/[^\d]/g, '').slice(0, 8);
     
@@ -109,9 +104,9 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     } else {
       setFormData({...formData, phone: `010-${numbers}`});
     }
-  };
+  }, [formData])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       const dataToSave = {
@@ -142,9 +137,9 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       console.error('Error saving farmer:', error)
       alert('저장 중 오류가 발생했습니다.')
     }
-  }
+  }, [formData, mode, farmerId, router])
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: string, subType?: string) => {
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, type: string, subType?: string) => {
     const files = e.target.files;
     if (!files) return;
 
@@ -239,9 +234,9 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         alert(error instanceof Error ? error.message : '이미지 업로드 중 오류가 발생했습니다.');
       }
     }
-  };
+  }, [formData, mode, farmerId])
 
-  const handleImageDelete = async (type: string, index: number, subType?: string) => {
+  const handleImageDelete = useCallback(async (type: string, index: number, subType?: string) => {
     try {
       let imageUrl = '';
       let updatedData;
@@ -339,11 +334,12 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       console.error('Error deleting image:', error);
       alert('이미지 삭제 중 오류가 발생했습니다.');
     }
-  };
+  }, [formData, mode, farmerId])
 
-  const handleAddEquipment = () => {
+  const handleAddEquipment = useCallback(() => {
+    const newEquipmentId = uuidv4();
     const newEquipment = {
-      id: uuidv4(),
+      id: newEquipmentId,
       type: '',
       manufacturer: '',
       model: '',
@@ -351,28 +347,42 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       usageHours: '',
       rating: '',
       images: [],
-      attachments: {},
+      attachments: {
+        loader: '',
+        rotary: '',
+        frontWheel: '',
+        rearWheel: '',
+        loaderModel: '',
+        rotaryModel: '',
+        frontWheelModel: '',
+        rearWheelModel: '',
+        loaderRating: '',
+        rotaryRating: '',
+        frontWheelRating: '',
+        rearWheelRating: ''
+      },
       saleType: null,
       tradeType: '',
       saleStatus: '',
       purchaseStatus: '',
       desiredPrice: '',
-      purchasePrice: ''
+      purchasePrice: '',
+      memo: ''
     };
     setFormData(prev => ({
       ...prev,
       equipments: [...prev.equipments, newEquipment]
     }));
-  };
+  }, [])
 
-  const removeEquipment = (equipmentId: string) => {
+  const removeEquipment = useCallback((equipmentId: string) => {
     setFormData(prev => ({
       ...prev,
       equipments: prev.equipments.filter(eq => eq.id !== equipmentId)
     }))
-  }
+  }, [])
 
-  const updateEquipment = (equipmentId: string, field: string, value: any) => {
+  const updateEquipment = useCallback((equipmentId: string, field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       equipments: prev.equipments.map(eq => {
@@ -382,20 +392,26 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
             return {
               ...eq,
               [parent]: {
-                ...eq[parent],
-                [child]: value
+                ...(eq[parent] || {}),
+                [child]: value ?? ''  // null이나 undefined일 경우 빈 문자열로 설정
               }
             }
           }
           return {
             ...eq,
-            [field]: value
+            [field]: value ?? ''  // null이나 undefined일 경우 빈 문자열로 설정
           }
         }
         return eq
       })
     }))
-  }
+  }, [])
+
+  // 메모이제이션된 값들
+  const equipmentOptions = useMemo(() => ({
+    type: ['tractor', 'combine', 'rice_transplanter', 'forklift', 'excavator', 'skid_loader', 'dryer', 'silo', 'claas', 'drone'],
+    manufacturer: ['daedong', 'kukje', 'ls', 'dongyang', 'asia', 'yanmar', 'iseki', 'john_deere', 'kubota', 'fendt', 'case', 'new_holland', 'mf', 'kumsung', 'fiat', 'hyundai', 'doosan']
+  }), [])
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -534,7 +550,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {(formData.farmerImages || []).map((url, index) => (
-                <div key={index} className="relative">
+                <div key={`farmer-image-${index}`} className="relative">
                   <img
                     src={url}
                     alt={`농민 사진 ${index + 1}`}
@@ -900,7 +916,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           </div>
 
           {formData.equipments.map((equipment, index) => (
-            <div key={equipment.id} className="border p-4 rounded-lg mb-4">
+            <div key={`equipment-${equipment.id}`} className="border p-4 rounded-lg mb-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">농기계 #{index + 1}</h3>
                 <button
@@ -931,7 +947,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {equipment.images?.map((url, imgIndex) => (
-                      <div key={imgIndex} className="relative">
+                      <div key={`equipment-${equipment.id}-${imgIndex}`} className="relative">
                         <img
                           src={url}
                           alt={`농기계 ${index + 1} 사진 ${imgIndex + 1}`}
@@ -956,8 +972,9 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">기종</label>
+                  <label htmlFor={`type-${equipment.id}`} className="block text-sm font-medium text-gray-700">기종</label>
                   <select
+                    id={`type-${equipment.id}`}
                     value={equipment.type}
                     onChange={(e) => updateEquipment(equipment.id, 'type', e.target.value)}
                     className="w-full p-2 border rounded"
@@ -977,8 +994,9 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                 </div>
 
                 <div>
-                  <label className="block mb-2">제조사</label>
+                  <label htmlFor={`manufacturer-${equipment.id}`} className="block mb-2">제조사</label>
                   <select
+                    id={`manufacturer-${equipment.id}`}
                     value={equipment.manufacturer}
                     onChange={(e) => updateEquipment(equipment.id, 'manufacturer', e.target.value)}
                     className="w-full p-2 border rounded"
@@ -1005,8 +1023,9 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                 </div>
 
                 <div>
-                  <label className="block mb-2">모델명</label>
+                  <label htmlFor={`model-${equipment.id}`} className="block mb-2">모델명</label>
                   <input
+                    id={`model-${equipment.id}`}
                     type="text"
                     value={equipment.model}
                     onChange={(e) => updateEquipment(equipment.id, 'model', e.target.value)}
@@ -1015,33 +1034,35 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                 </div>
 
                 <div>
-                  <label className="block mb-2">연식</label>
+                  <label htmlFor={`year-${equipment.id}`} className="block mb-2">연식</label>
                   <select
+                    id={`year-${equipment.id}`}
                     value={equipment.year}
                     onChange={(e) => updateEquipment(equipment.id, 'year', e.target.value)}
                     className="w-full p-2 border rounded"
                   >
                     <option value="">선택하세요</option>
                     {Array.from({ length: 36 }, (_, i) => 2025 - i).map(year => (
-                      <option key={year} value={year}>{year}년</option>
+                      <option key={`year-${year}`} value={year}>{year}년</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block mb-2">사용시간</label>
+                  <label htmlFor={`usageHours-${equipment.id}`} className="block mb-2">사용시간</label>
                   <input
+                    id={`usageHours-${equipment.id}`}
                     type="text"
                     value={equipment.usageHours}
                     onChange={(e) => updateEquipment(equipment.id, 'usageHours', e.target.value)}
                     className="w-full p-2 border rounded"
-                  >
-                  </input>
+                  />
                 </div>
 
                 <div>
-                  <label className="block mb-2">상태등급</label>
+                  <label htmlFor={`rating-${equipment.id}`} className="block mb-2">상태등급</label>
                   <select
+                    id={`rating-${equipment.id}`}
                     value={equipment.rating}
                     onChange={(e) => updateEquipment(equipment.id, 'rating', e.target.value)}
                     className="w-full p-2 border rounded"
@@ -1102,27 +1123,30 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   <div>
                     <label className="block mb-2">판매구분</label>
                     <div className="space-y-2">
-                      <label className="flex items-center">
+                      <label key={`own-${equipment.id}`} className="flex items-center">
                         <input
                           type="radio"
+                          name={`saleType-${equipment.id}`}
                           checked={!equipment.saleType}
                           onChange={() => updateEquipment(equipment.id, 'saleType', null)}
                           className="mr-2"
                         />
                         보유
                       </label>
-                      <label className="flex items-center">
+                      <label key={`new-${equipment.id}`} className="flex items-center">
                         <input
                           type="radio"
+                          name={`saleType-${equipment.id}`}
                           checked={equipment.saleType === 'new'}
                           onChange={() => updateEquipment(equipment.id, 'saleType', 'new')}
                           className="mr-2"
                         />
                         신규판매
                       </label>
-                      <label className="flex items-center">
+                      <label key={`used-${equipment.id}`} className="flex items-center">
                         <input
                           type="radio"
+                          name={`saleType-${equipment.id}`}
                           checked={equipment.saleType === 'used'}
                           onChange={() => updateEquipment(equipment.id, 'saleType', 'used')}
                           className="mr-2"
@@ -1164,7 +1188,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                             rearWheel: ['없음', '흥아', 'BKT', '미셀린', '수입', '국산', '중국', '기타']
                           };
                           return (
-                            <div key={key} className="mb-4">
+                            <div key={`${key}-${equipment.id}`} className="mb-4">
                               <label className="block mb-2">{labels[key]}</label>
                               <select
                                 value={equipment.attachments[key]}
@@ -1173,7 +1197,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                               >
                                 <option value="">선택하세요</option>
                                 {options[key].map((option) => (
-                                  <option key={option} value={option}>{option}</option>
+                                  <option key={`${key}-${option}-${equipment.id}`} value={option}>{option}</option>
                                 ))}
                               </select>
                               {key !== 'loader' && (
@@ -1194,7 +1218,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                                   </label>
                                   <div className="grid grid-cols-2 gap-2">
                                     {(formData.attachmentImages[key] || []).map((url, imgIndex) => (
-                                      <div key={imgIndex} className="relative">
+                                      <div key={`${key}-${equipment.id}-${imgIndex}`} className="relative">
                                         <img
                                           src={url}
                                           alt={`${labels[key]} 사진 ${imgIndex + 1}`}

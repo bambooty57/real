@@ -19,6 +19,21 @@ interface AttachmentImages {
   rearWheel?: string[]
 }
 
+interface Equipment {
+  type: string
+  manufacturer?: string
+  model?: string
+  year?: string
+  usageHours?: string
+  rating?: string
+  memo?: string
+  attachments?: any
+  tradeType?: 'sale' | 'purchase'
+  desiredPrice?: string
+  purchasePrice?: string
+  tradeStatus?: string
+}
+
 // 농기계 타입 매핑
 const equipmentTypeMap: { [key: string]: string } = {
   'tractor': '트랙터',
@@ -26,30 +41,37 @@ const equipmentTypeMap: { [key: string]: string } = {
   'rice_transplanter': '이앙기',
   'forklift': '지게차',
   'excavator': '굴삭기',
-  'skid_loader': '스키로더'
+  'skid_loader': '스키로더',
+  'dryer': '건조기',
+  'silo': '싸일론',
+  'claas': '클라스',
+  'drone': '드론'
 }
 
 // 제조사 매핑
 const manufacturerMap: { [key: string]: string } = {
-  'john_deere': '존디어',
-  'kubota': '구보다',
   'daedong': '대동',
   'kukje': '국제',
-  'ls': '엘에스',
+  'ls': 'LS',
+  'dongyang': '동양',
+  'asia': '아세아',
   'yanmar': '얀마',
-  'newholland': '뉴홀랜드',
-  'mf': '엠에프',
+  'iseki': '이세키',
+  'john_deere': '존디어',
+  'kubota': '구보다',
+  'fendt': '펜트',
   'case': '케이스',
+  'new_holland': '뉴홀랜드',
+  'mf': 'MF',
+  'kumsung': '금성',
+  'fiat': '피아트',
   'hyundai': '현대',
-  'samsung': '삼성',
-  'volvo': '볼보',
-  'hitachi': '히타치',
   'doosan': '두산',
-  'claas': '클라스',
-  'agrico': '아그리코',
-  'star': '스타',
-  'chevrolet': '시보레',
-  'valmet': '발메트'
+  'volvo': '볼보',
+  'samsung': '삼성',
+  'daewoo': '대우',
+  'hitachi': '히타치',
+  'claas': '클라스'
 }
 
 // 작업기 한글명 매핑
@@ -121,10 +143,25 @@ const getFarmingTypeDisplay = (farmingType: any): string => {
   return '없음'
 }
 
-const getRatingStars = (rating: string | number) => {
-  const numRating = typeof rating === 'string' ? parseInt(rating, 10) : rating;
-  return '★'.repeat(numRating) + '☆'.repeat(5 - numRating);
-}
+// 별점 표시 함수 추가
+const getRatingStars = (rating: string) => {
+  const numRating = parseInt(rating);
+  return (
+    <div className="flex items-center">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <svg
+          key={star}
+          className={`h-4 w-4 ${star <= numRating ? 'text-yellow-400' : 'text-gray-300'}`}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+      <span className="ml-1 text-sm text-gray-600">({rating}점)</span>
+    </div>
+  );
+};
 
 interface Props {
   farmerId: string;
@@ -223,6 +260,109 @@ export default function FarmerDetailClient({ farmerId }: Props) {
 
     return result;
   }
+
+  // 농기계 목록 섹션
+  const renderEquipmentList = () => {
+    if (!farmer.equipments || farmer.equipments.length === 0) {
+      return <p className="text-gray-500">보유 농기계가 없습니다.</p>;
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {farmer.equipments.map((equipment, index) => {
+          const equipmentType = Object.entries(equipmentTypeMap).find(([code, _]) => code === equipment.type)?.[1] || equipment.type;
+          const manufacturer = manufacturerMap[equipment.manufacturer] || equipment.manufacturer;
+          const attachmentInfo = getAttachmentInfo(equipment);
+          
+          return (
+            <div key={index} className="border rounded-lg p-4 bg-white shadow-sm">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="font-semibold">{equipmentType}</h3>
+                  <p className="text-sm text-gray-600">{manufacturer} {equipment.model}</p>
+                </div>
+                <div className="flex gap-1">
+                  {equipment.tradeType === 'sale' && (
+                    <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      판매
+                    </span>
+                  )}
+                  {equipment.tradeType === 'purchase' && (
+                    <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
+                      구매
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1 text-sm">
+                <p>
+                  <span className="font-medium">연식:</span> {equipment.year}
+                </p>
+                <p>
+                  <span className="font-medium">사용시간:</span> {equipment.usageHours}시간
+                </p>
+                <div>
+                  <span className="font-medium">상태:</span> {getRatingStars(equipment.rating || '0')}
+                </div>
+                {equipment.tradeType === 'sale' && (
+                  <>
+                    <p>
+                      <span className="font-medium">판매가:</span> {Number(equipment.desiredPrice || 0).toLocaleString()}만원
+                    </p>
+                    <p>
+                      <span className="font-medium">진행상태:</span> {equipment.tradeStatus || '상담 전'}
+                    </p>
+                  </>
+                )}
+                {equipment.tradeType === 'purchase' && (
+                  <>
+                    <p>
+                      <span className="font-medium">구매희망가:</span> {Number(equipment.purchasePrice || 0).toLocaleString()}만원
+                    </p>
+                    <p>
+                      <span className="font-medium">진행상태:</span> {equipment.tradeStatus || '상담 전'}
+                    </p>
+                  </>
+                )}
+                
+                {/* 부착작업기 정보 */}
+                {attachmentInfo.length > 0 && (
+                  <div className="mt-3 border-t pt-3">
+                    <p className="font-medium mb-2">부착작업기</p>
+                    <div className="space-y-2">
+                      {attachmentInfo.map((attachment, idx) => (
+                        <div key={idx} className="bg-gray-50 p-2 rounded">
+                          <p className="font-medium text-gray-700">{attachment.name}</p>
+                          <div className="ml-2">
+                            <p>제조사: {manufacturerMap[attachment.manufacturer] || attachment.manufacturer}</p>
+                            {attachment.model && <p>모델: {attachment.model}</p>}
+                            {attachment.rating && (
+                              <div className="flex items-center">
+                                <span>상태: </span>
+                                {getRatingStars(attachment.rating)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 메모 정보 */}
+                {equipment.memo && (
+                  <div className="mt-3 border-t pt-3">
+                    <p className="font-medium">메모</p>
+                    <p className="text-gray-600 whitespace-pre-wrap">{equipment.memo}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   if (loading) return (
     <div className="p-8">
@@ -342,106 +482,7 @@ export default function FarmerDetailClient({ farmerId }: Props) {
       {/* 농기계 정보 섹션 */}
       <section className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold mb-4">보유 농기계</h2>
-        <div className="space-y-6">
-          {farmer.equipments.length > 0 ? (
-            farmer.equipments.map((equipment, index) => (
-              <div key={index} className="border rounded-lg p-4">
-                <div className="space-y-3">
-                  {/* 농기계 기본 정보 */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="font-medium">
-                        {getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer || '')})
-                      </span>
-                      {equipment.model && (
-                        <span className="text-sm text-gray-600">{equipment.model}</span>
-                      )}
-                      {equipment.year && (
-                        <span className="text-sm text-gray-600">{equipment.year}년식</span>
-                      )}
-                      {equipment.usageHours && (
-                        <span className="text-sm text-gray-600">{equipment.usageHours}시간 사용</span>
-                      )}
-                    </div>
-
-                    {/* 별점 표시 */}
-                    {equipment.rating && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600 mr-1">상태:</span>
-                        <div className="flex">
-                          {getRatingStars(equipment.rating!)}
-                        </div>
-                        {equipment.saleType && (
-                          <span className={`text-sm px-2 py-1 rounded ${
-                            equipment.saleType === 'new' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-orange-100 text-orange-800'
-                          }`}>
-                            {equipment.saleType === 'new' ? '신규판매' : '중고판매'}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 농기계 메모 */}
-                  {equipment.memo && (
-                    <div className="mt-2 text-sm bg-gray-50 p-2 rounded">
-                      <span className="font-medium">메모:</span>
-                      <span className="ml-2 whitespace-pre-wrap">{equipment.memo}</span>
-                    </div>
-                  )}
-
-                  {/* 거래 정보 */}
-                  <div className="flex gap-2">
-                    {equipment.forSale && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">판매</span>
-                        <span className="text-sm bg-blue-50 text-blue-800 px-2 py-1 rounded">
-                          {equipment.desiredPrice}만원
-                        </span>
-                      </div>
-                    )}
-                    {equipment.forPurchase && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">구매</span>
-                        <span className="text-sm bg-green-50 text-green-800 px-2 py-1 rounded">
-                          {equipment.purchasePrice}만원
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 작업기 정보 */}
-                  {equipment.attachments && (
-                    <div className="border-t pt-3">
-                      <h4 className="font-medium mb-2">작업기 정보</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {getAttachmentInfo(equipment).map((info, index) => (
-                          <div key={index} className="text-sm bg-gray-50 p-2 rounded">
-                            <div className="font-medium mb-1">{info.name}</div>
-                            <div className="ml-2 space-y-1">
-                              <div>제조사: {info.manufacturer}</div>
-                              <div>모델: {info.model}</div>
-                              {info.rating && (
-                                <div className="flex items-center">
-                                  <span>상태:</span>
-                                  {getRatingStars(info.rating)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-gray-500 text-center py-4">등록된 농기계가 없습니다.</div>
-          )}
-        </div>
+        {renderEquipmentList()}
       </section>
 
       {/* 이미지 갤러리 섹션 */}

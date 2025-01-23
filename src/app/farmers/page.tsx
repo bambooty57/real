@@ -192,6 +192,8 @@ interface Farmer {
   farmerImages?: string[]
   attachmentImages?: AttachmentImages
   memo?: string
+  zipCode?: string
+  canReceiveMail?: boolean
 }
 
 // 농기계 타입 매핑
@@ -528,7 +530,6 @@ export default function FarmerList() {
       }))
       
       setFarmers(prev => prev.filter(farmer => !selectedFarmers.includes(farmer.id)))
-      alert('선택한 농민 정보가 삭제되었습니다.')
     } catch (error) {
       console.error('Error deleting farmers:', error)
       alert('농민 정보 삭제 중 오류가 발생했습니다.')
@@ -968,42 +969,9 @@ export default function FarmerList() {
             </Link>
 
             <div className="space-y-1 text-sm">
-              <div className="flex flex-col space-y-1">
-                {(farmer.roadAddress || farmer.jibunAddress) && (
-                  <>
-                    {farmer.roadAddress && (
-                      <div className="truncate">
-                        <a 
-                          href={`https://map.kakao.com/link/search/${farmer.roadAddress}${farmer.addressDetail ? ` ${farmer.addressDetail}` : ''}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          {farmer.roadAddress}
-                          {farmer.addressDetail && <span className="ml-1">({farmer.addressDetail})</span>}
-                        </a>
-                      </div>
-                    )}
-                    {farmer.jibunAddress && (
-                      <div className="truncate">
-                        <a 
-                          href={`https://map.kakao.com/link/search/${farmer.jibunAddress}${farmer.addressDetail ? ` ${farmer.addressDetail}` : ''}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          {farmer.jibunAddress}
-                          {farmer.addressDetail && <span className="ml-1">({farmer.addressDetail})</span>}
-                        </a>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
+              {/* 전화번호 */}
               <div className="flex items-center">
+                <span className="font-medium min-w-[80px]">전화번호:</span>
                 <a 
                   href={`tel:${farmer.phone}`}
                   onClick={(e) => e.stopPropagation()}
@@ -1013,9 +981,66 @@ export default function FarmerList() {
                 </a>
               </div>
 
+              {/* 우편번호 */}
+              {farmer.zipCode && (
+                <div className="flex items-center">
+                  <span className="font-medium min-w-[80px]">우편번호:</span>
+                  <span>{farmer.zipCode}</span>
+                </div>
+              )}
+
+              {/* 도로명주소 */}
+              {farmer.roadAddress && (
+                <div className="flex items-center">
+                  <span className="font-medium min-w-[80px]">도로명:</span>
+                  <a 
+                    href={`https://map.kakao.com/link/search/${farmer.roadAddress}${farmer.addressDetail ? ` ${farmer.addressDetail}` : ''}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    {farmer.roadAddress}
+                  </a>
+                </div>
+              )}
+
+              {/* 지번주소 */}
+              {farmer.jibunAddress && (
+                <div className="flex items-center">
+                  <span className="font-medium min-w-[80px]">지번:</span>
+                  <a 
+                    href={`https://map.kakao.com/link/search/${farmer.jibunAddress}${farmer.addressDetail ? ` ${farmer.addressDetail}` : ''}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    {farmer.jibunAddress}
+                  </a>
+                </div>
+              )}
+
+              {/* 상세주소 */}
+              {farmer.addressDetail && (
+                <div className="flex items-center">
+                  <span className="font-medium min-w-[80px]">상세주소:</span>
+                  <span>{farmer.addressDetail}</span>
+                </div>
+              )}
+
+              {/* 우편수취가능여부 */}
               <div className="flex items-center">
-                <span className="font-medium min-w-[60px]">농기계:</span>
-                <span className="flex-1">
+                <span className="font-medium min-w-[80px]">우편수취:</span>
+                <span className={farmer.canReceiveMail ? "text-blue-600" : "text-red-600"}>
+                  {farmer.canReceiveMail ? "가능" : "불가능"}
+                </span>
+              </div>
+
+              {/* 농기계 */}
+              <div className="flex items-start">
+                <span className="font-medium min-w-[80px]">농기계:</span>
+                <div className="flex-1">
                   {farmer.equipments && farmer.equipments.length > 0 ? (
                     <div className="flex flex-col gap-2">
                       {farmer.equipments.map((equipment, index) => (
@@ -1041,12 +1066,13 @@ export default function FarmerList() {
                   ) : (
                     <span className="text-gray-400">미등록</span>
                   )}
-                </span>
+                </div>
               </div>
 
+              {/* 메모 */}
               {farmer.memo && (
                 <div className="flex items-start">
-                  <span className="font-medium min-w-[60px]">메모:</span>
+                  <span className="font-medium min-w-[80px]">메모:</span>
                   <div className="flex-1 max-h-16 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     <span className="text-gray-600 block">{farmer.memo}</span>
                   </div>
