@@ -20,6 +20,7 @@ interface Equipment {
   purchaseStatus?: string
   saleDate?: string
   purchaseDate?: string
+  saleType?: string
 }
 
 interface Farmer {
@@ -36,7 +37,8 @@ export default function TradePage() {
     tradeType: 'all', // 'all', 'sale', 'purchase'
     status: 'all', // 'all', '판매가능', '예약중', '판매완료'
     equipmentType: '',
-    manufacturer: ''
+    manufacturer: '',
+    saleType: 'all' // 'all', 'new', 'used'
   })
 
   // 농기계 종류 매핑
@@ -111,6 +113,11 @@ export default function TradePage() {
       if (filters.tradeType === 'purchase' && !equipment.forPurchase) return false
       if (filters.tradeType === 'all' && !equipment.forSale && !equipment.forPurchase) return false
 
+      // 판매 유형 필터
+      if (filters.saleType !== 'all' && equipment.forSale) {
+        if (!equipment.saleType || equipment.saleType !== filters.saleType) return false
+      }
+
       // 거래 상태 필터 개선
       if (filters.status !== 'all') {
         console.log('Status Filter:', {
@@ -174,7 +181,7 @@ export default function TradePage() {
       {/* 필터 섹션 */}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">검색 필터</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <label className="block mb-2">거래 유형</label>
             <select
@@ -185,6 +192,20 @@ export default function TradePage() {
               <option value="all">전체</option>
               <option value="sale">판매</option>
               <option value="purchase">구매</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-2">판매 유형</label>
+            <select
+              value={filters.saleType}
+              onChange={(e) => setFilters({...filters, saleType: e.target.value})}
+              className="w-full p-2 border rounded"
+              disabled={filters.tradeType === 'purchase'}
+            >
+              <option value="all">전체</option>
+              <option value="new">신규</option>
+              <option value="used">중고</option>
             </select>
           </div>
 
@@ -266,9 +287,16 @@ export default function TradePage() {
             <div key={farmer.id} className="border rounded-lg p-4">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-semibold">{farmer.name}</h3>
-                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {farmer.equipments?.some(eq => eq.forSale) ? '판매' : '구매'}
-                </span>
+                <div className="flex gap-1">
+                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    {farmer.equipments?.some(eq => eq.forSale) ? '판매' : '구매'}
+                  </span>
+                  {targetEquipment?.forSale && targetEquipment?.saleType && (
+                    <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
+                      {targetEquipment.saleType === 'new' ? '신규' : '중고'}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="space-y-1 text-sm">
                 <p>

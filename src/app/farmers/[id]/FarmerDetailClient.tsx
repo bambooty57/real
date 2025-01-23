@@ -366,11 +366,20 @@ export default function FarmerDetailClient({ farmerId }: Props) {
 
                     {/* 별점 표시 */}
                     {equipment.rating && (
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600 mr-1">상태:</span>
                         <div className="flex">
                           {getRatingStars(equipment.rating!)}
                         </div>
+                        {equipment.saleType && (
+                          <span className={`text-sm px-2 py-1 rounded ${
+                            equipment.saleType === 'new' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {equipment.saleType === 'new' ? '신규판매' : '중고판매'}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

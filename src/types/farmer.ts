@@ -9,6 +9,7 @@ export interface Equipment {
   memo?: string
   forSale?: boolean
   forPurchase?: boolean
+  saleType?: 'new' | 'used'
   desiredPrice?: string
   purchasePrice?: string
   saleStatus?: string

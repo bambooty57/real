@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase'
 import AddressSearch from '@/components/AddressSearch'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from '@/lib/firebase'
+import { v4 as uuidv4 } from 'uuid'
 
 export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }) {
   const router = useRouter()
@@ -49,7 +50,23 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       livestock: false,
       forageCrop: false,
     },
-    equipments: []
+    equipments: [{
+      id: uuidv4(),
+      type: '',
+      manufacturer: '',
+      model: '',
+      year: '',
+      usageHours: '',
+      rating: '',
+      images: [],
+      attachments: {},
+      saleType: null,
+      tradeType: '',
+      saleStatus: '',
+      purchaseStatus: '',
+      desiredPrice: '',
+      purchasePrice: ''
+    }]
   })
 
   const handleAddressSelect = (data: {
@@ -324,51 +341,29 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     }
   };
 
-  const addNewEquipment = () => {
+  const handleAddEquipment = () => {
     const newEquipment = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       type: '',
       manufacturer: '',
       model: '',
       year: '',
       usageHours: '',
       rating: '',
-      forSale: false,
-      desiredPrice: '',
-      saleStatus: '',
-      saleDate: '',
-      forPurchase: false,
-      purchasePrice: '',
-      purchaseStatus: '',
-      purchaseDate: '',
       images: [],
-      attachments: {
-        loader: '',
-        loaderModel: '',
-        loaderRating: '',
-        rotary: '',
-        rotaryModel: '',
-        rotaryRating: '',
-        frontWheel: '',
-        frontWheelModel: '',
-        frontWheelRating: '',
-        rearWheel: '',
-        rearWheelModel: '',
-        rearWheelRating: '',
-        rows: '',
-        rowsModel: '',
-        rowsRating: '',
-        tonnage: '',
-        tonnageModel: '',
-        tonnageRating: ''
-      },
-      memo: ''
-    }
+      attachments: {},
+      saleType: null,
+      tradeType: '',
+      saleStatus: '',
+      purchaseStatus: '',
+      desiredPrice: '',
+      purchasePrice: ''
+    };
     setFormData(prev => ({
       ...prev,
       equipments: [...prev.equipments, newEquipment]
-    }))
-  }
+    }));
+  };
 
   const removeEquipment = (equipmentId: string) => {
     setFormData(prev => ({
@@ -897,7 +892,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
             <h2 className="text-xl font-bold">보유 농기계</h2>
             <button
               type="button"
-              onClick={addNewEquipment}
+              onClick={handleAddEquipment}
               className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
             >
               농기계 추가
@@ -961,7 +956,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block mb-2">기종</label>
+                  <label className="block text-sm font-medium text-gray-700">기종</label>
                   <select
                     value={equipment.type}
                     onChange={(e) => updateEquipment(equipment.id, 'type', e.target.value)}
@@ -1006,10 +1001,6 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     <option value="fiat">피아트</option>
                     <option value="hyundai">현대</option>
                     <option value="doosan">두산</option>
-                    <option value="volvo">볼보</option>
-                    <option value="samsung">삼성</option>
-                    <option value="daewoo">대우</option>
-                    <option value="hitachi">히타츠</option>
                   </select>
                 </div>
 
@@ -1067,74 +1058,78 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                 {/* Transaction Information */}
                 <div className="col-span-2 grid grid-cols-2 gap-4 border-t pt-4 mt-4">
                   <div>
-                    <label className="flex items-center mb-2">
-                      <input
-                        type="checkbox"
-                        checked={equipment.forSale}
-                        onChange={(e) => updateEquipment(equipment.id, 'forSale', e.target.checked)}
-                        className="mr-2"
-                      />
-                      판매여부
-                    </label>
-                    {equipment.forSale && (
+                    <label className="block mb-2">거래구분</label>
+                    <select
+                      value={equipment.tradeType || ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateEquipment(equipment.id, 'tradeType', value);
+                      }}
+                      className="w-full p-2 border rounded mb-2"
+                    >
+                      <option value="">선택하세요</option>
+                      <option value="sale">판매희망</option>
+                      <option value="purchase">구매희망</option>
+                    </select>
+                    {equipment.tradeType && (
                       <>
                         <input
                           type="text"
-                          value={equipment.desiredPrice}
+                          value={equipment.tradeType === 'sale' ? equipment.desiredPrice : equipment.purchasePrice}
                           onChange={(e) => {
                             const value = e.target.value.replace(/[^0-9]/g, '');
-                            updateEquipment(equipment.id, 'desiredPrice', value);
+                            updateEquipment(equipment.id, equipment.tradeType === 'sale' ? 'desiredPrice' : 'purchasePrice', value);
                           }}
-                          placeholder="희망가격 (만원)"
+                          placeholder={`${equipment.tradeType === 'sale' ? '판매' : '구매'}가격 (만원)`}
                           className="w-full p-2 border rounded mb-2"
                         />
                         <select
-                          value={equipment.saleStatus}
-                          onChange={(e) => updateEquipment(equipment.id, 'saleStatus', e.target.value)}
+                          value={equipment.tradeType === 'sale' ? equipment.saleStatus : equipment.purchaseStatus}
+                          onChange={(e) => {
+                            updateEquipment(equipment.id, equipment.tradeType === 'sale' ? 'saleStatus' : 'purchaseStatus', e.target.value);
+                          }}
                           className="w-full p-2 border rounded"
                         >
-                          <option value="">판매상태 선택</option>
-                          <option value="available">판매가능</option>
-                          <option value="reserved">예약중</option>
-                          <option value="sold">판매완료</option>
+                          <option value="">상태 선택</option>
+                          <option value="가능">가능</option>
+                          <option value="계약중">계약중</option>
+                          <option value="완료">완료</option>
                         </select>
                       </>
                     )}
                   </div>
-
+                  
                   <div>
-                    <label className="flex items-center mb-2">
-                      <input
-                        type="checkbox"
-                        checked={equipment.forPurchase}
-                        onChange={(e) => updateEquipment(equipment.id, 'forPurchase', e.target.checked)}
-                        className="mr-2"
-                      />
-                      구매여부
-                    </label>
-                    {equipment.forPurchase && (
-                      <>
+                    <label className="block mb-2">판매구분</label>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
                         <input
-                          type="text"
-                          value={equipment.purchasePrice}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/[^0-9]/g, '');
-                            updateEquipment(equipment.id, 'purchasePrice', value);
-                          }}
-                          placeholder="구매가격 (만원)"
-                          className="w-full p-2 border rounded mb-2"
+                          type="radio"
+                          checked={!equipment.saleType}
+                          onChange={() => updateEquipment(equipment.id, 'saleType', null)}
+                          className="mr-2"
                         />
-                        <select
-                          value={equipment.purchaseStatus}
-                          onChange={(e) => updateEquipment(equipment.id, 'purchaseStatus', e.target.value)}
-                          className="w-full p-2 border rounded"
-                        >
-                          <option value="">구매상태 선택</option>
-                          <option value="searching">구매중</option>
-                          <option value="completed">구매완료</option>
-                        </select>
-                      </>
-                    )}
+                        보유
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          checked={equipment.saleType === 'new'}
+                          onChange={() => updateEquipment(equipment.id, 'saleType', 'new')}
+                          className="mr-2"
+                        />
+                        신규판매
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          checked={equipment.saleType === 'used'}
+                          onChange={() => updateEquipment(equipment.id, 'saleType', 'used')}
+                          className="mr-2"
+                        />
+                        중고판매
+                      </label>
+                    </div>
                   </div>
                 </div>
 
