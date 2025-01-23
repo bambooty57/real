@@ -925,7 +925,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     responsive: true,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: 'right' as const,
       },
       title: {
         display: true,
@@ -1103,31 +1103,12 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
             className="p-2 border rounded"
           >
             <option value="전체">전체 지역</option>
-            <option value="강진군">강진군</option>
-            <option value="고흥군">고흥군</option>
-            <option value="곡성군">곡성군</option>
-            <option value="광양시">광양시</option>
-            <option value="구례군">구례군</option>
-            <option value="나주시">나주시</option>
-            <option value="담양군">담양군</option>
-            <option value="목포시">목포시</option>
-            <option value="무안군">무안군</option>
-            <option value="보성군">보성군</option>
-            <option value="순천시">순천시</option>
-            <option value="신안군">신안군</option>
-            <option value="여수시">여수시</option>
-            <option value="영광군">영광군</option>
-            <option value="영암군">영암군</option>
-            <option value="완도군">완도군</option>
-            <option value="장성군">장성군</option>
-            <option value="장흥군">장흥군</option>
-            <option value="진도군">진도군</option>
-            <option value="함평군">함평군</option>
-            <option value="해남군">해남군</option>
-            <option value="화순군">화순군</option>
+            {CITIES.map((city) => (
+              <option key={city} value={city}>{city}</option>
+            ))}
           </select>
         </div>
-        <div className="h-[600px]">
+        <div className="h-[600px] pr-8">
           <Bar options={options} data={chartData} />
         </div>
       </div>

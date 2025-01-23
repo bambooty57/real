@@ -2,6 +2,9 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import Script from 'next/script'
+import { getServerSession } from 'next-auth'
+import SessionProvider from './components/SessionProvider'
+import { authOptions } from './api/auth/[...nextauth]/route'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -10,11 +13,13 @@ export const metadata = {
   description: '농민 정보 관리 시스템',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const session = await getServerSession(authOptions)
+
   return (
     <html lang="ko">
       <head>
@@ -25,10 +30,12 @@ export default function RootLayout({
         <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async />
       </head>
       <body className={`${inter.className} bg-white`}>
-        <Navigation />
-        <main className="container mx-auto px-4 py-8">
-          {children}
-        </main>
+        <SessionProvider session={session}>
+          <Navigation />
+          <main className="container mx-auto px-4 py-8">
+            {children}
+          </main>
+        </SessionProvider>
       </body>
     </html>
   )
