@@ -72,4 +72,19 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
   })
 
   // ... rest of the component code ...
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">{mode === 'edit' ? '농민 정보 수정' : '새 농민 등록'}</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form fields */}
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+        >
+          {mode === 'edit' ? '수정하기' : '등록하기'}
+        </button>
+      </form>
+    </div>
+  )
 } 
