@@ -4,7 +4,7 @@ import Navigation from '@/components/Navigation'
 import Script from 'next/script'
 import { getServerSession } from 'next-auth'
 import SessionProvider from './components/SessionProvider'
-import { authOptions } from './api/auth/[...nextauth]/route'
+import { authOptions } from '@/auth'
 
 const inter = Inter({ subsets: ['latin'] })
 
