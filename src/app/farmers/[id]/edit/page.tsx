@@ -1,9 +1,14 @@
 import { use } from 'react';
 import EditFarmerClient from './EditFarmerClient';
-import { PageProps } from 'next';
 
-export default function EditFarmerPage({ params }: PageProps) {
-  const farmerId = use(params).id;
+type Props = {
+  params: {
+    id: string;
+  };
+};
+
+export default function EditFarmerPage({ params }: Props) {
+  const farmerId = params.id;
   
   return (
     <div>
