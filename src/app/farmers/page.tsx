@@ -5,6 +5,8 @@ import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore'
 import { ref, deleteObject, listAll } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
 import Link from 'next/link'
+import { FaFileExcel } from 'react-icons/fa'
+import * as XLSX from 'xlsx-js-style'
 
 interface AddressData {
   읍면동: string[];
@@ -102,7 +104,19 @@ const JEONNAM_REGIONS: JeonnamRegions = {
     "읍면": ["해남읍", "삼산면", "화산면", "현산면", "송지면", "북평면", "북일면", "옥천면", "계곡면", "마산면", "황산면", "산이면", "문내면", "화원면"]
   },
   "영암군": {
-    "읍면": ["영암읍", "삼호읍", "덕진면", "금정면", "신북면", "시종면", "도포면", "군서면", "서호면", "학산면", "미암면"]
+    "읍면": {
+      "영암읍": ["동무리", "서무리", "남풍리", "북풍리", "회문리", "교동리", "춘양리", "망호리", "개신리", "장암리", "송평리", "용흥리", "청소리", "역리", "서남리", "대신리", "학정리", "내동리", "외동리"],
+      "삼호읍": ["난전리", "산호리", "용당리", "서호리", "나불리", "삼포리", "동호리", "망산리", "방아리", "백야리", "호텍리", "세지리", "서창리", "대불리"],
+      "덕진면": ["덕진리", "금강리", "영보리", "백계리", "용산리", "덕곡리", "월지리", "노송리", "장선리", "흥룡리"],
+      "금정면": ["금정리", "연소리", "와운리", "청룡리", "세류리", "월평리", "아천리", "도갑리", "남송리", "용흥리", "구림리", "오룡리"],
+      "신북면": ["월평리", "갈곡리", "장산리", "학동리", "금석리", "이천리", "철천리", "양계리", "모산리", "행정리", "대창리"],
+      "시종면": ["신연리", "구산리", "금지리", "봉소리", "옥야리", "신학리", "태간리", "월악리", "송평리", "내동리", "가좌리", "원포리"],
+      "도포면": ["도포리", "봉호리", "수산리", "영호리", "군서리", "구학리", "마산리", "덕화리", "원항리", "길성리"],
+      "군서면": ["군서리", "해창리", "동구림리", "서구림리", "도장리", "월곡리", "성산리", "양장리", "마산리", "월암리"],
+      "서호면": ["엄길리", "화송리", "쌍풍리", "태백리", "신호리", "청용리", "몽해리", "서호리", "장천리", "서호리"],
+      "학산면": ["상월리", "용산리", "독천리", "매월리", "금계리", "학계리", "용소리", "영계리", "은곡리", "묵동리"],
+      "미암면": ["미암리", "신한리", "채지리", "두억리", "호포리", "남산리", "덕계리", "선황리", "청천리", "미암리"]
+    }
   },
   "무안군": {
     "읍면": ["무안읍", "일로읍", "삼향읍", "몽탄면", "청계면", "현경면", "망운면", "해제면", "운남면"]
@@ -243,6 +257,21 @@ export default function FarmerList() {
   const [cities] = useState<string[]>(Object.keys(JEONNAM_REGIONS))
   const [towns, setTowns] = useState<string[]>([])
   const [ris, setRis] = useState<string[]>([])
+
+  // 필터 초기화 함수 추가
+  const resetFilters = () => {
+    setFilter({
+      ageGroup: '',
+      equipmentType: '',
+      manufacturer: '',
+      city: '',
+      town: '',
+      ri: '',
+      tradeType: '',
+      attachment: ''
+    })
+    setSearchTerm('')
+  }
 
   useEffect(() => {
     const fetchFarmers = async () => {
@@ -517,6 +546,53 @@ export default function FarmerList() {
     }
   }
 
+  // 엑셀 다운로드 함수 추가
+  const handleExcelDownload = () => {
+    const excelData = filteredFarmers.map(farmer => ({
+      'ID': farmer.id,
+      '이름': farmer.name,
+      '상호': farmer.businessName || '',
+      '연령대': farmer.ageGroup || '',
+      '전화번호': farmer.phone || '',
+      '우편번호': farmer.zipCode || '',
+      '지번주소': farmer.jibunAddress || '',
+      '도로명주소': farmer.roadAddress || '',
+      '상세주소': farmer.addressDetail || '',
+      '우편수취가능여부': farmer.canReceiveMail ? '가능' : '불가능',
+      '영농형태': farmer.farmingType || '',
+      '주작물': farmer.mainCrop || '',
+      '보유농기계': farmer.equipments?.map(eq => 
+        `${getKoreanEquipmentType(eq.type)}(${eq.manufacturer || ''})`
+      ).join(', ') || '',
+      '농민정보메모': farmer.memo || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "농민목록");
+    
+    // 열 너비 자동 조정
+    const colWidths = [
+      { wch: 20 },  // ID
+      { wch: 10 },  // 이름
+      { wch: 15 },  // 상호
+      { wch: 10 },  // 연령대
+      { wch: 15 },  // 전화번호
+      { wch: 10 },  // 우편번호
+      { wch: 30 },  // 지번주소
+      { wch: 30 },  // 도로명주소
+      { wch: 20 },  // 상세주소
+      { wch: 15 },  // 우편수취가능여부
+      { wch: 15 },  // 영농형태
+      { wch: 20 },  // 주작물
+      { wch: 40 },  // 보유농기계
+      { wch: 50 },  // 농민정보메모
+    ];
+    ws['!cols'] = colWidths;
+
+    XLSX.writeFile(wb, "농민목록.xlsx");
+  };
+
   if (loading) return (
     <div className="p-8">
       <div className="animate-pulse text-center">데이터를 불러오는 중...</div>
@@ -528,6 +604,7 @@ export default function FarmerList() {
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold">농민 목록</h1>
+          <span className="text-gray-600">총 {farmers.length}명</span>
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -545,6 +622,18 @@ export default function FarmerList() {
               선택 삭제 ({selectedFarmers.length})
             </button>
           )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExcelDownload}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            <FaFileExcel />
+            엑셀 다운로드
+          </button>
+          <Link href="/farmers/new" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+            농민 등록
+          </Link>
         </div>
       </div>
 
@@ -672,6 +761,16 @@ export default function FarmerList() {
               <option value="bucketSize">버켓용량</option>
             </optgroup>
           </select>
+
+          <button
+            onClick={resetFilters}
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            필터 초기화
+          </button>
         </div>
       </div>
 
@@ -707,7 +806,6 @@ export default function FarmerList() {
               </div>
             </div>
 
-            {/* 통합 이미지 갤러리 */}
             <Link href={`/farmers/${farmer.id}`} className="block">
               <div className="relative h-48">
                 {(() => {
@@ -769,9 +867,7 @@ export default function FarmerList() {
               </div>
             </Link>
 
-            {/* 농민 정보 */}
             <div className="space-y-1 text-sm">
-              {/* 주소 정보 */}
               <div className="flex flex-col space-y-1">
                 {(farmer.roadAddress || farmer.jibunAddress) && (
                   <>
@@ -807,7 +903,6 @@ export default function FarmerList() {
                 )}
               </div>
 
-              {/* 연락처 */}
               <div className="flex items-center">
                 <a 
                   href={`tel:${farmer.phone}`}
@@ -818,7 +913,6 @@ export default function FarmerList() {
                 </a>
               </div>
 
-              {/* 보유농기계 */}
               <div className="flex items-center">
                 <span className="font-medium min-w-[60px]">농기계:</span>
                 <span className="flex-1">
@@ -846,7 +940,6 @@ export default function FarmerList() {
                 </span>
               </div>
 
-              {/* 메모 */}
               {farmer.memo && (
                 <div className="flex items-start">
                   <span className="font-medium min-w-[60px]">메모:</span>
@@ -870,7 +963,6 @@ export default function FarmerList() {
         ))}
       </div>
 
-      {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg">
