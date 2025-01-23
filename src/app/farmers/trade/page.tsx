@@ -36,9 +36,7 @@ export default function TradePage() {
     tradeType: 'all', // 'all', 'sale', 'purchase'
     status: 'all', // 'all', '판매가능', '예약중', '판매완료'
     equipmentType: '',
-    manufacturer: '',
-    minPrice: '',
-    maxPrice: '',
+    manufacturer: ''
   })
 
   // 농기계 종류 매핑
@@ -161,14 +159,6 @@ export default function TradePage() {
         if (equipment.manufacturer !== dbManufacturer) return false;
       }
 
-      // 가격 범위 필터
-      const price = filters.tradeType === 'sale' 
-        ? Number(equipment.desiredPrice?.replace(/,/g, '') || '0')
-        : Number(equipment.purchasePrice?.replace(/,/g, '') || '0')
-      
-      if (filters.minPrice && price < Number(filters.minPrice)) return false
-      if (filters.maxPrice && price > Number(filters.maxPrice)) return false
-
       return true
     }) || false
   }
@@ -184,7 +174,7 @@ export default function TradePage() {
       {/* 필터 섹션 */}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">검색 필터</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block mb-2">거래 유형</label>
             <select
@@ -237,49 +227,29 @@ export default function TradePage() {
               className="w-full p-2 border rounded"
             >
               <option value="">전체</option>
-              <option value="대동">대동</option>
-              <option value="국제">국제</option>
-              <option value="엘에스">엘에스</option>
-              <option value="얀마">얀마</option>
-              <option value="구보다">구보다</option>
-              <option value="존디어">존디어</option>
-              <option value="뉴홀랜드">뉴홀랜드</option>
-              <option value="엠에프">엠에프</option>
-              <option value="케이스">케이스</option>
-              <option value="현대">현대</option>
-              <option value="삼성">삼성</option>
-              <option value="볼보">볼보</option>
-              <option value="히타치">히타치</option>
-              <option value="두산">두산</option>
+              <option value="daedong">대동</option>
+              <option value="kukje">국제</option>
+              <option value="ls">LS</option>
+              <option value="dongyang">동양</option>
+              <option value="asia">아세아</option>
+              <option value="yanmar">얀마</option>
+              <option value="iseki">이세키</option>
+              <option value="john_deere">존디어</option>
+              <option value="kubota">구보다</option>
+              <option value="fendt">펜트</option>
+              <option value="case">케이스</option>
+              <option value="new_holland">뉴홀랜드</option>
+              <option value="mf">MF</option>
+              <option value="kumsung">금성</option>
+              <option value="fiat">피아트</option>
+              <option value="hyundai">현대</option>
+              <option value="doosan">두산</option>
+              <option value="volvo">볼보</option>
+              <option value="samsung">삼성</option>
+              <option value="daewoo">대우</option>
+              <option value="hitachi">히타치</option>
+              <option value="claas">클라스</option>
             </select>
-          </div>
-
-          <div>
-            <label className="block mb-2">최소 가격</label>
-            <input
-              type="text"
-              value={filters.minPrice}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                setFilters({...filters, minPrice: value});
-              }}
-              className="w-full p-2 border rounded"
-              placeholder="최소 가격"
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2">최대 가격</label>
-            <input
-              type="text"
-              value={filters.maxPrice}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                setFilters({...filters, maxPrice: value});
-              }}
-              className="w-full p-2 border rounded"
-              placeholder="최대 가격"
-            />
           </div>
         </div>
       </div>
@@ -288,7 +258,11 @@ export default function TradePage() {
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-lg font-semibold mb-4">검색 결과 ({filteredFarmers.length}건)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredFarmers.map((farmer) => (
+          {filteredFarmers.map((farmer) => {
+            const targetEquipment = farmer.equipments?.find(eq => eq.forSale || eq.forPurchase);
+            const equipmentType = Object.entries(equipmentTypeMap).find(([_, value]) => value === targetEquipment?.type)?.[0] || targetEquipment?.type;
+            
+            return (
             <div key={farmer.id} className="border rounded-lg p-4">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-semibold">{farmer.name}</h3>
@@ -301,21 +275,21 @@ export default function TradePage() {
                   <span className="font-medium">연락처:</span> {farmer.phone}
                 </p>
                 <p>
-                  <span className="font-medium">농기계:</span> {farmer.equipments?.find(eq => eq.forSale || eq.forPurchase)?.manufacturer} {farmer.equipments?.find(eq => eq.forSale || eq.forPurchase)?.model}
+                  <span className="font-medium">농기계:</span> {equipmentType} {targetEquipment?.model}
                 </p>
                 <p>
-                  <span className="font-medium">연식:</span> {farmer.equipments?.find(eq => eq.forSale || eq.forPurchase)?.year}
+                  <span className="font-medium">연식:</span> {targetEquipment?.year}
                 </p>
                 <p>
-                  <span className="font-medium">사용시간:</span> {farmer.equipments?.find(eq => eq.forSale || eq.forPurchase)?.usageHours}시간
+                  <span className="font-medium">사용시간:</span> {targetEquipment?.usageHours}시간
                 </p>
                 <p>
-                  <span className="font-medium">상태:</span> {farmer.equipments?.find(eq => eq.forSale || eq.forPurchase)?.rating}점
+                  <span className="font-medium">상태:</span> {targetEquipment?.rating}점
                 </p>
                 {farmer.equipments?.find(eq => eq.forSale) && (
                   <>
                     <p>
-                      <span className="font-medium">판매가:</span> {farmer.equipments?.find(eq => eq.forSale)?.desiredPrice}원
+                      <span className="font-medium">판매가:</span> {Number(farmer.equipments?.find(eq => eq.forSale)?.desiredPrice || 0).toLocaleString()}만원
                     </p>
                     <p>
                       <span className="font-medium">진행상태:</span> {farmer.equipments?.find(eq => eq.forSale)?.saleStatus || '상담 전'}
@@ -325,7 +299,7 @@ export default function TradePage() {
                 {farmer.equipments?.find(eq => eq.forPurchase) && (
                   <>
                     <p>
-                      <span className="font-medium">구매희망가:</span> {farmer.equipments?.find(eq => eq.forPurchase)?.purchasePrice}원
+                      <span className="font-medium">구매희망가:</span> {Number(farmer.equipments?.find(eq => eq.forPurchase)?.purchasePrice || 0).toLocaleString()}만원
                     </p>
                     <p>
                       <span className="font-medium">진행상태:</span> {farmer.equipments?.find(eq => eq.forPurchase)?.purchaseStatus || '상담 전'}
@@ -342,7 +316,7 @@ export default function TradePage() {
                 </Link>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </div>
     </div>
