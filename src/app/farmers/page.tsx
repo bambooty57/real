@@ -241,14 +241,14 @@ export default function FarmerList() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState({
-    ageGroup: '',
     equipmentType: '',
     manufacturer: '',
     city: '',
     town: '',
     ri: '',
-    tradeType: '',
-    attachment: ''
+    saleType: '',
+    farmingType: '',
+    mainCrop: ''
   })
   const [currentImageIndexes, setCurrentImageIndexes] = useState<{[key: string]: number}>({})
   const [selectedFarmers, setSelectedFarmers] = useState<string[]>([])
@@ -259,17 +259,17 @@ export default function FarmerList() {
   const [towns, setTowns] = useState<string[]>([])
   const [ris, setRis] = useState<string[]>([])
 
-  // 필터 초기화 함수 추가
+  // 필터 초기화 함수
   const resetFilters = () => {
     setFilter({
-      ageGroup: '',
       equipmentType: '',
       manufacturer: '',
       city: '',
       town: '',
       ri: '',
-      tradeType: '',
-      attachment: ''
+      saleType: '',
+      farmingType: '',
+      mainCrop: ''
     })
     setSearchTerm('')
   }
@@ -283,6 +283,24 @@ export default function FarmerList() {
           ...doc.data()
         })) as Farmer[]
         setFarmers(farmerList)
+
+        // 선택된 시/군/읍/면/동에 해당하는 모든 리 데이터 수집
+        if (filter.city && filter.town) {
+          const uniqueRis = new Set<string>()
+          farmerList.forEach(farmer => {
+            if (farmer.roadAddress?.includes(filter.city) && farmer.roadAddress?.includes(filter.town)) {
+              const addressParts = farmer.roadAddress.split(' ')
+              const riPart = addressParts.find(part => part.endsWith('리'))
+              if (riPart) uniqueRis.add(riPart)
+            }
+            if (farmer.jibunAddress?.includes(filter.city) && farmer.jibunAddress?.includes(filter.town)) {
+              const addressParts = farmer.jibunAddress.split(' ')
+              const riPart = addressParts.find(part => part.endsWith('리'))
+              if (riPart) uniqueRis.add(riPart)
+            }
+          })
+          setRis(Array.from(uniqueRis).sort())
+        }
       } catch (error) {
         console.error('Error fetching farmers:', error)
         alert('농민 목록을 불러오는 중 오류가 발생했습니다.')
@@ -292,7 +310,7 @@ export default function FarmerList() {
     }
 
     fetchFarmers()
-  }, [])
+  }, [filter.city, filter.town])
 
   // 시/군 선택 시 읍/면/동 목록 업데이트
   useEffect(() => {
@@ -378,16 +396,17 @@ export default function FarmerList() {
       return false;
     }
 
-    // 연령대 필터링
-    if (filter.ageGroup && farmer.ageGroup !== filter.ageGroup) return false;
-
-    // 거래 유형 필터링
-    if (filter.tradeType) {
-      const hasMatchingTrade = farmer.equipments && farmer.equipments.some(eq => 
-        (filter.tradeType === 'sale' && eq.forSale) || 
-        (filter.tradeType === 'purchase' && eq.forPurchase)
+    // 판매구분 필터링
+    if (filter.saleType && filter.saleType !== '전체') {
+      const hasMatchingSaleType = farmer.equipments && farmer.equipments.some(eq => 
+        eq.saleType === filter.saleType
       );
-      if (!hasMatchingTrade) return false;
+      if (!hasMatchingSaleType) return false;
+    }
+
+    // 주작물 필터링
+    if (filter.mainCrop && filter.mainCrop !== '전체' && farmer.mainCrop !== filter.mainCrop) {
+      return false;
     }
 
     return true;
@@ -605,7 +624,9 @@ export default function FarmerList() {
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold">농민 목록</h1>
-          <span className="text-gray-600">총 {farmers.length}명</span>
+          <span className="text-gray-600">
+            검색 {filteredFarmers.length}명 / 총 {farmers.length}명
+          </span>
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -626,6 +647,15 @@ export default function FarmerList() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            새로고침
+          </button>
+          <button
             onClick={handleExcelDownload}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
@@ -638,140 +668,209 @@ export default function FarmerList() {
         </div>
       </div>
 
-      <div className="mb-6 space-y-4">
-        <input
-          type="text"
-          placeholder="이름, 주소, 전화번호, 농작물로 검색..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
+      {/* 필터 섹션 */}
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">검색 필터</h2>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* 지역 필터 */}
-          <select
-            value={filter.city}
-            onChange={(e) => setFilter(prev => ({ ...prev, city: e.target.value }))}
-            className="p-2 border rounded"
-          >
-            <option value="">시/군 전체</option>
-            {cities.map(city => (
-              <option key={city} value={city}>{city}</option>
-            ))}
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* 시/군 필터 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">시/군</label>
+            <div className="relative">
+              <select
+                value={filter.city}
+                onChange={(e) => setFilter(prev => ({ ...prev, city: e.target.value }))}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="전체">전체</option>
+                {cities.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
 
-          <select
-            value={filter.town}
-            onChange={(e) => setFilter(prev => ({ ...prev, town: e.target.value }))}
-            className="p-2 border rounded"
-            disabled={!filter.city}
-          >
-            <option value="">읍/면/동 전체</option>
-            {towns.map(town => (
-              <option key={town} value={town}>{town}</option>
-            ))}
-          </select>
+          {/* 읍/면/동 필터 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">읍/면/동</label>
+            <div className="relative">
+              <select
+                value={filter.town}
+                onChange={(e) => setFilter(prev => ({ ...prev, town: e.target.value }))}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                disabled={!filter.city}
+              >
+                <option value="전체">전체</option>
+                {towns.map(town => (
+                  <option key={town} value={town}>{town}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
 
-          <select
-            value={filter.ri}
-            onChange={(e) => setFilter(prev => ({ ...prev, ri: e.target.value }))}
-            className="p-2 border rounded"
-            disabled={!filter.town}
-          >
-            <option value="">리 전체</option>
-            {ris.map(ri => (
-              <option key={ri} value={ri}>{ri}</option>
-            ))}
-          </select>
+          {/* 리 필터 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">리</label>
+            <div className="relative">
+              <select
+                value={filter.ri}
+                onChange={(e) => setFilter(prev => ({ ...prev, ri: e.target.value }))}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                disabled={!filter.town}
+              >
+                <option value="전체">전체</option>
+                {ris.map(ri => (
+                  <option key={ri} value={ri}>{ri}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
 
-          {/* 기존 필터 */}
-          <select
-            value={filter.ageGroup}
-            onChange={(e) => setFilter(prev => ({ ...prev, ageGroup: e.target.value }))}
-            className="p-2 border rounded"
-          >
-            <option value="">연령대 전체</option>
-            {['20대', '30대', '40대', '50대', '60대', '70대', '80대'].map(age => (
-              <option key={age} value={age}>{age}</option>
-            ))}
-          </select>
+          {/* 영농형태 필터 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">영농형태</label>
+            <div className="relative">
+              <select
+                value={filter.farmingType}
+                onChange={(e) => setFilter(prev => ({ ...prev, farmingType: e.target.value }))}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="전체">전체</option>
+                {[
+                  '벼농사', '밭농사', '과수원', '축산업', '시설원예', 
+                  '복합영농', '특용작물', '기타'
+                ].map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
 
-          <select
-            value={filter.equipmentType}
-            onChange={(e) => setFilter(prev => ({ ...prev, equipmentType: e.target.value }))}
-            className="p-2 border rounded"
-          >
-            <option value="">농기계 종류 전체</option>
-            {EQUIPMENT_TYPES.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
+          {/* 주작물 필터 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">주작물</label>
+            <div className="relative">
+              <select
+                value={filter.mainCrop}
+                onChange={(e) => setFilter(prev => ({ ...prev, mainCrop: e.target.value }))}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="전체">전체</option>
+                <option value="벼">벼</option>
+                <option value="보리">보리</option>
+                <option value="밀">밀</option>
+                <option value="콩">콩</option>
+                <option value="고추">고추</option>
+                <option value="마늘">마늘</option>
+                <option value="양파">양파</option>
+                <option value="감자">감자</option>
+                <option value="고구마">고구마</option>
+                <option value="배추">배추</option>
+                <option value="무">무</option>
+                <option value="참깨">참깨</option>
+                <option value="들깨">들깨</option>
+                <option value="땅콩">땅콩</option>
+                <option value="인삼">인삼</option>
+                <option value="버섯">버섯</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
 
-          <select
-            value={filter.manufacturer}
-            onChange={(e) => setFilter(prev => ({ ...prev, manufacturer: e.target.value }))}
-            className="p-2 border rounded"
-          >
-            <option value="">제조사 전체</option>
-            {[
-              '대동', '국제', '엘에스', '얀마', '구보다', '존디어', '뉴홀랜드', 
-              '엠에프', '케이스', '현대', '삼성', '볼보', '히타치', '두산', 
-              '클라스', '아그리코', '스타', '시보레', '발메트'
-            ].map(manufacturer => (
-              <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
-            ))}
-          </select>
+          {/* 농기계 종류 필터 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">농기계 종류</label>
+            <div className="relative">
+              <select
+                value={filter.equipmentType}
+                onChange={(e) => setFilter(prev => ({ ...prev, equipmentType: e.target.value }))}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="전체">전체</option>
+                {EQUIPMENT_TYPES.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
 
-          {/* 거래 유형 필터 */}
-          <select
-            value={filter.tradeType}
-            onChange={(e) => setFilter(prev => ({ ...prev, tradeType: e.target.value }))}
-            className="p-2 border rounded"
-          >
-            <option value="">거래 유형 전체</option>
-            <option value="sale">판매 희망</option>
-            <option value="purchase">구매 희망</option>
-          </select>
+          {/* 제조사 필터 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">제조사</label>
+            <div className="relative">
+              <select
+                value={filter.manufacturer}
+                onChange={(e) => setFilter(prev => ({ ...prev, manufacturer: e.target.value }))}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="전체">전체</option>
+                {[
+                  '대동', '국제', '엘에스', '얀마', '구보다', '존디어', '뉴홀랜드', 
+                  '엠에프', '케이스', '현대', '삼성', '볼보', '히타치', '두산', 
+                  '클라스', '아그리코', '스타', '시보레', '발메트'
+                ].map(manufacturer => (
+                  <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
 
-          {/* 작업기 필터 */}
-          <select
-            value={filter.attachment}
-            onChange={(e) => setFilter(prev => ({ ...prev, attachment: e.target.value }))}
-            className="p-2 border rounded"
-          >
-            <option value="">작업기 전체</option>
-            <optgroup label="트랙터">
-              <option value="loader">로더</option>
-              <option value="rotary">로타리</option>
-              <option value="frontWheel">전륜</option>
-              <option value="rearWheel">후륜</option>
-            </optgroup>
-            <optgroup label="콤바인">
-              <option value="cutter">예취부</option>
-            </optgroup>
-            <optgroup label="이앙기">
-              <option value="rows">작업열</option>
-            </optgroup>
-            <optgroup label="지게차">
-              <option value="tonnage">톤수</option>
-            </optgroup>
-            <optgroup label="굴삭기">
-              <option value="size">규격</option>
-            </optgroup>
-            <optgroup label="스키로더">
-              <option value="bucketSize">버켓용량</option>
-            </optgroup>
-          </select>
-
-          <button
-            onClick={resetFilters}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center justify-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            필터 초기화
-          </button>
+          {/* 판매구분 필터 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">판매구분</label>
+            <div className="relative">
+              <select
+                value={filter.saleType}
+                onChange={(e) => setFilter(prev => ({ ...prev, saleType: e.target.value }))}
+                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="전체">전체</option>
+                <option value="new">신규</option>
+                <option value="used">중고</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
