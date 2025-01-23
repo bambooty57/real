@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { use } from 'react';
-import { NewFarmer } from '../../new/page';
+import NewFarmer from '../../new/NewFarmer';
 
 interface PageProps {
   params: Promise<{
