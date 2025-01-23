@@ -151,6 +151,7 @@ interface Equipment {
   forPurchase?: boolean
   desiredPrice?: string
   purchasePrice?: string
+  saleType?: 'new' | 'used'
   attachments?: {
     loader?: string
     rotary?: string
@@ -921,14 +922,18 @@ export default function FarmerList() {
                       {farmer.equipments.map((equipment, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <span>{getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer)})</span>
+                          {equipment.saleType && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded ${
+                              equipment.saleType === 'new' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-orange-100 text-orange-800'
+                            }`}>
+                              {equipment.saleType === 'new' ? '신규' : '중고'}
+                            </span>
+                          )}
                           {equipment.forSale && 
                             <span className="text-sm bg-blue-100 text-blue-800 px-2 rounded">
                               판매가: {equipment.desiredPrice}만원
-                            </span>
-                          }
-                          {equipment.forPurchase && 
-                            <span className="text-sm bg-green-100 text-green-800 px-2 rounded">
-                              구매희망가: {equipment.purchasePrice}만원
                             </span>
                           }
                         </div>
