@@ -6,6 +6,25 @@ import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { FaFileExcel, FaGoogle } from 'react-icons/fa';
 import * as XLSX from 'xlsx-js-style';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface Farmer {
   id: string;
@@ -30,6 +49,8 @@ interface Farmer {
     type: string;
     manufacturer: string;
   }>;
+  roadAddress: string;
+  jibunAddress: string;
 }
 
 const getKoreanEquipmentType = (type: string): string => {
@@ -115,7 +136,131 @@ const formatPhoneNumber = (phone: string): string => {
   return numbers.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 };
 
-export default function Home() {
+interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor: string;
+    borderColor: string;
+    borderWidth: number;
+  }[];
+}
+
+// 전체 시/군 목록 정의
+const CITIES = [
+  '강진군', '고흥군', '곡성군', '광양시', '구례군',
+  '나주시', '담양군', '목포시', '무안군', '보성군',
+  '순천시', '신안군', '여수시', '영광군', '영암군',
+  '완도군', '장성군', '장흥군', '진도군', '함평군',
+  '해남군', '화순군'
+] as const;
+
+// 각 시/군의 읍/면/동 목록 정의
+const REGIONS = {
+  '강진군': [
+    '강진읍', '군동면', '칠량면', '대구면', '도암면', '신전면', 
+    '성전면', '작천면', '병영면', '옴천면', '마량면'
+  ],
+  '고흥군': [
+    '고흥읍', '도양읍', '풍양면', '도덕면', '금산면', '도화면', 
+    '포두면', '봉래면', '동일면', '점암면', '영남면', '과역면', 
+    '남양면', '동강면', '대서면', '두원면'
+  ],
+  '곡성군': [
+    '곡성읍', '오곡면', '삼기면', '석곡면', '목사동면', '죽곡면', 
+    '고달면', '옥과면', '입면', '겸면', '오산면'
+  ],
+  '광양시': [
+    '광양읍', '봉강면', '옥룡면', '옥곡면', '진상면', '진월면', 
+    '다압면', '골약동', '중마동', '광영동', '태인동', '금호동'
+  ],
+  '구례군': [
+    '구례읍', '문척면', '간전면', '토지면', '마산면', '광의면', 
+    '용방면', '산동면'
+  ],
+  '나주시': [
+    '남평읍', '세지면', '왕곡면', '반남면', '공산면', '동강면', 
+    '다시면', '문평면', '노안면', '금천면', '산포면', '다도면', 
+    '송월동', '영강동', '금남동', '성북동', '영산동'
+  ],
+  '담양군': [
+    '담양읍', '봉산면', '고서면', '남면', '창평면', '대덕면', 
+    '무정면', '금성면', '용면', '월산면', '수북면', '대전면'
+  ],
+  '목포시': [
+    '용당1동', '용당2동', '연동', '산정동', '연산동', '원산동', 
+    '대성동', '목원동', '동명동', '삼학동', '만호동', '유달동', 
+    '죽교동', '북항동', '용해동', '이로동', '상동', '하당동', 
+    '신흥동', '삼향동', '옥암동', '부주동'
+  ],
+  '무안군': [
+    '무안읍', '일로읍', '삼향읍', '몽탄면', '청계면', '현경면', 
+    '망운면', '해제면', '운남면'
+  ],
+  '보성군': [
+    '보성읍', '벌교읍', '노동면', '미력면', '겸백면', '율어면', 
+    '복내면', '문덕면', '조성면', '득량면', '회천면', '웅치면'
+  ],
+  '순천시': [
+    '승주읍', '해룡면', '서면', '황전면', '월등면', '주암면', 
+    '송광면', '외서면', '낙안면', '별량면', '상사면', '중앙동', 
+    '향동', '매곡동', '삼산동', '조곡동', '덕연동', '풍덕동', 
+    '남제동', '저전동', '장천동', '도사동', '왕조1동', '왕조2동'
+  ],
+  '신안군': [
+    '지도읍', '압해읍', '증도면', '임자면', '자은면', '비금면', 
+    '도초면', '흑산면', '하의면', '신의면', '장산면', '안좌면', 
+    '팔금면', '암태면'
+  ],
+  '여수시': [
+    '돌산읍', '소라면', '율촌면', '화양면', '남면', '화정면', 
+    '삼산면', '동문동', '한려동', '중앙동', '충무동', '광림동', 
+    '서강동', '대교동', '국동', '월호동', '여서동', '문수동', 
+    '미평동', '둔덕동', '만덕동', '쌍봉동', '시전동', '여천동', 
+    '주삼동', '삼일동', '묘도동'
+  ],
+  '영광군': [
+    '영광읍', '백수읍', '홍농읍', '대마면', '묘량면', '불갑면', 
+    '군서면', '군남면', '염산면', '법성면', '낙월면'
+  ],
+  '영암군': [
+    '영암읍', '삼호읍', '덕진면', '금정면', '신북면', '시종면', 
+    '도포면', '군서면', '서호면', '학산면', '미암면'
+  ],
+  '완도군': [
+    '완도읍', '금일읍', '노화읍', '군외면', '신지면', '고금면', 
+    '약산면', '청산면', '소안면', '금당면', '보길면', '생일면'
+  ],
+  '장성군': [
+    '장성읍', '진원면', '남면', '동화면', '삼서면', '삼계면', 
+    '황룡면', '서삼면', '북일면', '북이면', '북하면'
+  ],
+  '장흥군': [
+    '장흥읍', '관산읍', '대덕읍', '용산면', '안양면', '장동면', 
+    '장평면', '유치면', '부산면', '회진면'
+  ],
+  '진도군': [
+    '진도읍', '군내면', '고군면', '의신면', '임회면', '지산면', 
+    '조도면'
+  ],
+  '함평군': [
+    '함평읍', '손불면', '신광면', '학교면', '엄다면', '대동면', 
+    '나산면', '해보면', '월야면'
+  ],
+  '해남군': [
+    '해남읍', '삼산면', '화산면', '현산면', '송지면', '북평면', 
+    '북일면', '옥천면', '계곡면', '마산면', '황산면', '산이면', 
+    '문내면', '화원면'
+  ],
+  '화순군': [
+    '화순읍', '한천면', '춘양면', '청풍면', '이양면', '능주면', 
+    '도곡면', '도암면', '이서면', '북면', '동복면', '남면', 
+    '동면'
+  ]
+} as const;
+
+export default function Dashboard() {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,20 +282,23 @@ export default function Home() {
     status: 'idle' | 'processing' | 'success' | 'error';
     message: string;
   }>({ status: 'idle', message: '' });
-  const [farmerCount, setFarmerCount] = useState<number>(0);
+  const [selectedCity, setSelectedCity] = useState<string>('전체');
+  const [selectedMetric, setSelectedMetric] = useState<'customers' | 'equipments'>('customers');
+  const [chartData, setChartData] = useState<ChartData>({
+    labels: [],
+    datasets: []
+  });
 
+  // 데이터 가져오기
   useEffect(() => {
     const fetchFarmers = async () => {
       try {
-        console.log('Fetching farmers...');  // 디버깅용 로그
-        const farmersRef = collection(db, 'farmers');
-        const snapshot = await getDocs(farmersRef);
-        const farmersData = snapshot.docs.map(doc => ({
+        const querySnapshot = await getDocs(collection(db, 'farmers'));
+        const farmerList = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        } as Farmer));
-        console.log('Farmers data:', farmersData);  // 디버깅용 로그
-        setFarmers(farmersData);
+        })) as Farmer[];
+        setFarmers(farmerList);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching farmers:', err);
@@ -158,18 +306,7 @@ export default function Home() {
         setLoading(false);
       }
     };
-
-    async function getFarmerCount() {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'farmers'));
-        setFarmerCount(querySnapshot.size);
-      } catch (error) {
-        console.error('농민 수 조회 오류:', error);
-      }
-    }
-
     fetchFarmers();
-    getFarmerCount();
   }, []);
 
   const handleExcelDownload = () => {
@@ -537,6 +674,167 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     XLSX.writeFile(wb, "농민등록_양식.xlsx");
   };
 
+  // 차트 데이터 생성
+  useEffect(() => {
+    if (!farmers.length) return;
+
+    const locationData = new Map<string, { customers: number; equipments: number }>();
+
+    // 전체 지역일 때는 모든 시/군을 초기화
+    if (selectedCity === '전체') {
+      CITIES.forEach(city => {
+        locationData.set(city, { customers: 0, equipments: 0 });
+      });
+    } else {
+      // 특정 시/군이 선택된 경우, 해당 지역의 모든 읍/면/동을 초기화
+      const selectedRegions = REGIONS[selectedCity as keyof typeof REGIONS];
+      if (selectedRegions) {
+        selectedRegions.forEach(region => {
+          locationData.set(region, { customers: 0, equipments: 0 });
+        });
+      }
+    }
+
+    // 데이터 집계
+    console.log('전체 농민 수:', farmers.length);
+    
+    // 담양군 데이터 확인
+    const damyangFarmers = farmers.filter(farmer => {
+      const address = farmer.jibunAddress;
+      return address && address.includes('담양군');
+    });
+    console.log('담양군 농민 목록:', damyangFarmers.map(farmer => ({
+      name: farmer.name,
+      address: farmer.jibunAddress,
+      equipments: farmer.equipments?.length || 0
+    })));
+
+    farmers.forEach(farmer => {
+      const address = farmer.jibunAddress;  // 지번주소만 사용
+      if (!address) {
+        console.log('지번주소 없음:', farmer.name);
+        return;
+      }
+
+      // 주소에서 시군 추출
+      let city = '';
+      let town = '';
+
+      // 모든 시군구에 대해 처리
+      for (const cityName of CITIES) {
+        if (address.includes(cityName)) {
+          city = cityName;
+          const addressParts = address.split(cityName);
+          if (addressParts.length > 1) {
+            // 시군구 이후의 첫 번째 읍/면/동 찾기
+            const matches = addressParts[1].trim().match(/^[가-힣]+(읍|면|동)/);
+            if (matches) {
+              town = matches[0];
+            }
+          }
+          break;  // 시군구를 찾았으면 반복 중단
+        }
+      }
+
+      if (!city) {
+        console.log('시군구 파싱 실패:', address);
+        return;
+      }
+
+      // 장비 수 계산
+      const equipmentCount = farmer.equipments?.length || 0;
+      console.log('데이터 처리:', {
+        name: farmer.name,
+        address,
+        city,
+        town,
+        equipments: equipmentCount
+      });
+
+      if (selectedCity === '전체') {
+        if (locationData.has(city)) {
+          const data = locationData.get(city)!;
+          data.customers++;
+          data.equipments += equipmentCount;
+          console.log('시/군 집계:', city, '누적 장비 수:', data.equipments);
+        }
+      } else if (city === selectedCity && locationData.has(town)) {
+        const data = locationData.get(town)!;
+        data.customers++;
+        data.equipments += equipmentCount;
+        console.log('읍/면/동 집계:', town, '누적 장비 수:', data.equipments);
+      }
+    });
+
+    // 최종 집계 결과 출력
+    console.log('최종 집계 결과:', Array.from(locationData.entries()));
+
+    let sortedLocations: [string, { customers: number; equipments: number }][];
+    
+    if (selectedCity === '전체') {
+      // 전체 지역일 때는 CITIES 배열의 순서대로 정렬
+      sortedLocations = CITIES.map(city => [
+        city,
+        locationData.get(city) || { customers: 0, equipments: 0 }
+      ]);
+    } else {
+      // 특정 시/군이 선택된 경우, 해당 지역의 읍/면/동 순서대로 정렬
+      const selectedRegions = REGIONS[selectedCity as keyof typeof REGIONS];
+      if (selectedRegions) {
+        sortedLocations = selectedRegions.map(region => [
+          region,
+          locationData.get(region) || { customers: 0, equipments: 0 }
+        ]);
+      } else {
+        sortedLocations = Array.from(locationData.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]));
+      }
+    }
+
+    setChartData({
+      labels: sortedLocations.map(([location]) => location),
+      datasets: [
+        {
+          label: '고객 수',
+          data: sortedLocations.map(([, data]) => data.customers),
+          backgroundColor: 'rgba(53, 162, 235, 0.5)',
+          borderColor: 'rgba(53, 162, 235, 1)',
+          borderWidth: 1,
+          order: 2
+        },
+        {
+          label: '장비 수',
+          data: sortedLocations.map(([, data]) => data.equipments),
+          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+          order: 1
+        }
+      ]
+    });
+  }, [farmers, selectedCity]);
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: `${selectedCity} 지역 통계`,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1
+        }
+      }
+    }
+  };
+
   if (error) {
     return <div className="text-center py-10 text-red-500">{error}</div>;
   }
@@ -547,60 +845,73 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
 
   return (
     <div className="container mx-auto p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* 엑셀 업로드 버튼 */}
-          <div className="relative">
-            <input
-              type="file"
-              accept=".xlsx, .xls"
-              onChange={handleExcelUpload}
-              className="hidden"
-              id="excel-upload"
-            />
-            <label
-              htmlFor="excel-upload"
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer"
-            >
-              <FaFileExcel />
-              엑셀 업로드
-            </label>
-            {/* 업로드 상태 표시 */}
-            {uploadStatus.status !== 'idle' && (
-              <div className={`absolute top-full left-0 mt-2 p-2 rounded shadow-lg w-64 ${
-                uploadStatus.status === 'processing' ? 'bg-blue-100' :
-                uploadStatus.status === 'success' ? 'bg-green-100' :
-                'bg-red-100'
-              }`}>
-                <p className={`text-sm ${
-                  uploadStatus.status === 'processing' ? 'text-blue-700' :
-                  uploadStatus.status === 'success' ? 'text-green-700' :
-                  'text-red-700'
-                }`}>
-                  {uploadStatus.message}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* 템플릿 다운로드 버튼 */}
-          <button
-            onClick={handleTemplateDownload}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-          >
-            <FaFileExcel />
-            템플릿 다운로드
-          </button>
-
-          {/* 엑셀 다운로드 버튼 */}
-          <button
-            onClick={handleExcelDownload}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            <FaFileExcel />
-            엑셀 다운로드
-          </button>
+      {/* 통계 섹션 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="p-6 bg-blue-100 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2 text-blue-900">총 고객수</h3>
+          <p className="text-3xl font-bold text-blue-600">{farmers.length}명</p>
         </div>
+        <div className="p-6 bg-green-100 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2 text-green-900">총 농기계수</h3>
+          <p className="text-3xl font-bold text-green-600">
+            {farmers.reduce((acc, farmer) => acc + (farmer.equipments?.length || 0), 0)}대
+          </p>
+        </div>
+      </div>
+
+      {/* 엑셀 관련 버튼들 */}
+      <div className="mb-4 flex items-center gap-4">
+        {/* 엑셀 업로드 버튼 */}
+        <div className="relative">
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            onChange={handleExcelUpload}
+            className="hidden"
+            id="excel-upload"
+          />
+          <label
+            htmlFor="excel-upload"
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer"
+          >
+            <FaFileExcel />
+            엑셀 업로드
+          </label>
+          {/* 업로드 상태 표시 */}
+          {uploadStatus.status !== 'idle' && (
+            <div className={`absolute top-full left-0 mt-2 p-2 rounded shadow-lg w-64 ${
+              uploadStatus.status === 'processing' ? 'bg-blue-100' :
+              uploadStatus.status === 'success' ? 'bg-green-100' :
+              'bg-red-100'
+            }`}>
+              <p className={`text-sm ${
+                uploadStatus.status === 'processing' ? 'text-blue-700' :
+                uploadStatus.status === 'success' ? 'text-green-700' :
+                'text-red-700'
+              }`}>
+                {uploadStatus.message}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* 템플릿 다운로드 버튼 */}
+        <button
+          onClick={handleTemplateDownload}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+        >
+          <FaFileExcel />
+          템플릿 다운로드
+        </button>
+
+        {/* 엑셀 다운로드 버튼 */}
+        <button
+          onClick={handleExcelDownload}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          <FaFileExcel />
+          엑셀 다운로드
+        </button>
       </div>
 
       {/* 업로드 결과 표시 */}
@@ -657,17 +968,42 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         </div>
       )}
 
-      {/* 통계 섹션 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="p-6 bg-blue-100 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2 text-blue-900">총 고객수</h3>
-          <p className="text-3xl font-bold text-blue-600">{farmerCount}명</p>
+      {/* 차트 섹션 */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">지역별 통계</h1>
+          <select
+            value={selectedCity}
+            onChange={(e) => setSelectedCity(e.target.value)}
+            className="p-2 border rounded"
+          >
+            <option value="전체">전체 지역</option>
+            <option value="강진군">강진군</option>
+            <option value="고흥군">고흥군</option>
+            <option value="곡성군">곡성군</option>
+            <option value="광양시">광양시</option>
+            <option value="구례군">구례군</option>
+            <option value="나주시">나주시</option>
+            <option value="담양군">담양군</option>
+            <option value="목포시">목포시</option>
+            <option value="무안군">무안군</option>
+            <option value="보성군">보성군</option>
+            <option value="순천시">순천시</option>
+            <option value="신안군">신안군</option>
+            <option value="여수시">여수시</option>
+            <option value="영광군">영광군</option>
+            <option value="영암군">영암군</option>
+            <option value="완도군">완도군</option>
+            <option value="장성군">장성군</option>
+            <option value="장흥군">장흥군</option>
+            <option value="진도군">진도군</option>
+            <option value="함평군">함평군</option>
+            <option value="해남군">해남군</option>
+            <option value="화순군">화순군</option>
+          </select>
         </div>
-        <div className="p-6 bg-green-100 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2 text-green-900">총 농기계수</h3>
-          <p className="text-3xl font-bold text-green-600">
-            {farmers.reduce((acc, farmer) => acc + (farmer.equipments?.length || 0), 0)}대
-          </p>
+        <div className="h-[600px]">
+          <Bar options={options} data={chartData} />
         </div>
       </div>
     </div>
