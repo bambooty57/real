@@ -2,45 +2,34 @@ export interface Equipment {
   id: string
   type: string
   manufacturer: string
-  model?: string
-  year?: string
-  usageHours?: string
-  rating?: string
-  memo?: string
-  forSale?: boolean
-  forPurchase?: boolean
-  saleType?: 'new' | 'used'
+  model: string
+  year: string
+  usageHours: string
+  rating: string
+  images?: string[]
+  attachments: {
+    loader?: string
+    rotary?: string
+    frontWheel?: string
+    rearWheel?: string
+    loaderModel?: string
+    rotaryModel?: string
+    frontWheelModel?: string
+    rearWheelModel?: string
+    loaderRating?: string
+    rotaryRating?: string
+    frontWheelRating?: string
+    rearWheelRating?: string
+    rows?: string
+    tonnage?: string
+  }
+  saleType?: 'new' | 'used' | null
+  tradeType?: string
+  saleStatus?: string
+  purchaseStatus?: string
   desiredPrice?: string
   purchasePrice?: string
-  saleStatus?: string
-  saleDate?: string
-  purchaseStatus?: string
-  purchaseDate?: string
-  images?: string[]
-  attachments?: {
-    loader?: string
-    loaderModel?: string
-    loaderRating?: string
-    loaderImages?: string[]
-    rotary?: string
-    rotaryModel?: string
-    rotaryRating?: string
-    rotaryImages?: string[]
-    frontWheel?: string
-    frontWheelModel?: string
-    frontWheelRating?: string
-    frontWheelImages?: string[]
-    rearWheel?: string
-    rearWheelModel?: string
-    rearWheelRating?: string
-    rearWheelImages?: string[]
-    rows?: string
-    rowsModel?: string
-    rowsRating?: string
-    tonnage?: string
-    tonnageModel?: string
-    tonnageRating?: string
-  }
+  memo?: string
 }
 
 export interface AttachmentImages {
@@ -79,22 +68,38 @@ export interface FarmingTypes {
 }
 
 export interface Farmer {
-  id: string
+  id?: string
   name: string
   businessName?: string
-  companyName?: string
   zipCode: string
   roadAddress: string
   jibunAddress: string
   addressDetail?: string
+  canReceiveMail: boolean
   phone: string
   ageGroup: string
   memo?: string
-  canReceiveMail: boolean
-  mainCrop: MainCrop
+  farmerImages: string[]
+  mainImages: string[]
+  attachmentImages: {
+    loader: string[]
+    rotary: string[]
+    frontWheel: string[]
+    rearWheel: string[]
+  }
+  mainCrop: {
+    rice: boolean
+    barley: boolean
+    hanwoo: boolean
+    soybean: boolean
+    sweetPotato: boolean
+    persimmon: boolean
+    pear: boolean
+    plum: boolean
+    sorghum: boolean
+    goat: boolean
+    other: boolean
+  }
   farmingTypes: FarmingTypes
   equipments: Equipment[]
-  farmerImages?: string[]
-  mainImages?: string[]
-  attachmentImages?: AttachmentImages
 } 
