@@ -9,7 +9,13 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { storage } from '@/lib/firebase'
 import { v4 as uuidv4 } from 'uuid'
 
-export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }) {
+interface Props {
+  mode?: string;
+  farmerId?: string;
+  initialData?: any;
+}
+
+export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }: Props) {
   const router = useRouter()
   const [formData, setFormData] = useState(() => {
     if (initialData) {
