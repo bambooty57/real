@@ -4,7 +4,6 @@ import Navigation from '@/components/Navigation'
 import Script from 'next/script'
 import { getServerSession } from 'next-auth'
 import SessionProvider from './components/SessionProvider'
-import { authOptions } from './api/auth/[...nextauth]/route'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,7 +17,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession()
 
   return (
     <html lang="ko">
