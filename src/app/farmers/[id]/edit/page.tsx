@@ -1,12 +1,14 @@
-import { use } from 'react';
 import EditFarmerClient from './EditFarmerClient';
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: {
+    id: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export default function EditFarmerPage({ params }: Props) {
-  const { id: farmerId } = use(params);
+  const farmerId = params.id;
   
   return (
     <div>
