@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -163,395 +163,222 @@ const getRatingStars = (rating: string) => {
   );
 };
 
-interface Props {
-  farmerId: string;
+interface FarmerDetailClientProps {
+  farmerId: string
 }
 
-export default function FarmerDetailClient({ farmerId }: Props) {
+export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps) {
   const [farmer, setFarmer] = useState<Farmer | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'farmer' | 'equipment' | 'attachment'>('farmer')
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    const fetchFarmer = async () => {
+    async function fetchFarmerData() {
       try {
         const docRef = doc(db, 'farmers', farmerId)
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
-          setFarmer({
-            id: docSnap.id,
-            ...docSnap.data()
-          } as Farmer)
+          setFarmer({ id: docSnap.id, ...docSnap.data() } as Farmer)
         } else {
-          console.log('No such document!')
+          setError('농민 정보를 찾을 수 없습니다.')
         }
-      } catch (error) {
-        console.error('Error fetching farmer:', error)
+      } catch (err) {
+        setError('데이터를 불러오는 중 오류가 발생했습니다.')
+        console.error('Error fetching farmer data:', err)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchFarmer()
+    fetchFarmerData()
   }, [farmerId])
 
-  const getActiveImages = () => {
-    if (!farmer) return []
+  const handleDelete = async () => {
+    if (!window.confirm('정말로 이 농민 정보를 삭제하시겠습니까?')) {
+      return
+    }
 
-    switch (activeTab) {
-      case 'farmer':
-        return farmer.farmerImages || []
-      case 'equipment':
-        return farmer.equipments.flatMap(equipment => equipment.images || [])
-      case 'attachment':
-        if (!farmer.attachmentImages) return []
-        return Object.entries(farmer.attachmentImages).flatMap(([_, images]) => images || [])
-      default:
-        return []
+    try {
+      await deleteDoc(doc(db, 'farmers', farmerId))
+      router.push('/')
+    } catch (error) {
+      console.error('Error deleting farmer:', error)
+      alert('삭제 중 오류가 발생했습니다.')
     }
   }
 
-  const getAttachmentInfo = (equipment: Equipment) => {
-    const attachments = equipment.attachments || {};
-    const result = [];
-
-    // 로더
-    if (attachments.loader) {
-      result.push({
-        name: '로더',
-        manufacturer: attachments.loader,
-        model: attachments.loaderModel,
-        rating: attachments.loaderRating
-      });
-    }
-
-    // 로터리
-    if (attachments.rotary) {
-      result.push({
-        name: '로터리',
-        manufacturer: attachments.rotary,
-        model: attachments.rotaryModel,
-        rating: attachments.rotaryRating
-      });
-    }
-
-    // 전륜
-    if (attachments.frontWheel) {
-      result.push({
-        name: '전륜',
-        manufacturer: attachments.frontWheel,
-        model: attachments.frontWheelModel,
-        rating: attachments.frontWheelRating
-      });
-    }
-
-    // 후륜
-    if (attachments.rearWheel) {
-      result.push({
-        name: '후륜',
-        manufacturer: attachments.rearWheel,
-        model: attachments.rearWheelModel,
-        rating: attachments.rearWheelRating
-      });
-    }
-
-    return result;
+  if (loading) {
+    return <div>데이터를 불러오는 중...</div>
   }
 
-  // 농기계 목록 섹션
-  const renderEquipmentList = () => {
-    if (!farmer.equipments || farmer.equipments.length === 0) {
-      return <p className="text-gray-500">보유 농기계가 없습니다.</p>;
-    }
+  if (error) {
+    return <div className="text-red-500">{error}</div>
+  }
 
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {farmer.equipments.map((equipment, index) => {
-          const equipmentType = Object.entries(equipmentTypeMap).find(([code, _]) => code === equipment.type)?.[1] || equipment.type;
-          const manufacturer = manufacturerMap[equipment.manufacturer] || equipment.manufacturer;
-          const attachmentInfo = getAttachmentInfo(equipment);
-          
-          return (
-            <div key={index} className="border rounded-lg p-4 bg-white shadow-sm">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-semibold">{equipmentType}</h3>
-                  <p className="text-sm text-gray-600">{manufacturer} {equipment.model}</p>
-                </div>
-                <div className="flex gap-1">
-                  {equipment.tradeType === 'sale' && (
-                    <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                      판매
-                    </span>
-                  )}
-                  {equipment.tradeType === 'purchase' && (
-                    <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
-                      구매
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1 text-sm">
-                <p>
-                  <span className="font-medium">연식:</span> {equipment.year}
-                </p>
-                <p>
-                  <span className="font-medium">사용시간:</span> {equipment.usageHours}시간
-                </p>
-                <div>
-                  <span className="font-medium">상태:</span> {getRatingStars(equipment.rating || '0')}
-                </div>
-                {equipment.tradeType === 'sale' && (
-                  <>
-                    <p>
-                      <span className="font-medium">판매가:</span> {Number(equipment.desiredPrice || 0).toLocaleString()}만원
-                    </p>
-                    <p>
-                      <span className="font-medium">진행상태:</span> {equipment.tradeStatus || '상담 전'}
-                    </p>
-                  </>
-                )}
-                {equipment.tradeType === 'purchase' && (
-                  <>
-                    <p>
-                      <span className="font-medium">구매희망가:</span> {Number(equipment.purchasePrice || 0).toLocaleString()}만원
-                    </p>
-                    <p>
-                      <span className="font-medium">진행상태:</span> {equipment.tradeStatus || '상담 전'}
-                    </p>
-                  </>
-                )}
-                
-                {/* 부착작업기 정보 */}
-                {attachmentInfo.length > 0 && (
-                  <div className="mt-3 border-t pt-3">
-                    <p className="font-medium mb-2">부착작업기</p>
-                    <div className="space-y-2">
-                      {attachmentInfo.map((attachment, idx) => (
-                        <div key={idx} className="bg-gray-50 p-2 rounded">
-                          <p className="font-medium text-gray-700">{attachment.name}</p>
-                          <div className="ml-2">
-                            <p>제조사: {manufacturerMap[attachment.manufacturer] || attachment.manufacturer}</p>
-                            {attachment.model && <p>모델: {attachment.model}</p>}
-                            {attachment.rating && (
-                              <div className="flex items-center">
-                                <span>상태: </span>
-                                {getRatingStars(attachment.rating)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 메모 정보 */}
-                {equipment.memo && (
-                  <div className="mt-3 border-t pt-3">
-                    <p className="font-medium">메모</p>
-                    <p className="text-gray-600 whitespace-pre-wrap">{equipment.memo}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  if (loading) return (
-    <div className="p-8">
-      <div className="animate-pulse text-center">데이터를 불러오는 중...</div>
-    </div>
-  )
-
-  if (!farmer) return (
-    <div className="p-8">
-      <div className="text-center text-red-500">농민 정보를 찾을 수 없습니다.</div>
-    </div>
-  )
-
-  const activeImages = getActiveImages()
+  if (!farmer) {
+    return <div>농민 정보를 찾을 수 없습니다.</div>
+  }
 
   return (
-    <div className="container mx-auto p-4 space-y-8">
-      {/* 상단 네비게이션 */}
-      <div className="flex justify-end mb-6 print:hidden">
-        <div className="flex gap-2">
-          <button
-            onClick={() => router.back()}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            목록
-          </button>
+    <div className="max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">{farmer.name} 상세 정보</h1>
+        <div className="space-x-2">
           <Link
-            href={`/farmers/${farmer.id}/edit`}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            href={`/farmers/${farmerId}/edit`}
+            className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             수정
           </Link>
           <button
-            onClick={() => window.print()}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            onClick={handleDelete}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
           >
-            인쇄
+            삭제
           </button>
         </div>
       </div>
 
-      {/* 기본 정보 섹션 */}
-      <section className="bg-white rounded-lg shadow p-6 print:shadow-none print:p-0 print:mt-[1cm]">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{farmer.name}</h1>
-            {farmer.businessName && (
-              <span className="text-gray-600">({farmer.businessName})</span>
-            )}
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">기본 정보</h2>
+        <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <dt className="text-gray-600">이름</dt>
+            <dd className="font-medium">{farmer.name}</dd>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">연락처:</span>
-                <a 
-                  href={`tel:${farmer.phone}`}
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  {farmer.phone}
-                </a>
-              </div>
-              <div>
-                <span className="font-medium">연령대:</span>
-                <span className="ml-2">{farmer.ageGroup}</span>
-              </div>
-              <div>
-                <span className="font-medium">영농형태:</span>
-                <span className="ml-2">{getFarmingTypeDisplay(farmer.farmingTypes)}</span>
-              </div>
-              <div>
-                <span className="font-medium">주작물:</span>
-                <span className="ml-2">{getMainCropDisplay(farmer.mainCrop)}</span>
-              </div>
-              {farmer.memo && (
-                <div>
-                  <span className="font-medium">메모:</span>
-                  <span className="ml-2 whitespace-pre-wrap">{farmer.memo}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              {farmer.roadAddress && (
-                <div>
-                  <span className="font-medium">도로명:</span>
-                  <a 
-                    href={`https://map.kakao.com/link/search/${farmer.roadAddress}${farmer.addressDetail ? ` ${farmer.addressDetail}` : ''}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-2 text-blue-600 hover:text-blue-800"
-                  >
-                    {farmer.roadAddress}
-                    {farmer.addressDetail && <span className="ml-1">({farmer.addressDetail})</span>}
-                  </a>
-                </div>
-              )}
-              {farmer.jibunAddress && (
-                <div>
-                  <span className="font-medium">지번:</span>
-                  <a 
-                    href={`https://map.kakao.com/link/search/${farmer.jibunAddress}${farmer.addressDetail ? ` ${farmer.addressDetail}` : ''}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-2 text-blue-600 hover:text-blue-800"
-                  >
-                    {farmer.jibunAddress}
-                    {farmer.addressDetail && <span className="ml-1">({farmer.addressDetail})</span>}
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 농기계 정보 섹션 */}
-      <section className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">보유 농기계</h2>
-        {renderEquipmentList()}
-      </section>
-
-      {/* 이미지 갤러리 섹션 */}
-      <section className="bg-white rounded-lg shadow p-6 print:break-before-page">
-        <h2 className="text-xl font-bold mb-4">이미지 갤러리</h2>
-        
-        {/* 인쇄시 보이는 모든 이미지 */}
-        <div className="space-y-8">
-          {/* 농민 사진 */}
-          {farmer.farmerImages && farmer.farmerImages.length > 0 && (
+          {farmer.businessName && (
             <div>
-              <h3 className="text-lg font-bold mb-4">농민 사진</h3>
-              <div className="grid grid-cols-4 gap-4">
-                {farmer.farmerImages.map((url, index) => (
-                  <div key={index} className="aspect-square">
-                    <img
-                      src={url}
-                      alt={`농민 사진 ${index + 1}`}
-                      className="w-full h-full object-cover rounded"
-                    />
-                  </div>
-                ))}
-              </div>
+              <dt className="text-gray-600">상호명</dt>
+              <dd className="font-medium">{farmer.businessName}</dd>
             </div>
           )}
+          <div>
+            <dt className="text-gray-600">주소</dt>
+            <dd className="font-medium">
+              {farmer.roadAddress} {farmer.addressDetail}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-gray-600">우편수취</dt>
+            <dd className="font-medium">{farmer.canReceiveMail ? '가능' : '불가능'}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-600">전화번호</dt>
+            <dd className="font-medium">{farmer.phone}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-600">연령대</dt>
+            <dd className="font-medium">{farmer.ageGroup}</dd>
+          </div>
+        </dl>
+      </div>
 
-          {/* 농기계 사진 */}
-          {farmer.equipments.map((equipment, equipIndex) => 
-            equipment.images && equipment.images.length > 0 && (
-              <div key={equipIndex}>
-                <h3 className="text-lg font-bold mb-4">
-                  {getKoreanEquipmentType(equipment.type)} ({getKoreanManufacturer(equipment.manufacturer || '')}) 사진
-                </h3>
-                <div className="grid grid-cols-4 gap-4">
-                  {equipment.images.map((url: string, imgIndex: number) => (
-                    <div key={imgIndex} className="aspect-square">
-                      <img
-                        src={url}
-                        alt={`${getKoreanEquipmentType(equipment.type)} 사진 ${imgIndex + 1}`}
-                        className="w-full h-full object-cover rounded"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          )}
-
-          {/* 작업기 사진 */}
-          {farmer.attachmentImages && Object.entries(farmer.attachmentImages).map(([key, images]) =>
-            images && images.length > 0 && (
-              <div key={key}>
-                <h3 className="text-lg font-bold mb-4">{attachmentDisplayNames[key] || key} 사진</h3>
-                <div className="grid grid-cols-4 gap-4">
-                  {images.map((url: string, index: number) => (
-                    <div key={index} className="aspect-square">
-                      <img
-                        src={url}
-                        alt={`${attachmentDisplayNames[key] || key} 사진 ${index + 1}`}
-                        className="w-full h-full object-cover rounded"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          )}
+      {farmer.memo && (
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">메모</h2>
+          <p className="whitespace-pre-wrap">{farmer.memo}</p>
         </div>
-      </section>
+      )}
+
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">농업 형태</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {Object.entries(farmer.farmingTypes).map(([key, value]) => {
+            if (!value) return null;
+            const labels = {
+              paddyFarming: '논농사',
+              fieldFarming: '밭농사',
+              orchard: '과수원',
+              livestock: '축산업',
+              forageCrop: '조사료'
+            };
+            return (
+              <div key={key} className="flex items-center">
+                <span className="text-blue-600">✓</span>
+                <span className="ml-2">{labels[key as keyof typeof labels]}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">주요 작물</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {Object.entries(farmer.mainCrop).map(([key, value]) => {
+            if (!value) return null;
+            const labels = {
+              rice: '벼',
+              barley: '보리',
+              hanwoo: '한우',
+              soybean: '콩',
+              sweetPotato: '고구마',
+              persimmon: '감',
+              pear: '배',
+              plum: '자두',
+              sorghum: '수수',
+              goat: '염소',
+              other: '기타'
+            };
+            return (
+              <div key={key} className="flex items-center">
+                <span className="text-blue-600">✓</span>
+                <span className="ml-2">{labels[key as keyof typeof labels]}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {farmer.equipments.length > 0 && (
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">보유 농기계</h2>
+          <div className="space-y-6">
+            {farmer.equipments.map((equipment, index) => (
+              <div key={equipment.id} className="border-t pt-4 first:border-t-0 first:pt-0">
+                <h3 className="font-semibold mb-2">농기계 #{index + 1}</h3>
+                <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <dt className="text-gray-600">기종</dt>
+                    <dd className="font-medium">{equipment.type}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-600">제조사</dt>
+                    <dd className="font-medium">{equipment.manufacturer}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-600">모델명</dt>
+                    <dd className="font-medium">{equipment.model}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-600">연식</dt>
+                    <dd className="font-medium">{equipment.year}년</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-600">사용시간</dt>
+                    <dd className="font-medium">{equipment.usageHours}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-600">상태등급</dt>
+                    <dd className="font-medium">
+                      {'★'.repeat(Number(equipment.rating))}
+                      {'☆'.repeat(5 - Number(equipment.rating))}
+                    </dd>
+                  </div>
+                  {equipment.memo && (
+                    <div className="col-span-2">
+                      <dt className="text-gray-600">메모</dt>
+                      <dd className="font-medium whitespace-pre-wrap">{equipment.memo}</dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 } 
