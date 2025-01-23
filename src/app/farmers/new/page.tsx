@@ -9,16 +9,14 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { storage } from '@/lib/firebase'
 import { v4 as uuidv4 } from 'uuid'
 
-interface PageProps {
-  params: Promise<{}>;
-  searchParams: Promise<{}>;
+interface Props {
+  mode?: string;
+  farmerId?: string;
+  initialData?: any;
 }
 
-export default function NewFarmer({ params, searchParams }: PageProps) {
+function NewFarmer({ mode = 'new', farmerId = '', initialData = null }: Props) {
   const router = useRouter()
-  const mode = 'new'
-  const farmerId = ''
-  const initialData = null
   
   const [formData, setFormData] = useState(() => {
     if (initialData) {
@@ -1331,4 +1329,15 @@ export default function NewFarmer({ params, searchParams }: PageProps) {
       </form>
     </div>
   )
-} 
+}
+
+interface PageProps {
+  params: Promise<{}>;
+  searchParams: Promise<{}>;
+}
+
+export default function NewFarmerPage({ params, searchParams }: PageProps) {
+  return <NewFarmer />;
+}
+
+export { NewFarmer }; 

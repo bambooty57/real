@@ -1,8 +1,8 @@
 'use client';
 
-import EditFarmerClient from './EditFarmerClient';
 import { Suspense } from 'react';
 import { use } from 'react';
+import { NewFarmer } from '../../new/page';
 
 interface PageProps {
   params: Promise<{
@@ -17,7 +17,7 @@ export default function EditFarmerPage({ params }: PageProps) {
     <div>
       <h1 className="text-2xl font-bold mb-6">농민 정보 수정</h1>
       <Suspense fallback={<div>Loading...</div>}>
-        <EditFarmerClient farmerId={id} />
+        <NewFarmer mode="edit" farmerId={id} />
       </Suspense>
     </div>
   );
