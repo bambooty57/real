@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import NewFarmer from '../../new/page'
+import NewFarmer from '../../new/NewFarmer'
 
 const defaultFormData = {
   name: '',
@@ -57,10 +57,11 @@ interface EditFarmerClientProps {
 
 export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
   const [initialData, setInitialData] = useState<any>(defaultFormData)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchFarmerData() {
       try {
         const docRef = doc(db, 'farmers', farmerId)
         const docSnap = await getDoc(docRef)
@@ -82,27 +83,26 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
               }
             }))
           })
+        } else {
+          setError('농민 정보를 찾을 수 없습니다.')
         }
-      } catch (error) {
-        console.error('Error fetching farmer data:', error)
+      } catch (err) {
+        setError('데이터를 불러오는 중 오류가 발생했습니다.')
+        console.error('Error fetching farmer data:', err)
       } finally {
-        setIsLoading(false)
+        setLoading(false)
       }
     }
 
-    fetchData()
+    fetchFarmerData()
   }, [farmerId])
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    )
+  if (loading) {
+    return <div>데이터를 불러오는 중...</div>
   }
 
-  if (!initialData) {
-    return <div>농민 정보를 찾을 수 없습니다.</div>
+  if (error) {
+    return <div className="text-red-500">{error}</div>
   }
 
   return <NewFarmer mode="edit" farmerId={farmerId} initialData={initialData} />
