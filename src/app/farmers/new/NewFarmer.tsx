@@ -189,7 +189,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           </div>
 
           {/* 주소 */}
-          <div>
+          <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">주소 *</label>
             <AddressSearch
               onComplete={(data: { zonecode: string; roadAddress: string; jibunAddress?: string; }) => {
@@ -201,6 +201,42 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                 }))
               }}
             />
+            
+            {/* 우편번호 */}
+            <div>
+              <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700">우편번호</label>
+              <input
+                type="text"
+                id="zipCode"
+                value={formData.zipCode}
+                readOnly
+                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+              />
+            </div>
+
+            {/* 도로명 주소 */}
+            <div>
+              <label htmlFor="roadAddress" className="block text-sm font-medium text-gray-700">도로명 주소</label>
+              <input
+                type="text"
+                id="roadAddress"
+                value={formData.roadAddress}
+                readOnly
+                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+              />
+            </div>
+
+            {/* 지번 주소 */}
+            <div>
+              <label htmlFor="jibunAddress" className="block text-sm font-medium text-gray-700">지번 주소</label>
+              <input
+                type="text"
+                id="jibunAddress"
+                value={formData.jibunAddress}
+                readOnly
+                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+              />
+            </div>
           </div>
 
           {/* 상세주소 */}
@@ -231,14 +267,28 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           {/* 전화번호 */}
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">전화번호 *</label>
-            <input
-              type="tel"
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, phone: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
+            <div className="flex items-center">
+              <span className="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                010
+              </span>
+              <input
+                type="text"
+                id="phone"
+                value={formData.phone.replace(/^010/, '')}
+                onChange={(e) => {
+                  let value = e.target.value.replace(/[^0-9]/g, '');
+                  if (value.length > 8) value = value.slice(0, 8);
+                  if (value.length >= 4) {
+                    value = value.slice(0, 4) + '-' + value.slice(4);
+                  }
+                  setFormData((prev: FormData) => ({ ...prev, phone: '010' + value }));
+                }}
+                placeholder="0000-0000"
+                maxLength={9}
+                className="mt-1 block w-full rounded-r-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
           </div>
 
           {/* 연령대 */}
@@ -342,6 +392,486 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               rows={4}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
+          </div>
+        </div>
+
+        {/* 농민 이미지 */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">농민 이미지</h2>
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                const uploadedUrls = await Promise.all(
+                  files.map(async (file) => {
+                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return getDownloadURL(snapshot.ref);
+                  })
+                );
+                setFormData((prev: FormData) => ({
+                  ...prev,
+                  farmerImages: [...prev.farmerImages, ...uploadedUrls]
+                }));
+              }}
+              className="mt-1 block w-full"
+            />
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {formData.farmerImages.map((url, index) => (
+                <div key={url} className="relative">
+                  <img src={url} alt={`농민 이미지 ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const imageRef = ref(storage, url);
+                        await deleteObject(imageRef);
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          farmerImages: prev.farmerImages.filter(u => u !== url)
+                        }));
+                      } catch (error) {
+                        console.error('Error deleting image:', error);
+                      }
+                    }}
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 메인 이미지 */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">메인 이미지</h2>
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                const uploadedUrls = await Promise.all(
+                  files.map(async (file) => {
+                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return getDownloadURL(snapshot.ref);
+                  })
+                );
+                setFormData((prev: FormData) => ({
+                  ...prev,
+                  mainImages: [...prev.mainImages, ...uploadedUrls]
+                }));
+              }}
+              className="mt-1 block w-full"
+            />
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {formData.mainImages.map((url, index) => (
+                <div key={url} className="relative">
+                  <img src={url} alt={`메인 이미지 ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const imageRef = ref(storage, url);
+                        await deleteObject(imageRef);
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          mainImages: prev.mainImages.filter(u => u !== url)
+                        }));
+                      } catch (error) {
+                        console.error('Error deleting image:', error);
+                      }
+                    }}
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 농기계 정보 */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">농기계 정보</h2>
+          
+          {/* 농기계 목록 */}
+          <div className="space-y-4">
+            {formData.equipments.map((equipment, index) => (
+              <div key={equipment.id} className="p-4 border rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">농기계 {index + 1}</h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.filter(eq => eq.id !== equipment.id)
+                      }))
+                    }}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    삭제
+                  </button>
+                </div>
+
+                {/* 농기계 종류 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">농기계 종류</label>
+                  <select
+                    value={equipment.type}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, type: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="트랙터">트랙터</option>
+                    <option value="콤바인">콤바인</option>
+                    <option value="이앙기">이앙기</option>
+                    <option value="관리기">관리기</option>
+                    <option value="건조기">건조기</option>
+                    <option value="기타">기타</option>
+                  </select>
+                </div>
+
+                {/* 제조사 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">제조사</label>
+                  <select
+                    value={equipment.manufacturer}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, manufacturer: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="대동">대동</option>
+                    <option value="국제">국제</option>
+                    <option value="LS">LS</option>
+                    <option value="얀마">얀마</option>
+                    <option value="구보다">구보다</option>
+                    <option value="기타">기타</option>
+                  </select>
+                </div>
+
+                {/* 마력 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">마력</label>
+                  <input
+                    type="number"
+                    value={equipment.horsepower}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, horsepower: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="마력을 입력하세요"
+                  />
+                </div>
+
+                {/* 연식 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">연식</label>
+                  <input
+                    type="number"
+                    value={equipment.year}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, year: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="연식을 입력하세요"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 농기계 추가 버튼 */}
+          <button
+            type="button"
+            onClick={() => {
+              setFormData((prev: FormData) => ({
+                ...prev,
+                equipments: [
+                  ...prev.equipments,
+                  {
+                    id: uuidv4(),
+                    type: '',
+                    manufacturer: '',
+                    horsepower: '',
+                    year: ''
+                  }
+                ]
+              }))
+            }}
+            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            농기계 추가
+          </button>
+        </div>
+
+        {/* 부착작업기 이미지 */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">부착작업기 이미지</h2>
+          
+          {/* 로더 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">로더</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                const uploadedUrls = await Promise.all(
+                  files.map(async (file) => {
+                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return getDownloadURL(snapshot.ref);
+                  })
+                );
+                setFormData((prev: FormData) => ({
+                  ...prev,
+                  attachmentImages: {
+                    ...prev.attachmentImages,
+                    loader: [...prev.attachmentImages.loader, ...uploadedUrls]
+                  }
+                }));
+              }}
+              className="mt-1 block w-full"
+            />
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {formData.attachmentImages.loader.map((url, index) => (
+                <div key={url} className="relative">
+                  <img src={url} alt={`로더 ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const imageRef = ref(storage, url);
+                        await deleteObject(imageRef);
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          attachmentImages: {
+                            ...prev.attachmentImages,
+                            loader: prev.attachmentImages.loader.filter(u => u !== url)
+                          }
+                        }));
+                      } catch (error) {
+                        console.error('Error deleting image:', error);
+                      }
+                    }}
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 로타리 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">로타리</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                const uploadedUrls = await Promise.all(
+                  files.map(async (file) => {
+                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return getDownloadURL(snapshot.ref);
+                  })
+                );
+                setFormData((prev: FormData) => ({
+                  ...prev,
+                  attachmentImages: {
+                    ...prev.attachmentImages,
+                    rotary: [...prev.attachmentImages.rotary, ...uploadedUrls]
+                  }
+                }));
+              }}
+              className="mt-1 block w-full"
+            />
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {formData.attachmentImages.rotary.map((url, index) => (
+                <div key={url} className="relative">
+                  <img src={url} alt={`로타리 ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const imageRef = ref(storage, url);
+                        await deleteObject(imageRef);
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          attachmentImages: {
+                            ...prev.attachmentImages,
+                            rotary: prev.attachmentImages.rotary.filter(u => u !== url)
+                          }
+                        }));
+                      } catch (error) {
+                        console.error('Error deleting image:', error);
+                      }
+                    }}
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 전륜 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">전륜</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                const uploadedUrls = await Promise.all(
+                  files.map(async (file) => {
+                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return getDownloadURL(snapshot.ref);
+                  })
+                );
+                setFormData((prev: FormData) => ({
+                  ...prev,
+                  attachmentImages: {
+                    ...prev.attachmentImages,
+                    frontWheel: [...prev.attachmentImages.frontWheel, ...uploadedUrls]
+                  }
+                }));
+              }}
+              className="mt-1 block w-full"
+            />
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {formData.attachmentImages.frontWheel.map((url, index) => (
+                <div key={url} className="relative">
+                  <img src={url} alt={`전륜 ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const imageRef = ref(storage, url);
+                        await deleteObject(imageRef);
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          attachmentImages: {
+                            ...prev.attachmentImages,
+                            frontWheel: prev.attachmentImages.frontWheel.filter(u => u !== url)
+                          }
+                        }));
+                      } catch (error) {
+                        console.error('Error deleting image:', error);
+                      }
+                    }}
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 후륜 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">후륜</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                const uploadedUrls = await Promise.all(
+                  files.map(async (file) => {
+                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return getDownloadURL(snapshot.ref);
+                  })
+                );
+                setFormData((prev: FormData) => ({
+                  ...prev,
+                  attachmentImages: {
+                    ...prev.attachmentImages,
+                    rearWheel: [...prev.attachmentImages.rearWheel, ...uploadedUrls]
+                  }
+                }));
+              }}
+              className="mt-1 block w-full"
+            />
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {formData.attachmentImages.rearWheel.map((url, index) => (
+                <div key={url} className="relative">
+                  <img src={url} alt={`후륜 ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const imageRef = ref(storage, url);
+                        await deleteObject(imageRef);
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          attachmentImages: {
+                            ...prev.attachmentImages,
+                            rearWheel: prev.attachmentImages.rearWheel.filter(u => u !== url)
+                          }
+                        }));
+                      } catch (error) {
+                        console.error('Error deleting image:', error);
+                      }
+                    }}
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
