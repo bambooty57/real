@@ -17,7 +17,7 @@ if (!admin.apps.length) {
       const decodedCredentials = Buffer.from(base64Credentials, 'base64').toString();
       serviceAccount = JSON.parse(decodedCredentials);
     } catch (error) {
-      throw new Error('Failed to decode or parse service account credentials: ' + error.message);
+      throw new Error('Failed to decode or parse service account credentials: ' + (error instanceof Error ? error.message : String(error)));
     }
 
     if (!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
