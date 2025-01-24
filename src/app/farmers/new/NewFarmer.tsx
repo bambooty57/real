@@ -192,12 +192,12 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           <div>
             <label className="block text-sm font-medium text-gray-700">주소 *</label>
             <AddressSearch
-              onComplete={(data) => {
+              onComplete={(data: { zonecode: string; roadAddress: string; jibunAddress?: string; }) => {
                 setFormData(prev => ({
                   ...prev,
                   zipCode: data.zonecode,
                   roadAddress: data.roadAddress,
-                  jibunAddress: data.jibunAddress,
+                  jibunAddress: data.jibunAddress || '',
                 }))
               }}
             />
