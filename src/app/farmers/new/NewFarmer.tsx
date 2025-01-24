@@ -118,15 +118,35 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     e.preventDefault()
     
     try {
+      // Firebase에 저장할 데이터 준비
+      const saveData = {
+        name: formData.name,
+        businessName: formData.businessName,
+        zipCode: formData.zipCode,
+        roadAddress: formData.roadAddress,
+        jibunAddress: formData.jibunAddress,
+        addressDetail: formData.addressDetail,
+        canReceiveMail: formData.canReceiveMail,
+        phone: formData.phone,
+        ageGroup: formData.ageGroup,
+        memo: formData.memo,
+        farmerImages: formData.farmerImages,
+        mainImages: formData.mainImages,
+        attachmentImages: formData.attachmentImages,
+        mainCrop: formData.mainCrop,
+        farmingTypes: formData.farmingTypes,
+        equipments: formData.equipments
+      }
+
       if (mode === 'edit' && farmerId) {
         // 수정 모드
         const docRef = doc(db, 'farmers', farmerId)
-        await updateDoc(docRef, formData)
+        await updateDoc(docRef, saveData)
         router.push('/farmers')  // 수정 후 목록 페이지로 이동
       } else {
         // 새로운 등록 모드
         const docRef = collection(db, 'farmers')
-        const newFarmerRef = await addDoc(docRef, formData)
+        const newFarmerRef = await addDoc(docRef, saveData)
         router.push(`/farmers/${newFarmerRef.id}`)  // 등록 후 상세 페이지로 이동
       }
     } catch (error) {
