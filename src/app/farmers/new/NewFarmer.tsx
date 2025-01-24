@@ -635,7 +635,36 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     type: '',
                     manufacturer: '',
                     horsepower: '',
-                    year: ''
+                    year: '',
+                    model: '',
+                    usageHours: '',
+                    rating: '',
+                    attachments: {
+                      loader: '',
+                      rotary: '',
+                      frontWheel: '',
+                      rearWheel: '',
+                      loaderModel: '',
+                      rotaryModel: '',
+                      frontWheelModel: '',
+                      rearWheelModel: '',
+                      loaderRating: '',
+                      rotaryRating: '',
+                      frontWheelRating: '',
+                      rearWheelRating: '',
+                      rows: '',
+                      tonnage: ''
+                    },
+                    images: [],
+                    saleType: null,
+                    tradeType: '',
+                    saleStatus: '',
+                    purchaseStatus: '',
+                    desiredPrice: '',
+                    purchasePrice: '',
+                    memo: '',
+                    forSale: false,
+                    forPurchase: false
                   }
                 ]
               }))
