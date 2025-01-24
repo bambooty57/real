@@ -577,6 +577,27 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   </select>
                 </div>
 
+                {/* 모델명 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">모델명</label>
+                  <input
+                    type="text"
+                    value={equipment.model}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, model: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="모델명을 입력하세요"
+                  />
+                </div>
+
                 {/* 마력 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">마력</label>
@@ -616,6 +637,158 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     }}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     placeholder="연식을 입력하세요"
+                  />
+                </div>
+
+                {/* 사용시간 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">사용시간</label>
+                  <input
+                    type="text"
+                    value={equipment.usageHours}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, usageHours: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="사용시간을 입력하세요"
+                  />
+                </div>
+
+                {/* 상태 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">상태</label>
+                  <select
+                    value={equipment.rating}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, rating: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="상">상</option>
+                    <option value="중">중</option>
+                    <option value="하">하</option>
+                  </select>
+                </div>
+
+                {/* 판매여부 */}
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={equipment.forSale}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, forSale: e.target.checked }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">판매</span>
+                  </label>
+                </div>
+
+                {/* 구매여부 */}
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={equipment.forPurchase}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, forPurchase: e.target.checked }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">구매</span>
+                  </label>
+                </div>
+
+                {/* 판매가격 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">판매가격</label>
+                  <input
+                    type="text"
+                    value={equipment.desiredPrice}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, desiredPrice: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="판매가격을 입력하세요"
+                  />
+                </div>
+
+                {/* 구매가격 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">구매가격</label>
+                  <input
+                    type="text"
+                    value={equipment.purchasePrice}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, purchasePrice: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="구매가격을 입력하세요"
+                  />
+                </div>
+
+                {/* 메모 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">메모</label>
+                  <textarea
+                    value={equipment.memo}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, memo: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="메모를 입력하세요"
                   />
                 </div>
               </div>
