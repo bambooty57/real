@@ -30,6 +30,8 @@ export interface Equipment {
   desiredPrice?: string
   purchasePrice?: string
   memo?: string
+  forSale?: boolean
+  forPurchase?: boolean
 }
 
 export interface AttachmentImages {
@@ -45,18 +47,17 @@ export interface AttachmentImages {
 }
 
 export interface MainCrop {
-  [key: string]: boolean;
-  rice?: boolean;
-  barley?: boolean;
-  hanwoo?: boolean;
-  soybean?: boolean;
-  sweetPotato?: boolean;
-  persimmon?: boolean;
-  pear?: boolean;
-  plum?: boolean;
-  sorghum?: boolean;
-  goat?: boolean;
-  other?: boolean;
+  rice: boolean;
+  barley: boolean;
+  hanwoo: boolean;
+  soybean: boolean;
+  sweetPotato: boolean;
+  persimmon: boolean;
+  pear: boolean;
+  plum: boolean;
+  sorghum: boolean;
+  goat: boolean;
+  other: boolean;
 }
 
 export interface FarmingTypes {

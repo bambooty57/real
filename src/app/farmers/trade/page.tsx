@@ -74,30 +74,29 @@ export default function TradePage() {
     'drone': '드론'
   };
 
-  // 제조사 매핑 수정
-  const manufacturerMap = {
-    'daedong': '대동',
-    'kukje': '국제',
-    'ls': 'LS',
-    'dongyang': '동양',
-    'asia': '아세아',
-    'yanmar': '얀마',
-    'iseki': '이세키',
-    'john_deere': '존디어',
-    'kubota': '구보다',
-    'fendt': '펜트',
-    'case': '케이스',
-    'new_holland': '뉴홀랜드',
-    'mf': 'MF',
-    'kumsung': '금성',
-    'fiat': '피아트',
-    'hyundai': '현대',
-    'doosan': '두산',
-    'volvo': '볼보',
-    'samsung': '삼성',
-    'daewoo': '대우',
-    'hitachi': '히타치',
-    'claas': '클라스'
+  // 제조사 매핑
+  const manufacturerMap: { [key: string]: string } = {
+    daedong: '대동',
+    kukje: '국제',
+    ls: '엘에스',
+    dongyang: '동양',
+    asia: '아시아',
+    yanmar: '얀마',
+    iseki: '이세키',
+    john_deere: '존디어',
+    kubota: '구보다',
+    fendt: '펜트',
+    case: '케이스',
+    new_holland: '뉴홀랜드',
+    mf: '엠에프',
+    deutz: '도이츠',
+    same: '세임',
+    landini: '란디니',
+    valtra: '발트라',
+    zetor: '제토',
+    kioti: '키오티',
+    tong_yang: '동양',
+    claas: '클라스'
   };
 
   // 제조사 한글명 변환 함수

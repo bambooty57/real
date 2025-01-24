@@ -1,7 +1,7 @@
 'use client';
 
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, collection, query, limit, getDocs } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import { GoogleAuthProvider } from 'firebase/auth';
@@ -36,8 +36,9 @@ export async function testFirebaseConnection() {
     }
     
     // 간단한 읽기 작업으로 연결 테스트
-    const testRef = db.collection('farmers').limit(1);
-    await testRef.get();
+    const testRef = collection(db, 'farmers');
+    const q = query(testRef, limit(1));
+    await getDocs(q);
     
     console.log('Firebase connection test successful');
     return true;

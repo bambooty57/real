@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Farmer, Equipment } from '@/types/farmer'
+import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
 
 interface AttachmentImages {
   loader?: string[]
@@ -19,131 +20,7 @@ interface AttachmentImages {
   rearWheel?: string[]
 }
 
-interface Equipment {
-  type: string
-  manufacturer?: string
-  model?: string
-  year?: string
-  usageHours?: string
-  rating?: string
-  memo?: string
-  attachments?: any
-  tradeType?: 'sale' | 'purchase'
-  desiredPrice?: string
-  purchasePrice?: string
-  tradeStatus?: string
-}
-
-// 농기계 타입 매핑
-const equipmentTypeMap: { [key: string]: string } = {
-  'tractor': '트랙터',
-  'combine': '콤바인',
-  'rice_transplanter': '이앙기',
-  'forklift': '지게차',
-  'excavator': '굴삭기',
-  'skid_loader': '스키로더',
-  'dryer': '건조기',
-  'silo': '싸일론',
-  'claas': '클라스',
-  'drone': '드론'
-}
-
-// 제조사 매핑
-const manufacturerMap: { [key: string]: string } = {
-  'daedong': '대동',
-  'kukje': '국제',
-  'ls': 'LS',
-  'dongyang': '동양',
-  'asia': '아세아',
-  'yanmar': '얀마',
-  'iseki': '이세키',
-  'john_deere': '존디어',
-  'kubota': '구보다',
-  'fendt': '펜트',
-  'case': '케이스',
-  'new_holland': '뉴홀랜드',
-  'mf': 'MF',
-  'kumsung': '금성',
-  'fiat': '피아트',
-  'hyundai': '현대',
-  'doosan': '두산',
-  'volvo': '볼보',
-  'samsung': '삼성',
-  'daewoo': '대우',
-  'hitachi': '히타치',
-  'claas': '클라스'
-}
-
-// 작업기 한글명 매핑
-const attachmentDisplayNames: { [key: string]: string } = {
-  loader: '로더',
-  rotary: '로타리',
-  frontWheel: '전륜',
-  rearWheel: '후륜'
-}
-
-// 작물 한글명 매핑
-const cropDisplayNames: { [key: string]: string } = {
-  rice: '벼',
-  sweetPotato: '고구마',
-  persimmon: '감',
-  barley: '보리',
-  other: '기타',
-  sorghum: '수수',
-  pear: '배',
-  soybean: '콩',
-  goat: '염소',
-  hanwoo: '한우',
-  plum: '자두'
-}
-
-// 영농형태 한글명 매핑
-const farmingTypeDisplayNames: { [key: string]: string } = {
-  fieldFarming: '밭농사',
-  forageCrop: '사료작물',
-  livestock: '축산',
-  orchard: '과수원',
-  paddyFarming: '논농사'
-}
-
-// 작물 표시 함수
-const getMainCropDisplay = (mainCrop: any): string => {
-  if (typeof mainCrop === 'string') return mainCrop
-  
-  if (typeof mainCrop === 'object') {
-    const crops = Object.entries(mainCrop)
-      .filter(([_, value]) => value === true)
-      .map(([key]) => cropDisplayNames[key] || key)
-    
-    return crops.join(', ') || '없음'
-  }
-  
-  return '없음'
-}
-
-// 한글 변환 함수
-const getKoreanEquipmentType = (type: string): string => {
-  return equipmentTypeMap[type.toLowerCase()] || type
-}
-
-const getKoreanManufacturer = (manufacturer: string): string => {
-  return manufacturerMap[manufacturer.toLowerCase()] || manufacturer
-}
-
-// 영농형태 표시 함수
-const getFarmingTypeDisplay = (farmingType: any): string => {
-  if (typeof farmingType === 'object') {
-    const types = Object.entries(farmingType)
-      .filter(([_, value]) => value === true)
-      .map(([key]) => farmingTypeDisplayNames[key] || key)
-    
-    return types.join(', ') || '없음'
-  }
-  
-  return '없음'
-}
-
-// 별점 표시 함수 추가
+// 별점 표시 함수
 const getRatingStars = (rating: string) => {
   const numRating = parseInt(rating);
   return (

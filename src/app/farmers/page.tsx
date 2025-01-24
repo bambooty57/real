@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore'
+import { collection, getDocs, doc, deleteDoc, query, where } from 'firebase/firestore'
 import { ref, deleteObject, listAll } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
 import Link from 'next/link'
 import { FaFileExcel } from 'react-icons/fa'
 import * as XLSX from 'xlsx-js-style'
+import { Farmer } from '@/types/farmer'
+import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
 
 interface AddressData {
   읍면동: string[];
@@ -178,64 +180,13 @@ interface AttachmentImages {
   rearWheel?: string[]
 }
 
-interface Farmer {
-  id: string
-  name: string
-  businessName?: string
-  roadAddress: string      // 도로명 주소
-  jibunAddress: string     // 지번 주소
-  addressDetail?: string   // 상세 주소
-  phone: string
-  mainCrop: string
-  ageGroup: string
-  equipments: Equipment[]
-  farmerImages?: string[]
-  attachmentImages?: AttachmentImages
-  memo?: string
+interface Filter {
+  name?: string
+  phone?: string
+  address?: string
   zipCode?: string
   canReceiveMail?: boolean
-}
-
-// 농기계 타입 매핑
-const equipmentTypeMap: { [key: string]: string } = {
-  'tractor': '트랙터',
-  'combine': '콤바인',
-  'rice_transplanter': '이앙기',
-  'forklift': '지게차',
-  'excavator': '굴삭기',
-  'skid_loader': '스키로더'
-}
-
-// 제조사 매핑
-const manufacturerMap: { [key: string]: string } = {
-  'john_deere': '존디어',
-  'kubota': '구보다',
-  'daedong': '대동',
-  'kukje': '국제',
-  'ls': '엘에스',
-  'yanmar': '얀마',
-  'newholland': '뉴홀랜드',
-  'mf': '엠에프',
-  'case': '케이스',
-  'hyundai': '현대',
-  'samsung': '삼성',
-  'volvo': '볼보',
-  'hitachi': '히타치',
-  'doosan': '두산',
-  'claas': '클라스',
-  'agrico': '아그리코',
-  'star': '스타',
-  'chevrolet': '시보레',
-  'valmet': '발메트'
-}
-
-// 한글 변환 함수
-const getKoreanEquipmentType = (type: string): string => {
-  return equipmentTypeMap[type.toLowerCase()] || type
-}
-
-const getKoreanManufacturer = (manufacturer: string): string => {
-  return manufacturerMap[manufacturer.toLowerCase()] || manufacturer
+  equipmentType?: string
 }
 
 export default function FarmerList() {
@@ -407,7 +358,7 @@ export default function FarmerList() {
     }
 
     // 주작물 필터링
-    if (filter.mainCrop && filter.mainCrop !== '전체' && farmer.mainCrop !== filter.mainCrop) {
+    if (filter.mainCrop && filter.mainCrop !== '전체' && !farmer.mainCrop[filter.mainCrop.toLowerCase() as keyof typeof farmer.mainCrop]) {
       return false;
     }
 
@@ -491,7 +442,7 @@ export default function FarmerList() {
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedFarmers(filteredFarmers.map(farmer => farmer.id))
+      setSelectedFarmers(filteredFarmers.filter(farmer => farmer.id).map(farmer => farmer.id as string))
     } else {
       setSelectedFarmers([])
     }
@@ -529,7 +480,7 @@ export default function FarmerList() {
         await deleteDoc(doc(db, 'farmers', id))
       }))
       
-      setFarmers(prev => prev.filter(farmer => !selectedFarmers.includes(farmer.id)))
+      setFarmers(prev => prev.filter(farmer => farmer.id && !selectedFarmers.includes(farmer.id)))
     } catch (error) {
       console.error('Error deleting farmers:', error)
       alert('농민 정보 삭제 중 오류가 발생했습니다.')
@@ -580,10 +531,10 @@ export default function FarmerList() {
       '도로명주소': farmer.roadAddress || '',
       '상세주소': farmer.addressDetail || '',
       '우편수취가능여부': farmer.canReceiveMail ? '가능' : '불가능',
-      '영농형태': farmer.farmingType || '',
-      '주작물': farmer.mainCrop || '',
+      '영농형태': getFarmingTypeDisplay(farmer.farmingTypes) || '',
+      '주작물': getMainCropDisplay(farmer.mainCrop) || '',
       '보유농기계': farmer.equipments?.map(eq => 
-        `${getKoreanEquipmentType(eq.type)}(${eq.manufacturer || ''})`
+        `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`
       ).join(', ') || '',
       '농민정보메모': farmer.memo || ''
     }));
@@ -882,8 +833,8 @@ export default function FarmerList() {
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={selectedFarmers.includes(farmer.id)}
-                  onChange={() => handleSelectFarmer(farmer.id)}
+                  checked={farmer.id ? selectedFarmers.includes(farmer.id) : false}
+                  onChange={() => farmer.id && handleSelectFarmer(farmer.id)}
                   className="w-4 h-4"
                 />
                 <div className="flex items-center gap-2">
@@ -938,7 +889,9 @@ export default function FarmerList() {
                               onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()
-                                prevImage(farmer.id, 'all', allImages.length)
+                                if (farmer.id) {
+                                  prevImage(farmer.id, 'all', allImages.length)
+                                }
                               }}
                               className="bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center"
                             >
@@ -948,7 +901,9 @@ export default function FarmerList() {
                               onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()
-                                nextImage(farmer.id, 'all', allImages.length)
+                                if (farmer.id) {
+                                  nextImage(farmer.id, 'all', allImages.length)
+                                }
                               }}
                               className="bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center"
                             >

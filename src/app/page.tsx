@@ -18,6 +18,8 @@ import {
 } from 'chart.js';
 import { google } from 'googleapis';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
+import { Farmer } from '@/types/farmer';
 
 ChartJS.register(
   CategoryScale,
@@ -29,69 +31,25 @@ ChartJS.register(
   ChartDataLabels
 );
 
-interface Farmer {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  ageGroup: string;
-  mainCrop: {
-    rice: boolean;
-    barley: boolean;
-    hanwoo: boolean;
-    soybean: boolean;
-    sweetPotato: boolean;
-    persimmon: boolean;
-    pear: boolean;
-    plum: boolean;
-    sorghum: boolean;
-    goat: boolean;
-    other: boolean;
-  };
-  equipments: Array<{
-    type: string;
-    manufacturer: string;
-    tradeType?: string;
-    saleType?: string;
-  }>;
-  roadAddress: string;
-  jibunAddress: string;
-}
-
-const getKoreanEquipmentType = (type: string): string => {
-  const types: { [key: string]: string } = {
-    'tractor': '트랙터',
-    'transplanter': '이앙기',
-    'combine': '콤바인',
-    'forklift': '지게차',
-    'excavator': '굴삭기',
-    'skidLoader': '스키로더'
-  };
-  return types[type] || type;
-};
-
 const getMainCropText = (mainCrop: Farmer['mainCrop']) => {
-  if (!mainCrop) return '없음';
-  
+  const cropNames: { [key: string]: string } = {
+    rice: '벼',
+    barley: '보리',
+    hanwoo: '한우',
+    soybean: '콩',
+    sweetPotato: '고구마',
+    persimmon: '감',
+    pear: '배',
+    plum: '자두',
+    sorghum: '수수',
+    goat: '염소',
+    other: '기타'
+  };
+
   const selectedCrops = Object.entries(mainCrop)
     .filter(([_, value]) => value)
-    .map(([key, _]) => {
-      const cropNames = {
-        rice: '벼',
-        barley: '보리',
-        hanwoo: '한우',
-        soybean: '콩',
-        sweetPotato: '고구마',
-        persimmon: '감',
-        pear: '배',
-        plum: '자두',
-        sorghum: '수수',
-        goat: '염소',
-        other: '기타'
-      };
-      return cropNames[key];
-    });
-  
+    .map(([key]) => cropNames[key]);
+
   return selectedCrops.length > 0 ? selectedCrops.join(', ') : '없음';
 };
 
@@ -115,30 +73,20 @@ const EQUIPMENT_LIST = [
 ] as const;
 
 // 전화번호 형식 변환 함수 개선
-const formatPhoneNumber = (phone: string): string => {
+const formatPhoneNumber = (phone: string | undefined): string => {
+  if (!phone) return '';
+  
   // 숫자만 추출
   const numbers = phone.replace(/[^0-9]/g, '');
   
-  // 11자리가 아닌 경우 처리
-  if (numbers.length !== 11) {
-    // 10자리인 경우 (01012345678 -> 010-1234-5678)
-    if (numbers.length === 10 && numbers.startsWith('01')) {
-      return `010-${numbers.slice(2, 6)}-${numbers.slice(6)}`;
-    }
-    // 8자리인 경우 (12345678 -> 010-1234-5678)
-    if (numbers.length === 8) {
-      return `010-${numbers.slice(0, 4)}-${numbers.slice(4)}`;
-    }
-    // 7자리인 경우 (1234567 -> 010-123-4567)
-    if (numbers.length === 7) {
-      return `010-${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-    }
-    // 그 외의 경우는 원본 반환
-    return phone;
+  // 길이에 따라 포맷팅
+  if (numbers.length === 11) {
+    return numbers.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  } else if (numbers.length === 10) {
+    return numbers.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
   }
   
-  // 11자리인 경우 010-0000-0000 형식으로 변환
-  return numbers.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  return phone;  // 포맷팅할 수 없는 경우 원본 반환
 };
 
 interface ChartData {
@@ -265,6 +213,16 @@ const REGIONS = {
   ]
 } as const;
 
+interface ExcelRow {
+  [key: string]: any;
+  이름?: string;
+  전화번호?: string;
+  주소?: string;
+  연령대?: string;
+  영농형태?: string;
+  주작물?: string;
+}
+
 export default function Dashboard() {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -366,8 +324,8 @@ export default function Dashboard() {
         '도로명주소': farmer.roadAddress || '',
         '상세주소': farmer.addressDetail || '',
         '우편수취가능여부': farmer.canReceiveMail ? '가능' : '불가능',
-        '영농형태': farmer.farmingType || '',
-        '주작물': getMainCropText(farmer.mainCrop),
+        '영농형태': getFarmingTypeDisplay(farmer.farmingTypes) || '',
+        '주작물': getMainCropText(farmer.mainCrop) || '',
       };
 
       // 농기계 정보를 종류별로 분리하고 여러 대일 경우 처리
@@ -445,14 +403,14 @@ export default function Dashboard() {
         const sheet = workbook.Sheets[sheetName];
         
         // 엑셀 파일 읽기 설정 개선
-        const parsedData = XLSX.utils.sheet_to_json(sheet, { 
+        const jsonData = XLSX.utils.sheet_to_json<ExcelRow>(sheet, {
           raw: true,  // 원본 데이터 타입 보존
           defval: null,  // 빈 값을 null로 처리
-          header: true,  // 헤더 자동 인식
+          header: 1,  // 첫 번째 행을 헤더로 사용
           blankrows: false  // 빈 행 제외
         });
 
-        console.log('Parsed Excel Data:', parsedData);
+        console.log('Parsed Excel Data:', jsonData);
 
         let successCount = 0;
         let updateCount = 0;
@@ -473,7 +431,7 @@ export default function Dashboard() {
         const existingFarmers = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        } as Farmer));
 
         // 데이터 유효성 검사 함수
         const validateData = (row: any) => {
@@ -493,11 +451,11 @@ export default function Dashboard() {
         };
 
         // 업로드된 각 행에 대해 처리
-        for (const row of parsedData) {
+        for (const row of jsonData) {
           try {
-            setUploadStatus({ 
-              status: 'processing', 
-              message: `${row['이름'] || '알 수 없음'} 데이터 처리 중...` 
+            setUploadStatus({
+              status: 'processing',
+              message: `${row['이름'] || '알 수 없음'} 데이터 처리 중...`
             });
 
             // 데이터 유효성 검사
@@ -537,7 +495,7 @@ export default function Dashboard() {
               return f.name === farmerData.name && existingPhoneNumbers === newPhoneNumbers;
             });
 
-            if (existingFarmer) {
+            if (existingFarmer && existingFarmer.id) {
               // 기존 데이터 업데이트
               const farmerRef = doc(db, 'farmers', existingFarmer.id);
               const updateData = {
@@ -561,18 +519,17 @@ export default function Dashboard() {
                 createdAt: new Date().toISOString(),
                 memo: '',
                 canReceiveMail: false,
-                farmingType: '',
-                mainCrop: {},
+                farmingTypes: [],
                 equipments: []
               };
               batch.set(newFarmerRef, newData);
               successCount++;
               resultDetails.push({
-                name: farmerData.name,
-                phone: farmerData.phone,
+                name: farmerData.name || '이름없음',
+                phone: farmerData.phone || '',
                 status: '성공',
                 message: '신규 등록 완료',
-                data: newData
+                data: farmerData
               });
             }
           } catch (err) {
@@ -594,7 +551,7 @@ export default function Dashboard() {
           
           // 업로드 결과 상태 업데이트
           setUploadResult({
-            total: parsedData.length,
+            total: jsonData.length,
             success: successCount,
             update: updateCount,
             error: errorCount,
@@ -616,7 +573,7 @@ export default function Dashboard() {
 
           // 상세 결과 메시지 생성
           const resultMessage = `처리 완료:\n
-- 총 ${parsedData.length}건 중\n
+- 총 ${jsonData.length}건 중\n
 - 신규 등록: ${successCount}건\n
 - 정보 업데이트: ${updateCount}건\n
 - 처리 실패: ${errorCount}건\n\n
@@ -751,7 +708,10 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
 
   const handleGoogleSheetSync = useCallback(async () => {
     try {
-      setUploadStatus('구글 시트 동기화 중...');
+      setUploadStatus({ 
+        status: 'processing', 
+        message: '구글 시트 동기화 중...' 
+      });
       
       const response = await fetch('/api/sheets', {
         method: 'POST',
@@ -765,19 +725,31 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
       const result = await response.json();
 
       if (result.success) {
-        setUploadStatus('구글 시트 동기화가 완료되었습니다.');
+        setUploadStatus({ 
+          status: 'success', 
+          message: '구글 시트 동기화가 완료되었습니다.' 
+        });
       } else {
-        setUploadStatus('구글 시트 동기화 중 오류가 발생했습니다.');
+        setUploadStatus({ 
+          status: 'error', 
+          message: '구글 시트 동기화 중 오류가 발생했습니다.' 
+        });
         console.error('동기화 오류:', result.error);
       }
     } catch (error) {
-      setUploadStatus('구글 시트 동기화 중 오류가 발생했습니다.');
+      setUploadStatus({ 
+        status: 'error', 
+        message: '구글 시트 동기화 중 오류가 발생했습니다.' 
+      });
       console.error('동기화 오류:', error);
     }
 
     // 3초 후 상태 메시지 제거
     setTimeout(() => {
-      setUploadStatus('');
+      setUploadStatus({ 
+        status: 'idle', 
+        message: '' 
+      });
     }, 3000);
   }, [farmers]);
 
@@ -906,16 +878,14 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           data: sortedLocations.map(([, data]) => data.customers),
           backgroundColor: 'rgba(53, 162, 235, 0.5)',
           borderColor: 'rgba(53, 162, 235, 1)',
-          borderWidth: 1,
-          order: 2
+          borderWidth: 1
         },
         {
           label: '장비 수',
           data: sortedLocations.map(([, data]) => data.equipments),
           backgroundColor: 'rgba(75, 192, 192, 0.5)',
           borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 1,
-          order: 1
+          borderWidth: 1
         }
       ]
     });
@@ -929,16 +899,16 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
       },
       title: {
         display: true,
-        text: `${selectedCity} 지역 통계`,
+        text: '지역별 농민/장비 현황'
       },
       datalabels: {
-        anchor: 'end',
-        align: 'top',
+        anchor: 'end' as const,
+        align: 'end' as const,
         formatter: (value: number) => value,
         font: {
-          weight: 'bold'
+          weight: 'bold' as const
         },
-        color: '#333'
+        color: '#000000'
       }
     },
     scales: {

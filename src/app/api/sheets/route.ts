@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       'name',
       'phone',
       'businessName',
-      'farmingType',
+      'farmingTypes',
       'mainCrop',
       'equipments',
       'zipCode',

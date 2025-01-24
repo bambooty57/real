@@ -1,14 +1,17 @@
+import { FarmingTypes, MainCrop } from '@/types/farmer'
+
 // 농기계 타입 매핑
-export const getKoreanEquipmentType = (type: string): string => {
-  const equipmentTypeMap: { [key: string]: string } = {
-    'tractor': '트랙터',
-    'combine': '콤바인',
-    'rice_transplanter': '이앙기',
-    'forklift': '지게차',
-    'excavator': '굴삭기',
-    'skid_loader': '스키로더'
-  };
-  return equipmentTypeMap[type] || type;
+const equipmentTypeMap: { [key: string]: string } = {
+  'tractor': '트랙터',
+  'combine': '콤바인',
+  'rice_transplanter': '이앙기',
+  'forklift': '지게차',
+  'excavator': '굴삭기',
+  'skid_loader': '스키로더',
+  'dryer': '건조기',
+  'silo': '싸일론',
+  'claas': '클라스',
+  'drone': '드론'
 };
 
 // 제조사 매핑
@@ -28,7 +31,6 @@ export const getKoreanManufacturer = (manufacturer: string): string => {
     'volvo': '볼보',
     'hitachi': '히타치',
     'doosan': '두산',
-    'claas': '클라스',
     'agrico': '아그리코',
     'star': '스타',
     'chevrolet': '시보레',
@@ -53,40 +55,52 @@ export const getAttachmentDisplayName = (key: string): string => {
   return attachmentDisplayNames[key] || key;
 };
 
-// 작물 한글명 매핑
-export const getMainCropDisplay = (crops: { [key: string]: boolean }): string => {
-  const cropDisplayNames: { [key: string]: string } = {
-    rice: '벼',
-    barley: '보리',
-    hanwoo: '한우',
-    soybean: '콩',
-    sweetPotato: '고구마',
-    persimmon: '감',
-    pear: '배',
-    plum: '자두',
-    sorghum: '수수',
-    goat: '염소',
-    other: '기타'
-  };
-
-  return Object.entries(crops)
-    .filter(([_, value]) => value)
-    .map(([key, _]) => cropDisplayNames[key] || key)
-    .join(', ');
+// 영농형태 한글명 매핑
+const farmingTypeDisplayNames: { [key: string]: string } = {
+  paddyFarming: '논농사',
+  fieldFarming: '밭농사',
+  livestock: '축산',
+  orchard: '과수원',
+  forageCrop: '사료작물'
 };
 
-// 농업 형태 한글명 매핑
-export const getFarmingTypeDisplay = (types: { [key: string]: boolean }): string => {
-  const farmingTypeDisplayNames: { [key: string]: string } = {
-    paddyFarming: '논농사',
-    fieldFarming: '밭농사',
-    livestock: '축산',
-    orchard: '과수원',
-    forageCrop: '조사료'
-  };
+// 작물 한글명 매핑
+const cropDisplayNames: { [key: string]: string } = {
+  rice: '벼',
+  sweetPotato: '고구마',
+  persimmon: '감',
+  barley: '보리',
+  other: '기타',
+  sorghum: '수수',
+  pear: '배',
+  soybean: '콩',
+  goat: '염소',
+  hanwoo: '한우',
+  plum: '자두'
+};
 
-  return Object.entries(types)
-    .filter(([_, value]) => value)
-    .map(([key, _]) => farmingTypeDisplayNames[key] || key)
-    .join(', ');
-}; 
+export const getFarmingTypeDisplay = (farmingTypes: FarmingTypes): string => {
+  if (!farmingTypes) return ''
+  
+  const types = Object.entries(farmingTypes)
+    .filter(([_, value]) => value === true)
+    .map(([key]) => farmingTypeDisplayNames[key] || key)
+  
+  return types.join(', ') || '없음'
+}
+
+export const getMainCropDisplay = (mainCrop: MainCrop): string => {
+  if (!mainCrop) return ''
+  
+  if (typeof mainCrop === 'string') return mainCrop
+  
+  const crops = Object.entries(mainCrop)
+    .filter(([_, value]) => value === true)
+    .map(([key]) => cropDisplayNames[key] || key)
+  
+  return crops.join(', ') || '없음'
+}
+
+export const getKoreanEquipmentType = (type: string): string => {
+  return equipmentTypeMap[type.toLowerCase()] || type
+} 

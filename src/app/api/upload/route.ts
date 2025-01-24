@@ -1,23 +1,37 @@
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import admin from 'firebase-admin';
 import { getStorage } from 'firebase-admin/storage';
 
 const BUCKET_NAME = 'real-81ba6.firebasestorage.app';
 
 // Firebase Admin SDK 초기화
-if (!getApps().length) {
+if (!admin.apps.length) {
   try {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-      storageBucket: BUCKET_NAME
+    const base64Credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    if (!base64Credentials) {
+      throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set');
+    }
+
+    let serviceAccount;
+    try {
+      const decodedCredentials = Buffer.from(base64Credentials, 'base64').toString();
+      serviceAccount = JSON.parse(decodedCredentials);
+    } catch (error) {
+      throw new Error('Failed to decode or parse service account credentials: ' + error.message);
+    }
+
+    if (!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
+      throw new Error('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET environment variable is not set');
+    }
+
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     });
-    console.log('Firebase initialized with bucket:', BUCKET_NAME);
+    console.log('Firebase initialized successfully');
   } catch (error) {
-    console.error('Firebase initialization error:', error);
+    console.error('Firebase Admin initialization error:', error);
+    throw error;
   }
 }
 

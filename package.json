@@ -33,6 +33,7 @@
     "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^20.17.14",
     "@types/react": "^18",
     "@types/react-dom": "^18",
