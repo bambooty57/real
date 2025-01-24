@@ -2,32 +2,28 @@
 
 import { useEffect } from 'react'
 
+interface AddressData {
+  zonecode: string;
+  roadAddress: string;
+  jibunAddress?: string;
+  autoJibunAddress?: string;
+  buildingName?: string;
+}
+
+export interface AddressSearchProps {
+  onComplete: (data: AddressData) => void;
+}
+
 declare global {
   interface Window {
     daum: {
       Postcode: new (config: {
-        oncomplete: (data: {
-          zonecode: string;
-          roadAddress: string;
-          jibunAddress?: string;
-          autoJibunAddress?: string;
-          buildingName?: string;
-        }) => void;
+        oncomplete: (data: AddressData) => void;
       }) => {
         open: () => void;
       };
     };
   }
-}
-
-interface AddressData {
-  zonecode: string;
-  roadAddress: string;
-  jibunAddress: string;
-}
-
-export interface AddressSearchProps {
-  onComplete: (data: AddressData) => void;
 }
 
 export default function AddressSearch({ onComplete }: AddressSearchProps) {
