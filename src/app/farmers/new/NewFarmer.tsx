@@ -10,16 +10,58 @@ import { storage } from '@/lib/firebase'
 import { v4 as uuidv4 } from 'uuid'
 import { Equipment } from '@/types/farmer'
 
+interface FormData {
+  name: string;
+  businessName: string;
+  zipCode: string;
+  roadAddress: string;
+  jibunAddress: string;
+  addressDetail: string;
+  canReceiveMail: boolean;
+  phone: string;
+  ageGroup: string;
+  memo: string;
+  farmerImages: string[];
+  mainImages: string[];
+  attachmentImages: {
+    loader: string[];
+    rotary: string[];
+    frontWheel: string[];
+    rearWheel: string[];
+  };
+  mainCrop: {
+    rice: boolean;
+    barley: boolean;
+    hanwoo: boolean;
+    soybean: boolean;
+    sweetPotato: boolean;
+    persimmon: boolean;
+    pear: boolean;
+    plum: boolean;
+    sorghum: boolean;
+    goat: boolean;
+    other: boolean;
+  };
+  farmingTypes: {
+    paddyFarming: boolean;
+    fieldFarming: boolean;
+    orchard: boolean;
+    livestock: boolean;
+    forageCrop: boolean;
+  };
+  equipments: Equipment[];
+}
+
 interface Props {
   mode?: string;
   farmerId?: string;
-  initialData?: any;
+  initialData?: FormData | null;
 }
 
 export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }: Props) {
   const router = useRouter()
   
-  const [formData, setFormData] = useState(() => {
+  const [formData, setFormData] = useState<FormData>(() => {
     if (initialData) {
       return {
         ...initialData,
@@ -108,7 +150,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               type="text"
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, name: e.target.value }))}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
             />
@@ -121,7 +163,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               type="text"
               id="businessName"
               value={formData.businessName}
-              onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, businessName: e.target.value }))}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
@@ -148,7 +190,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               type="text"
               id="addressDetail"
               value={formData.addressDetail}
-              onChange={(e) => setFormData(prev => ({ ...prev, addressDetail: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, addressDetail: e.target.value }))}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
@@ -159,7 +201,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               <input
                 type="checkbox"
                 checked={formData.canReceiveMail}
-                onChange={(e) => setFormData(prev => ({ ...prev, canReceiveMail: e.target.checked }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, canReceiveMail: e.target.checked }))}
                 className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">우편수취 가능</span>
@@ -173,7 +215,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               type="tel"
               id="phone"
               value={formData.phone}
-              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, phone: e.target.value }))}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
             />
@@ -185,7 +227,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
             <select
               id="ageGroup"
               value={formData.ageGroup}
-              onChange={(e) => setFormData(prev => ({ ...prev, ageGroup: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, ageGroup: e.target.value }))}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
             >
@@ -213,7 +255,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   <input
                     type="checkbox"
                     checked={value}
-                    onChange={(e) => setFormData(prev => ({
+                    onChange={(e) => setFormData((prev: FormData) => ({
                       ...prev,
                       farmingTypes: {
                         ...prev.farmingTypes,
@@ -243,7 +285,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   <input
                     type="checkbox"
                     checked={value}
-                    onChange={(e) => setFormData(prev => ({
+                    onChange={(e) => setFormData((prev: FormData) => ({
                       ...prev,
                       mainCrop: {
                         ...prev.mainCrop,
@@ -276,7 +318,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
             <textarea
               id="memo"
               value={formData.memo}
-              onChange={(e) => setFormData(prev => ({ ...prev, memo: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, memo: e.target.value }))}
               rows={4}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />

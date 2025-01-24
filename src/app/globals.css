@@ -2,6 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 인쇄 스타일 */
+@media print {
+  body {
+    background: white;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  /* 페이지 여백 설정 */
+  @page {
+    margin: 2cm;
+  }
+
+  /* 그림자 제거 */
+  .shadow {
+    box-shadow: none !important;
+  }
+
+  /* 배경색 유지 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 페이지 나누기 방지 */
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+}
+
 @layer base {
   :root {
     --color-green-25: #f2f9f2;

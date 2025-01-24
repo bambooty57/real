@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Farmer, Equipment } from '@/types/farmer'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
+import { FaPrint } from 'react-icons/fa'
 
 interface AttachmentImages {
   loader?: string[]
@@ -86,6 +87,10 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
     }
   }
 
+  const handlePrint = () => {
+    window.print()
+  }
+
   if (loading) {
     return <div>데이터를 불러오는 중...</div>
   }
@@ -103,18 +108,33 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">{farmer.name} 상세 정보</h1>
         <div className="space-x-2">
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 print:hidden"
+          >
+            <FaPrint className="mr-2" />
+            인쇄
+          </button>
           <Link
             href={`/farmers/${farmerId}/edit`}
-            className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 print:hidden"
           >
             수정
           </Link>
           <button
             onClick={handleDelete}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 print:hidden"
           >
             삭제
           </button>
+        </div>
+      </div>
+
+      {/* 인쇄용 헤더 */}
+      <div className="hidden print:block mb-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-2">농민 상세 정보</h1>
+          <p className="text-gray-600">{new Date().toLocaleDateString('ko-KR')} 출력</p>
         </div>
       </div>
 
@@ -254,6 +274,81 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* 이미지 섹션 */}
+      {(farmer.mainImages?.length > 0 || farmer.farmerImages?.length > 0 || Object.values(farmer.attachmentImages || {}).some(arr => arr?.length > 0)) && (
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">이미지</h2>
+          
+          {/* 대표 이미지 */}
+          {farmer.mainImages?.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-medium mb-2">대표 이미지</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {farmer.mainImages.map((image, index) => (
+                  <div key={index} className="aspect-square relative">
+                    <img
+                      src={image}
+                      alt={`대표 이미지 ${index + 1}`}
+                      className="object-cover w-full h-full rounded-lg"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 농민 이미지 */}
+          {farmer.farmerImages?.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-medium mb-2">농민 이미지</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {farmer.farmerImages.map((image, index) => (
+                  <div key={index} className="aspect-square relative">
+                    <img
+                      src={image}
+                      alt={`농민 이미지 ${index + 1}`}
+                      className="object-cover w-full h-full rounded-lg"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 첨부 이미지 */}
+          {Object.entries(farmer.attachmentImages || {}).map(([category, images]) => {
+            if (!images?.length) return null;
+            const categoryLabels: { [key: string]: string } = {
+              loader: '로더',
+              rotary: '로터리',
+              frontWheel: '전륜',
+              rearWheel: '후륜',
+              cutter: '작업기',
+              rows: '작업열',
+              tonnage: '톤수',
+              size: '크기',
+              bucketSize: '버켓크기'
+            };
+            return (
+              <div key={category} className="mb-6">
+                <h3 className="text-lg font-medium mb-2">{categoryLabels[category] || category} 이미지</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {images.map((image, index) => (
+                    <div key={index} className="aspect-square relative">
+                      <img
+                        src={image}
+                        alt={`${categoryLabels[category]} 이미지 ${index + 1}`}
+                        className="object-cover w-full h-full rounded-lg"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
