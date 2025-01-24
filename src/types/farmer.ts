@@ -2,6 +2,7 @@ export interface Equipment {
   id: string
   type: string
   manufacturer: string
+  horsepower: string
   model: string
   year: string
   usageHours: string
