@@ -13,18 +13,22 @@ export interface Equipment {
     loader?: {
       model?: string
       rating?: string
+      condition?: number
     }
     rotary?: {
       model?: string
       rating?: string
+      condition?: number
     }
     frontWheel?: {
       model?: string
       rating?: string
+      condition?: number
     }
     rearWheel?: {
       model?: string
       rating?: string
+      condition?: number
     }
     rows?: string
     tonnage?: string
