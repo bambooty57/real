@@ -9,6 +9,8 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { storage } from '@/lib/firebase'
 import { v4 as uuidv4 } from 'uuid'
 import { Equipment } from '@/types/farmer'
+import { MANUFACTURERS, TRADE_TYPES, TRADE_METHODS, TRADE_STATUS } from '@/constants/manufacturers'
+import { createInitialEquipment } from '@/utils/equipment'
 
 interface FormData {
   name: string;
@@ -502,14 +504,11 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="">선택하세요</option>
-                    <option value="트랙터">트랙터</option>
-                    <option value="이앙기">이앙기</option>
-                    <option value="콤바인">콤바인</option>
-                    <option value="지게차">지게차</option>
-                    <option value="굴삭기">굴삭기</option>
-                    <option value="스키로더">스키로더</option>
-                    <option value="건조기">건조기</option>
-                    <option value="기타">기타</option>
+                    {MANUFACTURERS.EQUIPMENT.map(({ value, label }) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -812,8 +811,11 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="">선택하세요</option>
-                    <option value="new">신규</option>
-                    <option value="used">중고</option>
+                    {TRADE_TYPES.map(({ value, label }) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -835,12 +837,15 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="">선택하세요</option>
-                    <option value="판매희망">판매희망</option>
-                    <option value="구매희망">구매희망</option>
+                    {TRADE_METHODS.map(({ value, label }) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-                {/* 거래 상황 */}
+                {/* 거래 상태 */}
                 <div className="space-y-4">
                 {/* 판매 상태 */}
                 <div>
@@ -860,8 +865,11 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="">선택하세요</option>
-                    <option value="가능">가능</option>
-                    <option value="완료">완료</option>
+                    {TRADE_STATUS.map(({ value, label }) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1009,53 +1017,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                 ...prev,
                 equipments: [
                   ...prev.equipments,
-                  {
-                    id: uuidv4(),
-                    type: '',
-                    manufacturer: '',
-                    model: '',
-                    horsepower: '',
-                    year: '',
-                    usageHours: '',
-                    condition: 0,
-                    attachments: {
-                      loader: {
-                        model: '',
-                        manufacturer: '',
-                        condition: 0,
-                        memo: '',
-                        images: []
-                      },
-                      rotary: {
-                        model: '',
-                        manufacturer: '',
-                        condition: 0,
-                        memo: '',
-                        images: []
-                      },
-                      frontWheel: {
-                        model: '',
-                        manufacturer: '',
-                        condition: 0,
-                        memo: '',
-                        images: []
-                      },
-                      rearWheel: {
-                        model: '',
-                        manufacturer: '',
-                        condition: 0,
-                        memo: '',
-                        images: []
-                      }
-                    },
-                    saleType: null,
-                    tradeType: '',
-                    saleStatus: '',
-                    purchaseStatus: '',
-                    desiredPrice: '',
-                    memo: '',
-                    images: []
-                  } as Equipment
+                  createInitialEquipment()
                 ]
               }))
             }}

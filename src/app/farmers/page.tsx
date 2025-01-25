@@ -193,6 +193,8 @@ export default function FarmerList() {
   const [farmers, setFarmers] = useState<Farmer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 15
   const [filter, setFilter] = useState({
     equipmentType: '',
     manufacturer: '',
@@ -853,7 +855,9 @@ export default function FarmerList() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredFarmers.map(farmer => (
+        {filteredFarmers
+          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+          .map(farmer => (
           <div key={farmer.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center space-x-2">
@@ -1072,6 +1076,50 @@ export default function FarmerList() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* 페이지네이션 UI */}
+      <div className="mt-6 flex justify-center items-center space-x-2">
+        <button
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+        >
+          이전
+        </button>
+        {Array.from({ length: Math.ceil(filteredFarmers.length / itemsPerPage) }, (_, i) => i + 1)
+          .filter(pageNum => {
+            const currentPageRange = 2;
+            return (
+              pageNum === 1 ||
+              pageNum === Math.ceil(filteredFarmers.length / itemsPerPage) ||
+              (pageNum >= currentPage - currentPageRange && pageNum <= currentPage + currentPageRange)
+            );
+          })
+          .map((pageNum, index, array) => (
+            <React.Fragment key={pageNum}>
+              {index > 0 && array[index - 1] !== pageNum - 1 && (
+                <span className="px-2">...</span>
+              )}
+              <button
+                onClick={() => setCurrentPage(pageNum)}
+                className={`px-4 py-2 border rounded-lg ${
+                  currentPage === pageNum
+                    ? 'bg-blue-500 text-white'
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                {pageNum}
+              </button>
+            </React.Fragment>
+          ))}
+        <button
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredFarmers.length / itemsPerPage)))}
+          disabled={currentPage === Math.ceil(filteredFarmers.length / itemsPerPage)}
+          className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+        >
+          다음
+        </button>
       </div>
 
       {deleteModalOpen && (
