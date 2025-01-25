@@ -1594,21 +1594,41 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     model: '',
                     usageHours: '',
                     rating: '',
+                    condition: 0,
                     attachments: {
-                      loader: '',
-                      rotary: '',
-                      frontWheel: '',
-                      rearWheel: '',
-                      loaderModel: '',
-                      rotaryModel: '',
-                      frontWheelModel: '',
-                      rearWheelModel: '',
-                      loaderRating: '',
-                      rotaryRating: '',
-                      frontWheelRating: '',
-                      rearWheelRating: '',
+                      loader: {
+                        model: '',
+                        rating: '',
+                        condition: 0,
+                        memo: '',
+                        images: []
+                      },
+                      rotary: {
+                        model: '',
+                        rating: '',
+                        condition: 0,
+                        memo: '',
+                        images: []
+                      },
+                      frontWheel: {
+                        model: '',
+                        rating: '',
+                        condition: 0,
+                        memo: '',
+                        images: []
+                      },
+                      rearWheel: {
+                        model: '',
+                        rating: '',
+                        condition: 0,
+                        memo: '',
+                        images: []
+                      },
+                      cutter: '',
                       rows: '',
-                      tonnage: ''
+                      tonnage: '',
+                      size: '',
+                      bucketSize: ''
                     },
                     images: [],
                     saleType: null,
@@ -1620,7 +1640,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     memo: '',
                     forSale: false,
                     forPurchase: false
-                  }
+                  } as Equipment
                 ]
               }))
             }}
