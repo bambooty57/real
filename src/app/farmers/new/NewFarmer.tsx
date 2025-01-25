@@ -50,6 +50,7 @@ interface FormData {
     forageCrop: boolean;
   };
   equipments: Equipment[];
+  rating: number;
 }
 
 interface Props {
@@ -110,7 +111,8 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         livestock: false,
         forageCrop: false,
       },
-      equipments: []  // 빈 배열로 초기화
+      equipments: [],  // 빈 배열로 초기화
+      rating: 0
     }
   })
 
@@ -135,7 +137,8 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         attachmentImages: formData.attachmentImages,
         mainCrop: formData.mainCrop,
         farmingTypes: formData.farmingTypes,
-        equipments: formData.equipments
+        equipments: formData.equipments,
+        rating: formData.rating
       }
 
       if (mode === 'edit' && farmerId) {
@@ -174,6 +177,32 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
             />
+          </div>
+
+          {/* 별점 평가 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">별점 평가</label>
+            <div className="flex gap-2 mt-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev: FormData) => ({
+                      ...prev,
+                      rating: star
+                    }))
+                  }}
+                  className={`p-1 ${
+                    formData.rating >= star
+                      ? 'text-yellow-400'
+                      : 'text-gray-300'
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* 상호명 */}
@@ -542,12 +571,44 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   >
                     <option value="">선택하세요</option>
                     <option value="트랙터">트랙터</option>
-                    <option value="콤바인">콤바인</option>
                     <option value="이앙기">이앙기</option>
-                    <option value="관리기">관리기</option>
+                    <option value="콤바인">콤바인</option>
+                    <option value="지게차">지게차</option>
+                    <option value="굴삭기">굴삭기</option>
+                    <option value="스키로더">스키로더</option>
                     <option value="건조기">건조기</option>
                     <option value="기타">기타</option>
                   </select>
+                </div>
+
+                {/* 별점 평가 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">상태 평가</label>
+                  <div className="flex gap-2 mt-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, condition: star }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className={`p-1 ${
+                          equipment.condition >= star
+                            ? 'text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* 제조사 */}
@@ -568,12 +629,24 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="">선택하세요</option>
-                    <option value="대동">대동</option>
-                    <option value="국제">국제</option>
-                    <option value="LS">LS</option>
-                    <option value="얀마">얀마</option>
-                    <option value="구보다">구보다</option>
-                    <option value="기타">기타</option>
+                    <option value="john_deere">존디어</option>
+                    <option value="kubota">구보다</option>
+                    <option value="daedong">대동</option>
+                    <option value="kukje">국제</option>
+                    <option value="ls">엘에스</option>
+                    <option value="yanmar">얀마</option>
+                    <option value="newholland">뉴홀랜드</option>
+                    <option value="mf">엠에프</option>
+                    <option value="case">케이스</option>
+                    <option value="hyundai">현대</option>
+                    <option value="samsung">삼성</option>
+                    <option value="volvo">볼보</option>
+                    <option value="hitachi">히타치</option>
+                    <option value="doosan">두산</option>
+                    <option value="agrico">아그리코</option>
+                    <option value="star">스타</option>
+                    <option value="chevrolet">시보레</option>
+                    <option value="valmet">발메트</option>
                   </select>
                 </div>
 
@@ -750,46 +823,725 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   />
                 </div>
 
-                {/* 구매가격 */}
+                {/* 거래 유형 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">구매가격</label>
-                  <input
-                    type="text"
-                    value={equipment.purchasePrice}
+                  <label className="block text-sm font-medium text-gray-700">거래 유형</label>
+                  <select
+                    value={equipment.saleType || ''}
                     onChange={(e) => {
                       setFormData((prev: FormData) => ({
                         ...prev,
                         equipments: prev.equipments.map(eq =>
                           eq.id === equipment.id
-                            ? { ...eq, purchasePrice: e.target.value }
+                            ? { ...eq, saleType: e.target.value as 'new' | 'used' | null }
                             : eq
                         )
                       }))
                     }}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="구매가격을 입력하세요"
-                  />
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="new">신규</option>
+                    <option value="used">중고</option>
+                  </select>
                 </div>
 
-                {/* 메모 */}
+                {/* 거래 방식 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">메모</label>
-                  <textarea
-                    value={equipment.memo}
+                  <label className="block text-sm font-medium text-gray-700">거래 방식</label>
+                  <select
+                    value={equipment.tradeType || ''}
                     onChange={(e) => {
                       setFormData((prev: FormData) => ({
                         ...prev,
                         equipments: prev.equipments.map(eq =>
                           eq.id === equipment.id
-                            ? { ...eq, memo: e.target.value }
+                            ? { ...eq, tradeType: e.target.value }
                             : eq
                         )
                       }))
                     }}
-                    rows={3}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="메모를 입력하세요"
-                  />
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="판매희망">판매희망</option>
+                    <option value="구매희망">구매희망</option>
+                  </select>
+                </div>
+
+                {/* 판매 상태 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">판매 상태</label>
+                  <select
+                    value={equipment.saleStatus || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, saleStatus: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="가능">가능</option>
+                    <option value="완료">완료</option>
+                  </select>
+                </div>
+
+                {/* 구매 상태 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">구매 상태</label>
+                  <select
+                    value={equipment.purchaseStatus || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, purchaseStatus: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="가능">가능</option>
+                    <option value="완료">완료</option>
+                  </select>
+                </div>
+
+                {/* 부착작업기 섹션 */}
+                <div className="mt-4 border-t pt-4">
+                  <h4 className="text-lg font-medium mb-3">부착작업기</h4>
+                  
+                  {/* 로더 */}
+                  <div className="space-y-4 mb-4 p-4 border rounded-lg">
+                    <h5 className="font-medium">로더</h5>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">모델명</label>
+                      <input
+                        type="text"
+                        value={equipment.attachments?.loader?.model || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? {
+                                    ...eq,
+                                    attachments: {
+                                      ...eq.attachments,
+                                      loader: { ...eq.attachments?.loader, model: e.target.value }
+                                    }
+                                  }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="모델명을 입력하세요"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">상태 평가</label>
+                      <div className="flex gap-2 mt-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev: FormData) => ({
+                                ...prev,
+                                equipments: prev.equipments.map(eq =>
+                                  eq.id === equipment.id
+                                    ? {
+                                        ...eq,
+                                        attachments: {
+                                          ...eq.attachments,
+                                          loader: { ...eq.attachments?.loader, condition: star }
+                                        }
+                                      }
+                                    : eq
+                                )
+                              }))
+                            }}
+                            className={`p-1 ${
+                              equipment.attachments?.loader?.condition >= star
+                                ? 'text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">메모</label>
+                      <textarea
+                        value={equipment.attachments?.loader?.memo || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? {
+                                    ...eq,
+                                    attachments: {
+                                      ...eq.attachments,
+                                      loader: { ...eq.attachments?.loader, memo: e.target.value }
+                                    }
+                                  }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        rows={3}
+                        placeholder="메모를 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">이미지 (최대 4장)</label>
+                      <div className="mt-1 grid grid-cols-2 gap-2">
+                        {[...Array(4)].map((_, index) => (
+                          <div key={index} className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                setFormData((prev: FormData) => ({
+                                  ...prev,
+                                  equipments: prev.equipments.map(eq =>
+                                    eq.id === equipment.id
+                                      ? {
+                                          ...eq,
+                                          attachments: {
+                                            ...eq.attachments,
+                                            loader: {
+                                              ...eq.attachments?.loader,
+                                              images: eq.attachments?.loader?.images
+                                                ? [...eq.attachments.loader.images.slice(0, index), e.target.files?.[0] || null, ...eq.attachments.loader.images.slice(index + 1)]
+                                                : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
+                                            }
+                                          }
+                                        }
+                                      : eq
+                                  )
+                                }))
+                              }}
+                              className="hidden"
+                              id={`loader-image-${equipment.id}-${index}`}
+                            />
+                            <label
+                              htmlFor={`loader-image-${equipment.id}-${index}`}
+                              className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
+                            >
+                              {equipment.attachments?.loader?.images?.[index] ? (
+                                <img
+                                  src={URL.createObjectURL(equipment.attachments.loader.images[index])}
+                                  alt={`로더 이미지 ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full text-gray-400">
+                                  <span>이미지 추가</span>
+                                </div>
+                              )}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 로터리 */}
+                  <div className="space-y-4 mb-4 p-4 border rounded-lg">
+                    <h5 className="font-medium">로터리</h5>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">모델명</label>
+                      <input
+                        type="text"
+                        value={equipment.attachments?.rotary?.model || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? {
+                                    ...eq,
+                                    attachments: {
+                                      ...eq.attachments,
+                                      rotary: { ...eq.attachments?.rotary, model: e.target.value }
+                                    }
+                                  }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="모델명을 입력하세요"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">상태 평가</label>
+                      <div className="flex gap-2 mt-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev: FormData) => ({
+                                ...prev,
+                                equipments: prev.equipments.map(eq =>
+                                  eq.id === equipment.id
+                                    ? {
+                                        ...eq,
+                                        attachments: {
+                                          ...eq.attachments,
+                                          rotary: { ...eq.attachments?.rotary, condition: star }
+                                        }
+                                      }
+                                    : eq
+                                )
+                              }))
+                            }}
+                            className={`p-1 ${
+                              equipment.attachments?.rotary?.condition >= star
+                                ? 'text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">메모</label>
+                      <textarea
+                        value={equipment.attachments?.rotary?.memo || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? {
+                                    ...eq,
+                                    attachments: {
+                                      ...eq.attachments,
+                                      rotary: { ...eq.attachments?.rotary, memo: e.target.value }
+                                    }
+                                  }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        rows={3}
+                        placeholder="메모를 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">이미지 (최대 4장)</label>
+                      <div className="mt-1 grid grid-cols-2 gap-2">
+                        {[...Array(4)].map((_, index) => (
+                          <div key={index} className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                setFormData((prev: FormData) => ({
+                                  ...prev,
+                                  equipments: prev.equipments.map(eq =>
+                                    eq.id === equipment.id
+                                      ? {
+                                          ...eq,
+                                          attachments: {
+                                            ...eq.attachments,
+                                            rotary: {
+                                              ...eq.attachments?.rotary,
+                                              images: eq.attachments?.rotary?.images
+                                                ? [...eq.attachments.rotary.images.slice(0, index), e.target.files?.[0] || null, ...eq.attachments.rotary.images.slice(index + 1)]
+                                                : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
+                                            }
+                                          }
+                                        }
+                                      : eq
+                                  )
+                                }))
+                              }}
+                              className="hidden"
+                              id={`rotary-image-${equipment.id}-${index}`}
+                            />
+                            <label
+                              htmlFor={`rotary-image-${equipment.id}-${index}`}
+                              className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
+                            >
+                              {equipment.attachments?.rotary?.images?.[index] ? (
+                                <img
+                                  src={URL.createObjectURL(equipment.attachments.rotary.images[index])}
+                                  alt={`로터리 이미지 ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full text-gray-400">
+                                  <span>이미지 추가</span>
+                                </div>
+                              )}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 전륜 */}
+                  <div className="space-y-4 mb-4 p-4 border rounded-lg">
+                    <h5 className="font-medium">전륜</h5>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">모델명</label>
+                      <input
+                        type="text"
+                        value={equipment.attachments?.frontWheel?.model || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? {
+                                    ...eq,
+                                    attachments: {
+                                      ...eq.attachments,
+                                      frontWheel: { ...eq.attachments?.frontWheel, model: e.target.value }
+                                    }
+                                  }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="모델명을 입력하세요"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">상태 평가</label>
+                      <div className="flex gap-2 mt-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev: FormData) => ({
+                                ...prev,
+                                equipments: prev.equipments.map(eq =>
+                                  eq.id === equipment.id
+                                    ? {
+                                        ...eq,
+                                        attachments: {
+                                          ...eq.attachments,
+                                          frontWheel: { ...eq.attachments?.frontWheel, condition: star }
+                                        }
+                                      }
+                                    : eq
+                                )
+                              }))
+                            }}
+                            className={`p-1 ${
+                              equipment.attachments?.frontWheel?.condition >= star
+                                ? 'text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">메모</label>
+                      <textarea
+                        value={equipment.attachments?.frontWheel?.memo || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? {
+                                    ...eq,
+                                    attachments: {
+                                      ...eq.attachments,
+                                      frontWheel: { ...eq.attachments?.frontWheel, memo: e.target.value }
+                                    }
+                                  }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        rows={3}
+                        placeholder="메모를 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">이미지 (최대 4장)</label>
+                      <div className="mt-1 grid grid-cols-2 gap-2">
+                        {[...Array(4)].map((_, index) => (
+                          <div key={index} className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                setFormData((prev: FormData) => ({
+                                  ...prev,
+                                  equipments: prev.equipments.map(eq =>
+                                    eq.id === equipment.id
+                                      ? {
+                                          ...eq,
+                                          attachments: {
+                                            ...eq.attachments,
+                                            frontWheel: {
+                                              ...eq.attachments?.frontWheel,
+                                              images: eq.attachments?.frontWheel?.images
+                                                ? [...eq.attachments.frontWheel.images.slice(0, index), e.target.files?.[0] || null, ...eq.attachments.frontWheel.images.slice(index + 1)]
+                                                : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
+                                            }
+                                          }
+                                        }
+                                      : eq
+                                  )
+                                }))
+                              }}
+                              className="hidden"
+                              id={`frontWheel-image-${equipment.id}-${index}`}
+                            />
+                            <label
+                              htmlFor={`frontWheel-image-${equipment.id}-${index}`}
+                              className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
+                            >
+                              {equipment.attachments?.frontWheel?.images?.[index] ? (
+                                <img
+                                  src={URL.createObjectURL(equipment.attachments.frontWheel.images[index])}
+                                  alt={`전륜 이미지 ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full text-gray-400">
+                                  <span>이미지 추가</span>
+                                </div>
+                              )}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 후륜 */}
+                  <div className="space-y-4 mb-4 p-4 border rounded-lg">
+                    <h5 className="font-medium">후륜</h5>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">모델명</label>
+                      <input
+                        type="text"
+                        value={equipment.attachments?.rearWheel?.model || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? {
+                                    ...eq,
+                                    attachments: {
+                                      ...eq.attachments,
+                                      rearWheel: { ...eq.attachments?.rearWheel, model: e.target.value }
+                                    }
+                                  }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="모델명을 입력하세요"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">상태 평가</label>
+                      <div className="flex gap-2 mt-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev: FormData) => ({
+                                ...prev,
+                                equipments: prev.equipments.map(eq =>
+                                  eq.id === equipment.id
+                                    ? {
+                                        ...eq,
+                                        attachments: {
+                                          ...eq.attachments,
+                                          rearWheel: { ...eq.attachments?.rearWheel, condition: star }
+                                        }
+                                      }
+                                    : eq
+                                )
+                              }))
+                            }}
+                            className={`p-1 ${
+                              equipment.attachments?.rearWheel?.condition >= star
+                                ? 'text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">메모</label>
+                      <textarea
+                        value={equipment.attachments?.rearWheel?.memo || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? {
+                                    ...eq,
+                                    attachments: {
+                                      ...eq.attachments,
+                                      rearWheel: { ...eq.attachments?.rearWheel, memo: e.target.value }
+                                    }
+                                  }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        rows={3}
+                        placeholder="메모를 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">이미지 (최대 4장)</label>
+                      <div className="mt-1 grid grid-cols-2 gap-2">
+                        {[...Array(4)].map((_, index) => (
+                          <div key={index} className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                setFormData((prev: FormData) => ({
+                                  ...prev,
+                                  equipments: prev.equipments.map(eq =>
+                                    eq.id === equipment.id
+                                      ? {
+                                          ...eq,
+                                          attachments: {
+                                            ...eq.attachments,
+                                            rearWheel: {
+                                              ...eq.attachments?.rearWheel,
+                                              images: eq.attachments?.rearWheel?.images
+                                                ? [...eq.attachments.rearWheel.images.slice(0, index), e.target.files?.[0] || null, ...eq.attachments.rearWheel.images.slice(index + 1)]
+                                                : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
+                                            }
+                                          }
+                                        }
+                                      : eq
+                                  )
+                                }))
+                              }}
+                              className="hidden"
+                              id={`rearWheel-image-${equipment.id}-${index}`}
+                            />
+                            <label
+                              htmlFor={`rearWheel-image-${equipment.id}-${index}`}
+                              className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
+                            >
+                              {equipment.attachments?.rearWheel?.images?.[index] ? (
+                                <img
+                                  src={URL.createObjectURL(equipment.attachments.rearWheel.images[index])}
+                                  alt={`후륜 이미지 ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full text-gray-400">
+                                  <span>이미지 추가</span>
+                                </div>
+                              )}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 농기계 이미지 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">농기계 이미지 (최대 4장)</label>
+                  <div className="mt-1 grid grid-cols-2 gap-2">
+                    {[...Array(4)].map((_, index) => (
+                      <div key={index} className="relative">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { 
+                                      ...eq, 
+                                      images: eq.images ? 
+                                        [...eq.images.slice(0, index), e.target.files?.[0] || null, ...eq.images.slice(index + 1)] 
+                                        : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
+                                    }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className="hidden"
+                          id={`equipment-image-${equipment.id}-${index}`}
+                        />
+                        <label
+                          htmlFor={`equipment-image-${equipment.id}-${index}`}
+                          className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
+                        >
+                          {equipment.images?.[index] ? (
+                            <img
+                              src={URL.createObjectURL(equipment.images[index])}
+                              alt={`농기계 이미지 ${index + 1}`}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-gray-400">
+                              <span>이미지 추가</span>
+                            </div>
+                          )}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}
@@ -908,7 +1660,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
             </div>
           </div>
 
-          {/* 로타리 */}
+          {/* 로터리 */}
           <div>
             <label className="block text-sm font-medium text-gray-700">로타리</label>
             <input
