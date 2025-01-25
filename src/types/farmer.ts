@@ -12,6 +12,7 @@ export interface Equipment {
   attachments: {
     loader?: {
       model?: string
+      manufacturer?: string
       rating?: string
       condition?: number
       memo?: string
@@ -19,6 +20,7 @@ export interface Equipment {
     }
     rotary?: {
       model?: string
+      manufacturer?: string
       rating?: string
       condition?: number
       memo?: string
@@ -26,6 +28,7 @@ export interface Equipment {
     }
     frontWheel?: {
       model?: string
+      manufacturer?: string
       rating?: string
       condition?: number
       memo?: string
@@ -33,6 +36,7 @@ export interface Equipment {
     }
     rearWheel?: {
       model?: string
+      manufacturer?: string
       rating?: string
       condition?: number
       memo?: string

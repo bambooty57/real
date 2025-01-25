@@ -22,13 +22,6 @@ interface FormData {
   ageGroup: string;
   memo: string;
   farmerImages: string[];
-  mainImages: string[];
-  attachmentImages: {
-    loader: string[];
-    rotary: string[];
-    frontWheel: string[];
-    rearWheel: string[];
-  };
   mainCrop: {
     rice: boolean;
     barley: boolean;
@@ -84,13 +77,6 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       ageGroup: '',
       memo: '',
       farmerImages: [],
-      mainImages: [],
-      attachmentImages: {
-        loader: [],
-        rotary: [],
-        frontWheel: [],
-        rearWheel: []
-      },
       mainCrop: {
         rice: false,
         barley: false,
@@ -133,8 +119,6 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         ageGroup: formData.ageGroup,
         memo: formData.memo,
         farmerImages: formData.farmerImages,
-        mainImages: formData.mainImages,
-        attachmentImages: formData.attachmentImages,
         mainCrop: formData.mainCrop,
         farmingTypes: formData.farmingTypes,
         equipments: formData.equipments,
@@ -476,58 +460,6 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           </div>
         </div>
 
-        {/* 메인 이미지 */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">메인 이미지</h2>
-          <div>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={async (e) => {
-                const files = Array.from(e.target.files || []);
-                const uploadedUrls = await Promise.all(
-                  files.map(async (file) => {
-                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    return getDownloadURL(snapshot.ref);
-                  })
-                );
-                setFormData((prev: FormData) => ({
-                  ...prev,
-                  mainImages: [...prev.mainImages, ...uploadedUrls]
-                }));
-              }}
-              className="mt-1 block w-full"
-            />
-            <div className="mt-2 grid grid-cols-4 gap-2">
-              {formData.mainImages.map((url, index) => (
-                <div key={url} className="relative">
-                  <img src={url} alt={`메인 이미지 ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const imageRef = ref(storage, url);
-                        await deleteObject(imageRef);
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          mainImages: prev.mainImages.filter(u => u !== url)
-                        }));
-                      } catch (error) {
-                        console.error('Error deleting image:', error);
-                      }
-                    }}
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* 농기계 정보 */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">농기계 정보</h2>
@@ -581,7 +513,258 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   </select>
                 </div>
 
-                {/* 별점 평가 */}
+                {/* 로터리 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">모델명</label>
+                  <input
+                    type="text"
+                    value={equipment.attachments?.rotary?.model || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? {
+                                ...eq,
+                                attachments: {
+                                  ...eq.attachments,
+                                  rotary: { ...eq.attachments?.rotary, model: e.target.value }
+                                }
+                              }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="모델명을 입력하세요"
+                  />
+                </div>
+
+                {/* 제조사 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">제조사</label>
+                  <select
+                    value={equipment.attachments?.rotary?.manufacturer || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? {
+                                ...eq,
+                                attachments: {
+                                  ...eq.attachments,
+                                  rotary: { ...eq.attachments?.rotary, manufacturer: e.target.value }
+                                }
+                              }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="woongjin">웅진</option>
+                    <option value="samwon">삼원</option>
+                    <option value="weeken">위켄</option>
+                    <option value="youngjin">영진</option>
+                    <option value="agros">아그로스</option>
+                    <option value="chelli">첼리</option>
+                    <option value="jungang">중앙</option>
+                    <option value="folder">폴더</option>
+                    <option value="other">기타</option>
+                  </select>
+                </div>
+
+                {/* 전륜 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">모델명</label>
+                  <input
+                    type="text"
+                    value={equipment.attachments?.frontWheel?.model || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? {
+                                ...eq,
+                                attachments: {
+                                  ...eq.attachments,
+                                  frontWheel: { ...eq.attachments?.frontWheel, model: e.target.value }
+                                }
+                              }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="모델명을 입력하세요"
+                  />
+                </div>
+
+                {/* 제조사 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">제조사</label>
+                  <select
+                    value={equipment.attachments?.frontWheel?.manufacturer || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? {
+                                ...eq,
+                                attachments: {
+                                  ...eq.attachments,
+                                  frontWheel: { ...eq.attachments?.frontWheel, manufacturer: e.target.value }
+                                }
+                              }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="heungah">흥아</option>
+                    <option value="bkt">bkt</option>
+                    <option value="michelin">미셀린</option>
+                    <option value="india">인도</option>
+                    <option value="china">중국</option>
+                    <option value="other">기타</option>
+                  </select>
+                </div>
+
+                {/* 후륜 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">모델명</label>
+                  <input
+                    type="text"
+                    value={equipment.attachments?.rearWheel?.model || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? {
+                                ...eq,
+                                attachments: {
+                                  ...eq.attachments,
+                                  rearWheel: { ...eq.attachments?.rearWheel, model: e.target.value }
+                                }
+                              }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="모델명을 입력하세요"
+                  />
+                </div>
+
+                {/* 제조사 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">제조사</label>
+                  <select
+                    value={equipment.attachments?.rearWheel?.manufacturer || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? {
+                                ...eq,
+                                attachments: {
+                                  ...eq.attachments,
+                                  rearWheel: { ...eq.attachments?.rearWheel, manufacturer: e.target.value }
+                                }
+                              }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="heungah">흥아</option>
+                    <option value="bkt">bkt</option>
+                    <option value="michelin">미셀린</option>
+                    <option value="india">인도</option>
+                    <option value="china">중국</option>
+                    <option value="other">기타</option>
+                  </select>
+                </div>
+
+                {/* 마력 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">마력</label>
+                  <input
+                    type="number"
+                    value={equipment.horsepower}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, horsepower: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="마력을 입력하세요"
+                  />
+                </div>
+
+                {/* 연식 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">연식</label>
+                  <select
+                    value={equipment.year}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, year: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    {Array.from({ length: 36 }, (_, i) => 1990 + i).map((year) => (
+                      <option key={year} value={year}>
+                        {year}년
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 사용시간 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">사용시간</label>
+                  <input
+                    type="text"
+                    value={equipment.usageHours}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? { ...eq, usageHours: e.target.value }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="사용시간을 입력하세요"
+                  />
+                </div>
+
+                {/* 상태 평가 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">상태 평가</label>
                   <div className="flex gap-2 mt-1">
@@ -609,218 +792,6 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                       </button>
                     ))}
                   </div>
-                </div>
-
-                {/* 제조사 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">제조사</label>
-                  <select
-                    value={equipment.manufacturer}
-                    onChange={(e) => {
-                      setFormData((prev: FormData) => ({
-                        ...prev,
-                        equipments: prev.equipments.map(eq =>
-                          eq.id === equipment.id
-                            ? { ...eq, manufacturer: e.target.value }
-                            : eq
-                        )
-                      }))
-                    }}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  >
-                    <option value="">선택하세요</option>
-                    <option value="john_deere">존디어</option>
-                    <option value="kubota">구보다</option>
-                    <option value="daedong">대동</option>
-                    <option value="kukje">국제</option>
-                    <option value="ls">엘에스</option>
-                    <option value="yanmar">얀마</option>
-                    <option value="newholland">뉴홀랜드</option>
-                    <option value="mf">엠에프</option>
-                    <option value="case">케이스</option>
-                    <option value="hyundai">현대</option>
-                    <option value="samsung">삼성</option>
-                    <option value="volvo">볼보</option>
-                    <option value="hitachi">히타치</option>
-                    <option value="doosan">두산</option>
-                    <option value="agrico">아그리코</option>
-                    <option value="star">스타</option>
-                    <option value="chevrolet">시보레</option>
-                    <option value="valmet">발메트</option>
-                  </select>
-                </div>
-
-                {/* 모델명 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">모델명</label>
-                  <input
-                    type="text"
-                    value={equipment.model}
-                    onChange={(e) => {
-                      setFormData((prev: FormData) => ({
-                        ...prev,
-                        equipments: prev.equipments.map(eq =>
-                          eq.id === equipment.id
-                            ? { ...eq, model: e.target.value }
-                            : eq
-                        )
-                      }))
-                    }}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="모델명을 입력하세요"
-                  />
-                </div>
-
-                {/* 마력 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">마력</label>
-                  <input
-                    type="number"
-                    value={equipment.horsepower}
-                    onChange={(e) => {
-                      setFormData((prev: FormData) => ({
-                        ...prev,
-                        equipments: prev.equipments.map(eq =>
-                          eq.id === equipment.id
-                            ? { ...eq, horsepower: e.target.value }
-                            : eq
-                        )
-                      }))
-                    }}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="마력을 입력하세요"
-                  />
-                </div>
-
-                {/* 연식 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">연식</label>
-                  <input
-                    type="number"
-                    value={equipment.year}
-                    onChange={(e) => {
-                      setFormData((prev: FormData) => ({
-                        ...prev,
-                        equipments: prev.equipments.map(eq =>
-                          eq.id === equipment.id
-                            ? { ...eq, year: e.target.value }
-                            : eq
-                        )
-                      }))
-                    }}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="연식을 입력하세요"
-                  />
-                </div>
-
-                {/* 사용시간 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">사용시간</label>
-                  <input
-                    type="text"
-                    value={equipment.usageHours}
-                    onChange={(e) => {
-                      setFormData((prev: FormData) => ({
-                        ...prev,
-                        equipments: prev.equipments.map(eq =>
-                          eq.id === equipment.id
-                            ? { ...eq, usageHours: e.target.value }
-                            : eq
-                        )
-                      }))
-                    }}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="사용시간을 입력하세요"
-                  />
-                </div>
-
-                {/* 상태 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">상태</label>
-                  <select
-                    value={equipment.rating}
-                    onChange={(e) => {
-                      setFormData((prev: FormData) => ({
-                        ...prev,
-                        equipments: prev.equipments.map(eq =>
-                          eq.id === equipment.id
-                            ? { ...eq, rating: e.target.value }
-                            : eq
-                        )
-                      }))
-                    }}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  >
-                    <option value="">선택하세요</option>
-                    <option value="상">상</option>
-                    <option value="중">중</option>
-                    <option value="하">하</option>
-                  </select>
-                </div>
-
-                {/* 판매여부 */}
-                <div>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={equipment.forSale}
-                      onChange={(e) => {
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          equipments: prev.equipments.map(eq =>
-                            eq.id === equipment.id
-                              ? { ...eq, forSale: e.target.checked }
-                              : eq
-                          )
-                        }))
-                      }}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">판매</span>
-                  </label>
-                </div>
-
-                {/* 구매여부 */}
-                <div>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={equipment.forPurchase}
-                      onChange={(e) => {
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          equipments: prev.equipments.map(eq =>
-                            eq.id === equipment.id
-                              ? { ...eq, forPurchase: e.target.checked }
-                              : eq
-                          )
-                        }))
-                      }}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">구매</span>
-                  </label>
-                </div>
-
-                {/* 판매가격 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">판매가격</label>
-                  <input
-                    type="text"
-                    value={equipment.desiredPrice}
-                    onChange={(e) => {
-                      setFormData((prev: FormData) => ({
-                        ...prev,
-                        equipments: prev.equipments.map(eq =>
-                          eq.id === equipment.id
-                            ? { ...eq, desiredPrice: e.target.value }
-                            : eq
-                        )
-                      }))
-                    }}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="판매가격을 입력하세요"
-                  />
                 </div>
 
                 {/* 거래 유형 */}
@@ -869,6 +840,8 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                   </select>
                 </div>
 
+                {/* 거래 상황 */}
+                <div className="space-y-4">
                 {/* 판매 상태 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">판매 상태</label>
@@ -914,610 +887,27 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     <option value="완료">완료</option>
                   </select>
                 </div>
-
-                {/* 부착작업기 섹션 */}
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="text-lg font-medium mb-3">부착작업기</h4>
-                  
-                  {/* 로더 */}
-                  <div className="space-y-4 mb-4 p-4 border rounded-lg">
-                    <h5 className="font-medium">로더</h5>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">모델명</label>
-                      <input
-                        type="text"
-                        value={equipment.attachments?.loader?.model || ''}
-                        onChange={(e) => {
-                          setFormData((prev: FormData) => ({
-                            ...prev,
-                            equipments: prev.equipments.map(eq =>
-                              eq.id === equipment.id
-                                ? {
-                                    ...eq,
-                                    attachments: {
-                                      ...eq.attachments,
-                                      loader: { ...eq.attachments?.loader, model: e.target.value }
-                                    }
-                                  }
-                                : eq
-                            )
-                          }))
-                        }}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="모델명을 입력하세요"
-                      />
                     </div>
                     
+                {/* 희망가격 */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">상태 평가</label>
-                      <div className="flex gap-2 mt-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev: FormData) => ({
-                                ...prev,
-                                equipments: prev.equipments.map(eq =>
-                                  eq.id === equipment.id
-                                    ? {
-                                        ...eq,
-                                        attachments: {
-                                          ...eq.attachments,
-                                          loader: { ...eq.attachments?.loader, condition: star }
-                                        }
-                                      }
-                                    : eq
-                                )
-                              }))
-                            }}
-                            className={`p-1 ${
-                              (equipment.attachments?.loader?.condition ?? 0) >= star
-                                ? 'text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">메모</label>
-                      <textarea
-                        value={equipment.attachments?.loader?.memo || ''}
-                        onChange={(e) => {
-                          setFormData((prev: FormData) => ({
-                            ...prev,
-                            equipments: prev.equipments.map(eq =>
-                              eq.id === equipment.id
-                                ? {
-                                    ...eq,
-                                    attachments: {
-                                      ...eq.attachments,
-                                      loader: { ...eq.attachments?.loader, memo: e.target.value }
-                                    }
-                                  }
-                                : eq
-                            )
-                          }))
-                        }}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        rows={3}
-                        placeholder="메모를 입력하세요"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">이미지 (최대 4장)</label>
-                      <div className="mt-1 grid grid-cols-2 gap-2">
-                        {[...Array(4)].map((_, index) => (
-                          <div key={index} className="relative">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                setFormData((prev: FormData) => ({
-                                  ...prev,
-                                  equipments: prev.equipments.map(eq =>
-                                    eq.id === equipment.id
-                                      ? {
-                                          ...eq,
-                                          attachments: {
-                                            ...eq.attachments,
-                                            loader: {
-                                              ...eq.attachments?.loader,
-                                              images: eq.attachments?.loader?.images
-                                                ? [...eq.attachments.loader.images.slice(0, index), e.target.files?.[0] || null, ...eq.attachments.loader.images.slice(index + 1)]
-                                                : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
-                                            }
-                                          }
-                                        }
-                                      : eq
-                                  )
-                                }))
-                              }}
-                              className="hidden"
-                              id={`loader-image-${equipment.id}-${index}`}
-                            />
-                            <label
-                              htmlFor={`loader-image-${equipment.id}-${index}`}
-                              className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
-                            >
-                              {equipment.attachments?.loader?.images?.[index] ? (
-                                <img
-                                  src={
-                                    typeof equipment.attachments.loader.images[index] === 'string'
-                                      ? equipment.attachments.loader.images[index] as string
-                                      : equipment.attachments.loader.images[index] instanceof File
-                                        ? URL.createObjectURL(equipment.attachments.loader.images[index] as File)
-                                        : ''
-                                  }
-                                  alt={`로더 이미지 ${index + 1}`}
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                              ) : (
-                                <div className="flex items-center justify-center h-full text-gray-400">
-                                  <span>이미지 추가</span>
-                                </div>
-                              )}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 로터리 */}
-                  <div className="space-y-4 mb-4 p-4 border rounded-lg">
-                    <h5 className="font-medium">로터리</h5>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">모델명</label>
+                  <label className="block text-sm font-medium text-gray-700">희망가격</label>
                       <input
                         type="text"
-                        value={equipment.attachments?.rotary?.model || ''}
+                    value={equipment.desiredPrice}
                         onChange={(e) => {
                           setFormData((prev: FormData) => ({
                             ...prev,
                             equipments: prev.equipments.map(eq =>
                               eq.id === equipment.id
-                                ? {
-                                    ...eq,
-                                    attachments: {
-                                      ...eq.attachments,
-                                      rotary: { ...eq.attachments?.rotary, model: e.target.value }
-                                    }
-                                  }
+                            ? { ...eq, desiredPrice: e.target.value }
                                 : eq
                             )
                           }))
                         }}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="모델명을 입력하세요"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">상태 평가</label>
-                      <div className="flex gap-2 mt-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev: FormData) => ({
-                                ...prev,
-                                equipments: prev.equipments.map(eq =>
-                                  eq.id === equipment.id
-                                    ? {
-                                        ...eq,
-                                        attachments: {
-                                          ...eq.attachments,
-                                          rotary: { ...eq.attachments?.rotary, condition: star }
-                                        }
-                                      }
-                                    : eq
-                                )
-                              }))
-                            }}
-                            className={`p-1 ${
-                              (equipment.attachments?.rotary?.condition ?? 0) >= star
-                                ? 'text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">메모</label>
-                      <textarea
-                        value={equipment.attachments?.rotary?.memo || ''}
-                        onChange={(e) => {
-                          setFormData((prev: FormData) => ({
-                            ...prev,
-                            equipments: prev.equipments.map(eq =>
-                              eq.id === equipment.id
-                                ? {
-                                    ...eq,
-                                    attachments: {
-                                      ...eq.attachments,
-                                      rotary: { ...eq.attachments?.rotary, memo: e.target.value }
-                                    }
-                                  }
-                                : eq
-                            )
-                          }))
-                        }}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        rows={3}
-                        placeholder="메모를 입력하세요"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">이미지 (최대 4장)</label>
-                      <div className="mt-1 grid grid-cols-2 gap-2">
-                        {[...Array(4)].map((_, index) => (
-                          <div key={index} className="relative">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                setFormData((prev: FormData) => ({
-                                  ...prev,
-                                  equipments: prev.equipments.map(eq =>
-                                    eq.id === equipment.id
-                                      ? {
-                                          ...eq,
-                                          attachments: {
-                                            ...eq.attachments,
-                                            rotary: {
-                                              ...eq.attachments?.rotary,
-                                              images: eq.attachments?.rotary?.images
-                                                ? [...eq.attachments.rotary.images.slice(0, index), e.target.files?.[0] || null, ...eq.attachments.rotary.images.slice(index + 1)]
-                                                : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
-                                            }
-                                          }
-                                        }
-                                      : eq
-                                  )
-                                }))
-                              }}
-                              className="hidden"
-                              id={`rotary-image-${equipment.id}-${index}`}
-                            />
-                            <label
-                              htmlFor={`rotary-image-${equipment.id}-${index}`}
-                              className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
-                            >
-                              {equipment.attachments?.rotary?.images?.[index] ? (
-                                <img
-                                  src={
-                                    typeof equipment.attachments.rotary.images[index] === 'string'
-                                      ? equipment.attachments.rotary.images[index] as string
-                                      : equipment.attachments.rotary.images[index] instanceof File
-                                        ? URL.createObjectURL(equipment.attachments.rotary.images[index] as File)
-                                        : ''
-                                  }
-                                  alt={`로터리 이미지 ${index + 1}`}
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                              ) : (
-                                <div className="flex items-center justify-center h-full text-gray-400">
-                                  <span>이미지 추가</span>
-                                </div>
-                              )}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 전륜 */}
-                  <div className="space-y-4 mb-4 p-4 border rounded-lg">
-                    <h5 className="font-medium">전륜</h5>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">모델명</label>
-                      <input
-                        type="text"
-                        value={equipment.attachments?.frontWheel?.model || ''}
-                        onChange={(e) => {
-                          setFormData((prev: FormData) => ({
-                            ...prev,
-                            equipments: prev.equipments.map(eq =>
-                              eq.id === equipment.id
-                                ? {
-                                    ...eq,
-                                    attachments: {
-                                      ...eq.attachments,
-                                      frontWheel: { ...eq.attachments?.frontWheel, model: e.target.value }
-                                    }
-                                  }
-                                : eq
-                            )
-                          }))
-                        }}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="모델명을 입력하세요"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">상태 평가</label>
-                      <div className="flex gap-2 mt-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev: FormData) => ({
-                                ...prev,
-                                equipments: prev.equipments.map(eq =>
-                                  eq.id === equipment.id
-                                    ? {
-                                        ...eq,
-                                        attachments: {
-                                          ...eq.attachments,
-                                          frontWheel: { ...eq.attachments?.frontWheel, condition: star }
-                                        }
-                                      }
-                                    : eq
-                                )
-                              }))
-                            }}
-                            className={`p-1 ${
-                              (equipment.attachments?.frontWheel?.condition ?? 0) >= star
-                                ? 'text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">메모</label>
-                      <textarea
-                        value={equipment.attachments?.frontWheel?.memo || ''}
-                        onChange={(e) => {
-                          setFormData((prev: FormData) => ({
-                            ...prev,
-                            equipments: prev.equipments.map(eq =>
-                              eq.id === equipment.id
-                                ? {
-                                    ...eq,
-                                    attachments: {
-                                      ...eq.attachments,
-                                      frontWheel: { ...eq.attachments?.frontWheel, memo: e.target.value }
-                                    }
-                                  }
-                                : eq
-                            )
-                          }))
-                        }}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        rows={3}
-                        placeholder="메모를 입력하세요"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">이미지 (최대 4장)</label>
-                      <div className="mt-1 grid grid-cols-2 gap-2">
-                        {[...Array(4)].map((_, index) => (
-                          <div key={index} className="relative">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                setFormData((prev: FormData) => ({
-                                  ...prev,
-                                  equipments: prev.equipments.map(eq =>
-                                    eq.id === equipment.id
-                                      ? {
-                                          ...eq,
-                                          attachments: {
-                                            ...eq.attachments,
-                                            frontWheel: {
-                                              ...eq.attachments?.frontWheel,
-                                              images: eq.attachments?.frontWheel?.images
-                                                ? [...eq.attachments.frontWheel.images.slice(0, index), e.target.files?.[0] || null, ...eq.attachments.frontWheel.images.slice(index + 1)]
-                                                : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
-                                            }
-                                          }
-                                        }
-                                      : eq
-                                  )
-                                }))
-                              }}
-                              className="hidden"
-                              id={`frontWheel-image-${equipment.id}-${index}`}
-                            />
-                            <label
-                              htmlFor={`frontWheel-image-${equipment.id}-${index}`}
-                              className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
-                            >
-                              {equipment.attachments?.frontWheel?.images?.[index] ? (
-                                <img
-                                  src={
-                                    typeof equipment.attachments.frontWheel.images[index] === 'string'
-                                      ? equipment.attachments.frontWheel.images[index] as string
-                                      : equipment.attachments.frontWheel.images[index] instanceof File
-                                        ? URL.createObjectURL(equipment.attachments.frontWheel.images[index] as File)
-                                        : ''
-                                  }
-                                  alt={`전륜 이미지 ${index + 1}`}
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                              ) : (
-                                <div className="flex items-center justify-center h-full text-gray-400">
-                                  <span>이미지 추가</span>
-                                </div>
-                              )}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 후륜 */}
-                  <div className="space-y-4 mb-4 p-4 border rounded-lg">
-                    <h5 className="font-medium">후륜</h5>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">모델명</label>
-                      <input
-                        type="text"
-                        value={equipment.attachments?.rearWheel?.model || ''}
-                        onChange={(e) => {
-                          setFormData((prev: FormData) => ({
-                            ...prev,
-                            equipments: prev.equipments.map(eq =>
-                              eq.id === equipment.id
-                                ? {
-                                    ...eq,
-                                    attachments: {
-                                      ...eq.attachments,
-                                      rearWheel: { ...eq.attachments?.rearWheel, model: e.target.value }
-                                    }
-                                  }
-                                : eq
-                            )
-                          }))
-                        }}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="모델명을 입력하세요"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">상태 평가</label>
-                      <div className="flex gap-2 mt-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev: FormData) => ({
-                                ...prev,
-                                equipments: prev.equipments.map(eq =>
-                                  eq.id === equipment.id
-                                    ? {
-                                        ...eq,
-                                        attachments: {
-                                          ...eq.attachments,
-                                          rearWheel: { ...eq.attachments?.rearWheel, condition: star }
-                                        }
-                                      }
-                                    : eq
-                                )
-                              }))
-                            }}
-                            className={`p-1 ${
-                              (equipment.attachments?.rearWheel?.condition ?? 0) >= star
-                                ? 'text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">메모</label>
-                      <textarea
-                        value={equipment.attachments?.rearWheel?.memo || ''}
-                        onChange={(e) => {
-                          setFormData((prev: FormData) => ({
-                            ...prev,
-                            equipments: prev.equipments.map(eq =>
-                              eq.id === equipment.id
-                                ? {
-                                    ...eq,
-                                    attachments: {
-                                      ...eq.attachments,
-                                      rearWheel: { ...eq.attachments?.rearWheel, memo: e.target.value }
-                                    }
-                                  }
-                                : eq
-                            )
-                          }))
-                        }}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        rows={3}
-                        placeholder="메모를 입력하세요"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">이미지 (최대 4장)</label>
-                      <div className="mt-1 grid grid-cols-2 gap-2">
-                        {[...Array(4)].map((_, index) => (
-                          <div key={index} className="relative">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                setFormData((prev: FormData) => ({
-                                  ...prev,
-                                  equipments: prev.equipments.map(eq =>
-                                    eq.id === equipment.id
-                                      ? {
-                                          ...eq,
-                                          attachments: {
-                                            ...eq.attachments,
-                                            rearWheel: {
-                                              ...eq.attachments?.rearWheel,
-                                              images: eq.attachments?.rearWheel?.images
-                                                ? [...eq.attachments.rearWheel.images.slice(0, index), e.target.files?.[0] || null, ...eq.attachments.rearWheel.images.slice(index + 1)]
-                                                : Array(4).fill(null).map((_, i) => i === index ? e.target.files?.[0] || null : null)
-                                            }
-                                          }
-                                        }
-                                      : eq
-                                  )
-                                }))
-                              }}
-                              className="hidden"
-                              id={`rearWheel-image-${equipment.id}-${index}`}
-                            />
-                            <label
-                              htmlFor={`rearWheel-image-${equipment.id}-${index}`}
-                              className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
-                            >
-                              {equipment.attachments?.rearWheel?.images?.[index] ? (
-                                <img
-                                  src={
-                                    typeof equipment.attachments.rearWheel.images[index] === 'string'
-                                      ? equipment.attachments.rearWheel.images[index] as string
-                                      : equipment.attachments.rearWheel.images[index] instanceof File
-                                        ? URL.createObjectURL(equipment.attachments.rearWheel.images[index] as File)
-                                        : ''
-                                  }
-                                  alt={`후륜 이미지 ${index + 1}`}
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                              ) : (
-                                <div className="flex items-center justify-center h-full text-gray-400">
-                                  <span>이미지 추가</span>
-                                </div>
-                              )}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                    placeholder="희망가격을 입력하세요"
+                  />
                 </div>
 
                 {/* 농기계 이미지 */}
@@ -1573,6 +963,40 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     ))}
                   </div>
                 </div>
+
+                {/* 로더 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">제조사</label>
+                  <select
+                    value={equipment.attachments?.loader?.manufacturer || ''}
+                    onChange={(e) => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.map(eq =>
+                          eq.id === equipment.id
+                            ? {
+                                ...eq,
+                                attachments: {
+                                  ...eq.attachments,
+                                  loader: { ...eq.attachments?.loader, manufacturer: e.target.value }
+                                }
+                              }
+                            : eq
+                        )
+                      }))
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="hanil">한일</option>
+                    <option value="taesung">태성</option>
+                    <option value="ansung">안성</option>
+                    <option value="heemang">희망</option>
+                    <option value="jangsu">장수</option>
+                    <option value="bonsa">본사</option>
+                    <option value="other">기타</option>
+                  </select>
+                </div>
               </div>
             ))}
           </div>
@@ -1589,57 +1013,48 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     id: uuidv4(),
                     type: '',
                     manufacturer: '',
+                    model: '',
                     horsepower: '',
                     year: '',
-                    model: '',
                     usageHours: '',
-                    rating: '',
                     condition: 0,
                     attachments: {
                       loader: {
                         model: '',
-                        rating: '',
+                        manufacturer: '',
                         condition: 0,
                         memo: '',
                         images: []
                       },
                       rotary: {
                         model: '',
-                        rating: '',
+                        manufacturer: '',
                         condition: 0,
                         memo: '',
                         images: []
                       },
                       frontWheel: {
                         model: '',
-                        rating: '',
+                        manufacturer: '',
                         condition: 0,
                         memo: '',
                         images: []
                       },
                       rearWheel: {
                         model: '',
-                        rating: '',
+                        manufacturer: '',
                         condition: 0,
                         memo: '',
                         images: []
-                      },
-                      cutter: '',
-                      rows: '',
-                      tonnage: '',
-                      size: '',
-                      bucketSize: ''
+                      }
                     },
-                    images: [],
                     saleType: null,
                     tradeType: '',
                     saleStatus: '',
                     purchaseStatus: '',
                     desiredPrice: '',
-                    purchasePrice: '',
                     memo: '',
-                    forSale: false,
-                    forPurchase: false
+                    images: []
                   } as Equipment
                 ]
               }))
@@ -1648,235 +1063,6 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           >
             농기계 추가
           </button>
-        </div>
-
-        {/* 부착작업기 이미지 */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">부착작업기 이미지</h2>
-          
-          {/* 로더 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">로더</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={async (e) => {
-                const files = Array.from(e.target.files || []);
-                const uploadedUrls = await Promise.all(
-                  files.map(async (file) => {
-                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    return getDownloadURL(snapshot.ref);
-                  })
-                );
-                setFormData((prev: FormData) => ({
-                  ...prev,
-                  attachmentImages: {
-                    ...prev.attachmentImages,
-                    loader: [...prev.attachmentImages.loader, ...uploadedUrls]
-                  }
-                }));
-              }}
-              className="mt-1 block w-full"
-            />
-            <div className="mt-2 grid grid-cols-4 gap-2">
-              {formData.attachmentImages.loader.map((url, index) => (
-                <div key={url} className="relative">
-                  <img src={url} alt={`로더 ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const imageRef = ref(storage, url);
-                        await deleteObject(imageRef);
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          attachmentImages: {
-                            ...prev.attachmentImages,
-                            loader: prev.attachmentImages.loader.filter(u => u !== url)
-                          }
-                        }));
-                      } catch (error) {
-                        console.error('Error deleting image:', error);
-                      }
-                    }}
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 로터리 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">로타리</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={async (e) => {
-                const files = Array.from(e.target.files || []);
-                const uploadedUrls = await Promise.all(
-                  files.map(async (file) => {
-                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    return getDownloadURL(snapshot.ref);
-                  })
-                );
-                setFormData((prev: FormData) => ({
-                  ...prev,
-                  attachmentImages: {
-                    ...prev.attachmentImages,
-                    rotary: [...prev.attachmentImages.rotary, ...uploadedUrls]
-                  }
-                }));
-              }}
-              className="mt-1 block w-full"
-            />
-            <div className="mt-2 grid grid-cols-4 gap-2">
-              {formData.attachmentImages.rotary.map((url, index) => (
-                <div key={url} className="relative">
-                  <img src={url} alt={`로타리 ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const imageRef = ref(storage, url);
-                        await deleteObject(imageRef);
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          attachmentImages: {
-                            ...prev.attachmentImages,
-                            rotary: prev.attachmentImages.rotary.filter(u => u !== url)
-                          }
-                        }));
-                      } catch (error) {
-                        console.error('Error deleting image:', error);
-                      }
-                    }}
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 전륜 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">전륜</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={async (e) => {
-                const files = Array.from(e.target.files || []);
-                const uploadedUrls = await Promise.all(
-                  files.map(async (file) => {
-                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    return getDownloadURL(snapshot.ref);
-                  })
-                );
-                setFormData((prev: FormData) => ({
-                  ...prev,
-                  attachmentImages: {
-                    ...prev.attachmentImages,
-                    frontWheel: [...prev.attachmentImages.frontWheel, ...uploadedUrls]
-                  }
-                }));
-              }}
-              className="mt-1 block w-full"
-            />
-            <div className="mt-2 grid grid-cols-4 gap-2">
-              {formData.attachmentImages.frontWheel.map((url, index) => (
-                <div key={url} className="relative">
-                  <img src={url} alt={`전륜 ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const imageRef = ref(storage, url);
-                        await deleteObject(imageRef);
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          attachmentImages: {
-                            ...prev.attachmentImages,
-                            frontWheel: prev.attachmentImages.frontWheel.filter(u => u !== url)
-                          }
-                        }));
-                      } catch (error) {
-                        console.error('Error deleting image:', error);
-                      }
-                    }}
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 후륜 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">후륜</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={async (e) => {
-                const files = Array.from(e.target.files || []);
-                const uploadedUrls = await Promise.all(
-                  files.map(async (file) => {
-                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    return getDownloadURL(snapshot.ref);
-                  })
-                );
-                setFormData((prev: FormData) => ({
-                  ...prev,
-                  attachmentImages: {
-                    ...prev.attachmentImages,
-                    rearWheel: [...prev.attachmentImages.rearWheel, ...uploadedUrls]
-                  }
-                }));
-              }}
-              className="mt-1 block w-full"
-            />
-            <div className="mt-2 grid grid-cols-4 gap-2">
-              {formData.attachmentImages.rearWheel.map((url, index) => (
-                <div key={url} className="relative">
-                  <img src={url} alt={`후륜 ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const imageRef = ref(storage, url);
-                        await deleteObject(imageRef);
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          attachmentImages: {
-                            ...prev.attachmentImages,
-                            rearWheel: prev.attachmentImages.rearWheel.filter(u => u !== url)
-                          }
-                        }));
-                      } catch (error) {
-                        console.error('Error deleting image:', error);
-                      }
-                    }}
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         <button

@@ -25,7 +25,6 @@ export async function POST(req: Request) {
       'businessName',
       'farmingTypes',
       'mainCrop',
-      'equipments',
       'zipCode',
       'roadAddress',
       'jibunAddress',
@@ -34,14 +33,49 @@ export async function POST(req: Request) {
       'ageGroup',
       'canReceiveMail',
       'createdAt',
-      'updatedAt'
+      'updatedAt',
+      // Equipment 필드들
+      'equipment_type',
+      'equipment_manufacturer',
+      'equipment_horsepower',
+      'equipment_model',
+      'equipment_year',
+      'equipment_usageHours',
+      'equipment_rating',
+      // Attachments 필드들
+      'equipment_loader',
+      'equipment_rotary',
+      'equipment_frontWheel',
+      'equipment_rearWheel',
+      'equipment_loaderModel',
+      'equipment_rotaryModel',
+      'equipment_frontWheelModel',
+      'equipment_rearWheelModel',
+      'equipment_loaderRating',
+      'equipment_rotaryRating',
+      'equipment_frontWheelRating',
+      'equipment_rearWheelRating',
+      'equipment_rows',
+      'equipment_tonnage'
     ];
 
     jsonData = [headers];
     data.forEach((item: any) => {
       const row = headers.map(header => {
-        if (header === 'equipments') {
-          return Array.isArray(item[header]) ? item[header].join(', ') : '';
+        if (header === 'farmingTypes' || header === 'mainCrop') {
+          return JSON.stringify(item[header]);
+        }
+        // Equipment 필드 처리
+        if (header.startsWith('equipment_')) {
+          const equipment = item.equipments?.[0] || {};
+          const field = header.replace('equipment_', '');
+          if (field in equipment) {
+            return equipment[field]?.toString() || '';
+          }
+          if (field in (equipment.attachments || {})) {
+            return equipment.attachments[field]?.toString() || '';
+          }
+          return '';
         }
         return item[header]?.toString() || '';
       });
@@ -54,14 +88,14 @@ export async function POST(req: Request) {
 
   while (retries < MAX_RETRIES) {
     try {
-      if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_SHEET_ID) {
+      if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEET_ID) {
         throw new Error('필수 환경 변수가 설정되지 않았습니다.');
       }
 
       const auth = new google.auth.GoogleAuth({
         credentials: {
           client_email: process.env.GOOGLE_CLIENT_EMAIL,
-          private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+          private_key: process.env.GOOGLE_SERVICE_ACCOUNT_KEY?.replace(/\\n/g, '\n'),
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
       });

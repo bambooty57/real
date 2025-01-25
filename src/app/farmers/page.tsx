@@ -306,16 +306,31 @@ export default function FarmerList() {
   }, [filter.city, filter.town])
 
   const filteredFarmers = farmers.filter(farmer => {
-    if (!farmer) return false;
-    
     // 검색어 필터링
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      const nameMatch = typeof farmer.name === 'string' ? farmer.name.toLowerCase().includes(searchLower) : false;
-      const phoneMatch = typeof farmer.phone === 'string' ? farmer.phone.toLowerCase().includes(searchLower) : false;
-      const businessMatch = typeof farmer.businessName === 'string' ? farmer.businessName.toLowerCase().includes(searchLower) : false;
-      
-      if (!(nameMatch || phoneMatch || businessMatch)) return false;
+      const searchFields = [
+        farmer.name,
+        farmer.businessName,
+        farmer.roadAddress,
+        farmer.jibunAddress,
+        farmer.phone,
+        farmer.memo,
+        // 농기계 정보 검색
+        ...(farmer.equipments?.map(eq => [
+          eq.type,
+          eq.manufacturer,
+          eq.model,
+          eq.attachments?.loader?.manufacturer,
+          eq.attachments?.rotary?.manufacturer,
+          eq.attachments?.frontWheel?.manufacturer,
+          eq.attachments?.rearWheel?.manufacturer
+        ]).flat() || [])
+      ].filter(Boolean).map(field => field?.toLowerCase());
+
+      if (!searchFields.some(field => field?.includes(searchLower))) {
+        return false;
+      }
     }
 
     // 지역 필터링
@@ -620,13 +635,24 @@ export default function FarmerList() {
         </div>
       </div>
 
+      {/* 통합검색란 추가 */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="이름, 상호명, 주소, 전화번호, 메모, 농기계 정보 검색..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
       {/* 필터 섹션 */}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">검색 필터</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {/* 시/군 필터 */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">시/군</label>
