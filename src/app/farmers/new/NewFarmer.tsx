@@ -1018,6 +1018,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                     year: '',
                     usageHours: '',
                     condition: 0,
+                    rating: 0,
                     attachments: {
                       loader: {
                         model: '',
