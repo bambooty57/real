@@ -7,6 +7,7 @@ export interface Equipment {
   year: string
   usageHours: string
   rating: string
+  condition: number
   images?: string[]
   attachments: {
     loader?: string
