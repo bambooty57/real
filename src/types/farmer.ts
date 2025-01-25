@@ -8,35 +8,35 @@ export interface Equipment {
   usageHours: string
   rating: string
   condition: number
-  images?: string[]
+  images?: (string | File | null)[]
   attachments: {
     loader?: {
       model?: string
       rating?: string
       condition?: number
       memo?: string
-      images?: (File | null)[]
+      images?: (string | File | null)[]
     }
     rotary?: {
       model?: string
       rating?: string
       condition?: number
       memo?: string
-      images?: (File | null)[]
+      images?: (string | File | null)[]
     }
     frontWheel?: {
       model?: string
       rating?: string
       condition?: number
       memo?: string
-      images?: (File | null)[]
+      images?: (string | File | null)[]
     }
     rearWheel?: {
       model?: string
       rating?: string
       condition?: number
       memo?: string
-      images?: (File | null)[]
+      images?: (string | File | null)[]
     }
     cutter?: string
     rows?: string
