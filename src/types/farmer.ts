@@ -14,24 +14,31 @@ export interface Equipment {
       model?: string
       rating?: string
       condition?: number
+      memo?: string
     }
     rotary?: {
       model?: string
       rating?: string
       condition?: number
+      memo?: string
     }
     frontWheel?: {
       model?: string
       rating?: string
       condition?: number
+      memo?: string
     }
     rearWheel?: {
       model?: string
       rating?: string
       condition?: number
+      memo?: string
     }
+    cutter?: string
     rows?: string
     tonnage?: string
+    size?: string
+    bucketSize?: string
   }
   saleType?: 'new' | 'used' | null
   tradeType?: string
