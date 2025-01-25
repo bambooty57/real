@@ -1047,7 +1047,13 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                             >
                               {equipment.attachments?.loader?.images?.[index] ? (
                                 <img
-                                  src={URL.createObjectURL(equipment.attachments.loader.images[index])}
+                                  src={
+                                    typeof equipment.attachments.loader.images[index] === 'string'
+                                      ? equipment.attachments.loader.images[index] as string
+                                      : equipment.attachments.loader.images[index] instanceof File
+                                        ? URL.createObjectURL(equipment.attachments.loader.images[index] as File)
+                                        : ''
+                                  }
                                   alt={`로더 이미지 ${index + 1}`}
                                   className="w-full h-full object-cover rounded-lg"
                                 />
@@ -1191,7 +1197,13 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                             >
                               {equipment.attachments?.rotary?.images?.[index] ? (
                                 <img
-                                  src={URL.createObjectURL(equipment.attachments.rotary.images[index])}
+                                  src={
+                                    typeof equipment.attachments.rotary.images[index] === 'string'
+                                      ? equipment.attachments.rotary.images[index] as string
+                                      : equipment.attachments.rotary.images[index] instanceof File
+                                        ? URL.createObjectURL(equipment.attachments.rotary.images[index] as File)
+                                        : ''
+                                  }
                                   alt={`로터리 이미지 ${index + 1}`}
                                   className="w-full h-full object-cover rounded-lg"
                                 />
@@ -1335,7 +1347,13 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                             >
                               {equipment.attachments?.frontWheel?.images?.[index] ? (
                                 <img
-                                  src={URL.createObjectURL(equipment.attachments.frontWheel.images[index])}
+                                  src={
+                                    typeof equipment.attachments.frontWheel.images[index] === 'string'
+                                      ? equipment.attachments.frontWheel.images[index] as string
+                                      : equipment.attachments.frontWheel.images[index] instanceof File
+                                        ? URL.createObjectURL(equipment.attachments.frontWheel.images[index] as File)
+                                        : ''
+                                  }
                                   alt={`전륜 이미지 ${index + 1}`}
                                   className="w-full h-full object-cover rounded-lg"
                                 />
@@ -1479,7 +1497,13 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                             >
                               {equipment.attachments?.rearWheel?.images?.[index] ? (
                                 <img
-                                  src={URL.createObjectURL(equipment.attachments.rearWheel.images[index])}
+                                  src={
+                                    typeof equipment.attachments.rearWheel.images[index] === 'string'
+                                      ? equipment.attachments.rearWheel.images[index] as string
+                                      : equipment.attachments.rearWheel.images[index] instanceof File
+                                        ? URL.createObjectURL(equipment.attachments.rearWheel.images[index] as File)
+                                        : ''
+                                  }
                                   alt={`후륜 이미지 ${index + 1}`}
                                   className="w-full h-full object-cover rounded-lg"
                                 />
