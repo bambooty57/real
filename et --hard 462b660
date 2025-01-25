@@ -1,0 +1,62 @@
+[33ma21d299[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: Equipment 타입에 필수 필드 rating 추가
+[33m4917cdc[m fix: NextAuth 타입 에러 수정 및 rating 타입 변환 추가
+[33m1d38343[m feat: 검색 필터 레이아웃을 6열로 변경하고 통합검색 기능 개선
+[33m73053ea[m fix: Add type assertion for Equipment interface in NewFarmer
+[33m8022f67[m fix: Handle both string URLs and File objects in equipment image rendering
+[33mac90174[m fix: Handle both string URLs and File objects in image rendering
+[33m5bfe7ac[m fix: Update Equipment images type to support File objects and null values
+[33mcb42c54[m fix: Add images field to Equipment attachments type
+[33m5375bd1[m feat: Equipment 인터페이스의 attachments에 memo 필드 추가
+[33m2a567be[m fix: condition이 undefined일 때 기본값 0 설정
+[33mb111a7e[m feat: Equipment 인터페이스의 attachments에 condition 필드 추가
+[33mccca495[m refactor: Equipment 인터페이스의 attachments 타입 구조 변경
+[33m402f562[m feat: Equipment 인터페이스에 condition 필드 추가
+[33m3c2542f[m feat: 농민/농기계/부착작업기 별점 평가 기능 추가
+[33m462b660[m fix: 농기계 기본 정보 섹션 수정
+[33maba2084[m fix: Equipment 인터페이스의 모든 필수 필드 초기화
+[33mb473e27[m fix: Equipment 인터페이스에 horsepower 속성 추가
+[33m054db41[m style: 이미지 그리드를 4열로 변경
+[33ma01ac5e[m fix: AddressData 인터페이스의 jibunAddress를 선택적 값으로 수정
+[33mdd6348e[m fix: AddressSearch 컴포넌트 타입 오류 수정
+[33m70c0deb[m fix: Firebase updateDoc 타입 오류 수정
+[33m12cfcaa[m feat: 농민 상세보기 페이지에 인쇄 기능 추가
+[33mab5ef59[m fix: 새농민등록 폼 필드 추가
+[33m25fc2af[m Update service account settings
+[33m8744736[m chore: Remove service account key file
+[33m87ca8d8[m feat: Add Firebase and Google OAuth configuration (without credentials)
+[33ma11f309[m fix: Update upload route with correct environment variable
+[33m9f5b0a3[m fix: Update Firebase service account key environment variable name
+[33m84c8b45[m fix: Handle unknown error type in upload route
+[33md2e7083[m feat: Update dependencies and code improvements
+[33mccbc799[m fix: FarmerDetailClient 컴포넌트 수정
+[33ma8f32fc[m fix: Farmer 타입 정의 추가
+[33m0960c5e[m fix: NewFarmer 컴포넌트 JSX 추가
+[33me997ea7[m fix: EditFarmerClient 컴포넌트 수정
+[33m0ec8df8[m fix: NewFarmer 컴포넌트 분리
+[33m272e54a[m fix: Next.js 15 페이지 컴포넌트 구조 수정
+[33mbd42ae1[m fix: Next.js 15 PageProps 타입 수정
+[33m1afcb0b[m fix: Next.js 15 props 타입 정의
+[33mef852c2[m fix: Next.js 15 params Promise 타입 수정 (상세 페이지)
+[33m2766c76[m fix: Next.js 15 params Promise 타입 수정
+[33md16d555[m fix: Next.js 15 auth 구조 변경
+[33m24bcda9[m fix: getServerSession에 authOptions 추가
+[33m2cca920[m fix: Next.js 15 params 타입 및 Suspense 추가
+[33m45e61e2[m fix: Next.js 15 params 타입 수정
+[33mb852480[m fix: Next.js 15 PageProps 타입 수정
+[33mc978744[m fix: params 타입 수정
+[33m3b5efdb[m fix: Next.js 15 params 타입 수정
+[33m7377d77[m fix: NextAuth 설정 수정 및 빌드 에러 해결
+[33m1038c1c[m feat: 구글 로그인 기능 추가
+[33m886335b[m 차트에 데이터 레이블 추가
+[33m5c3dfc9[m feat: 엑셀 다운로드 기능 개선 - 농기계별 거래유형과 판매구분 정보 추가 - 동일 종류 농기계 여러 대 표시 지원
+[33mdb5b264[m feat: 지역별 통계 기능 개선 - 전체 시군구 데이터 표시 - 주소 파싱 로직 개선 - 장비 데이터 집계 로직 수정
+[33md7a2f05[m feat: 농민 목록 페이지 개선 - 필터 UI 개선 - 검색 결과 표시 방식 변경 - 새로고침 버튼 추가 - 불필요한 필터 제거
+[33m045b98a[m feat: 농기계 거래 페이지 개선 - 부착작업기 정보 표시 추가 - 상태 별점 표시 적용 - 엑셀 다운로드 기능 개선
+[33mfcbce6a[m feat: 농기계 거래 페이지 주소 표시 개선 - 주소 필드 매핑 수정 - 데이터 로깅 추가
+[33me1c7bfc[m feat: 농기계 거래 페이지 개선 - 제조사 한글 표시 - 검색 필터 기능 개선 - 거래 상태 표시 수정 - 개별 장비 카드 형식으로 변경
+[33m1be6ac8[m feat: 농기계 거래관리 페이지 개선 - 판매구분(신규/중고) 표시 추가
+[33m2be8441[m feat: 농기계 거래관리 페이지 개선 - 판매구분(신규/중고) 표시 추가
+[33m3c059e7[m feat: 농기계 거래관리 페이지 개선 - 가격필터 제거 - 농기계 한글 표시 - 가격 만원 단위 표시
+[33md90a1d0[m feat: 농기계 거래관리 페이지 필터 개선 - 거래상태, 농기계 종류, 제조사 필터 수정
+[33mb430eb7[m feat: 농민목록 페이지에 엑셀 다운로드 기능 추가
+[33m4d2eb0f[m refactor: Firebase 설정을 환경 변수로 이동
