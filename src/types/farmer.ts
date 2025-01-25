@@ -10,18 +10,22 @@ export interface Equipment {
   condition: number
   images?: string[]
   attachments: {
-    loader?: string
-    rotary?: string
-    frontWheel?: string
-    rearWheel?: string
-    loaderModel?: string
-    rotaryModel?: string
-    frontWheelModel?: string
-    rearWheelModel?: string
-    loaderRating?: string
-    rotaryRating?: string
-    frontWheelRating?: string
-    rearWheelRating?: string
+    loader?: {
+      model?: string
+      rating?: string
+    }
+    rotary?: {
+      model?: string
+      rating?: string
+    }
+    frontWheel?: {
+      model?: string
+      rating?: string
+    }
+    rearWheel?: {
+      model?: string
+      rating?: string
+    }
     rows?: string
     tonnage?: string
   }
