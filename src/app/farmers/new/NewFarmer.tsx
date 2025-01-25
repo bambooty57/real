@@ -600,7 +600,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                           }))
                         }}
                         className={`p-1 ${
-                          equipment.condition >= star
+                          (equipment.condition ?? 0) >= star
                             ? 'text-yellow-400'
                             : 'text-gray-300'
                         }`}
@@ -972,7 +972,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                               }))
                             }}
                             className={`p-1 ${
-                              equipment.attachments?.loader?.condition >= star
+                              (equipment.attachments?.loader?.condition ?? 0) >= star
                                 ? 'text-yellow-400'
                                 : 'text-gray-300'
                             }`}
@@ -1116,7 +1116,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                               }))
                             }}
                             className={`p-1 ${
-                              equipment.attachments?.rotary?.condition >= star
+                              (equipment.attachments?.rotary?.condition ?? 0) >= star
                                 ? 'text-yellow-400'
                                 : 'text-gray-300'
                             }`}
@@ -1260,7 +1260,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                               }))
                             }}
                             className={`p-1 ${
-                              equipment.attachments?.frontWheel?.condition >= star
+                              (equipment.attachments?.frontWheel?.condition ?? 0) >= star
                                 ? 'text-yellow-400'
                                 : 'text-gray-300'
                             }`}
@@ -1404,7 +1404,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                               }))
                             }}
                             className={`p-1 ${
-                              equipment.attachments?.rearWheel?.condition >= star
+                              (equipment.attachments?.rearWheel?.condition ?? 0) >= star
                                 ? 'text-yellow-400'
                                 : 'text-gray-300'
                             }`}
