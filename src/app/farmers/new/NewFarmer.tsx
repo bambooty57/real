@@ -1553,7 +1553,13 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                         >
                           {equipment.images?.[index] ? (
                             <img
-                              src={URL.createObjectURL(equipment.images[index])}
+                              src={
+                                typeof equipment.images[index] === 'string'
+                                  ? equipment.images[index] as string
+                                  : equipment.images[index] instanceof File
+                                    ? URL.createObjectURL(equipment.images[index] as File)
+                                    : ''
+                              }
                               alt={`농기계 이미지 ${index + 1}`}
                               className="w-full h-full object-cover rounded-lg"
                             />
