@@ -15,24 +15,28 @@ export interface Equipment {
       rating?: string
       condition?: number
       memo?: string
+      images?: (File | null)[]
     }
     rotary?: {
       model?: string
       rating?: string
       condition?: number
       memo?: string
+      images?: (File | null)[]
     }
     frontWheel?: {
       model?: string
       rating?: string
       condition?: number
       memo?: string
+      images?: (File | null)[]
     }
     rearWheel?: {
       model?: string
       rating?: string
       condition?: number
       memo?: string
+      images?: (File | null)[]
     }
     cutter?: string
     rows?: string
