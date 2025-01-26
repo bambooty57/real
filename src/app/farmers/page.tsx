@@ -234,12 +234,16 @@ export default function FarmersPage() {
 
   // 필터링 로직 수정
   const filteredFarmers = farmers.filter(farmer => {
-    const matchesSearch = searchTerm === '' || [
+    const searchFields = [
       farmer.name,
       farmer.phone,
       farmer.businessName,
       farmer.roadAddress
-    ].some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()));
+    ];
+    
+    const matchesSearch = searchTerm === '' || searchFields.some(field => 
+      field && typeof field === 'string' && field.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     // 주소에서 지역 정보 추출 (도로명 주소 우선, 없으면 지번 주소 사용)
     const addressParts = parseAddress(farmer.roadAddress || farmer.jibunAddress);

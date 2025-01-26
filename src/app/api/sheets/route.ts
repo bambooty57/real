@@ -33,8 +33,18 @@ function formatFarmerData(farmers: any[]) {
     farmer.name || '',
     farmer.phone || '',
     farmer.businessName || '',
-    (farmer.farmingTypes ? Object.keys(farmer.farmingTypes).filter(key => farmer.farmingTypes[key]).join(', ') : ''),
-    (farmer.mainCrop ? Object.keys(farmer.mainCrop).filter(key => farmer.mainCrop[key]).join(', ') : ''),
+    (farmer.farmingTypes && typeof farmer.farmingTypes === 'object' 
+      ? Object.entries(farmer.farmingTypes)
+          .filter(([_, value]) => value)
+          .map(([key]) => key)
+          .join(', ') 
+      : ''),
+    (farmer.mainCrop && typeof farmer.mainCrop === 'object'
+      ? Object.entries(farmer.mainCrop)
+          .filter(([_, value]) => value)
+          .map(([key]) => key)
+          .join(', ')
+      : ''),
     farmer.zipCode || '',
     farmer.roadAddress || '',
     farmer.jibunAddress || '',
