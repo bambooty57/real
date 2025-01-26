@@ -1,7 +1,8 @@
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 
-export const maxDuration = 300; // 함수 실행 시간을 5분으로 연장
+export const runtime = 'nodejs';
+export const maxDuration = 60; // 함수 실행 시간을 1분으로 줄임
 
 export async function POST(req: Request) {
   try {
