@@ -1,12 +1,6 @@
 {
   "functions": {
-    "api/sheets": {
-      "maxDuration": 60
-    },
-    "api/upload": {
-      "maxDuration": 60
-    },
-    "api/auth/[...nextauth]": {
+    "src/app/api/**/*.ts": {
       "maxDuration": 60
     }
   }
