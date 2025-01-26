@@ -6,62 +6,36 @@ import { db } from '@/lib/firebase'
 import Link from 'next/link'
 import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
+import { Equipment as BaseEquipment } from '@/types/farmer'
 
-interface Equipment {
-  type: string
-  manufacturer: string
-  model: string
-  horsepower: string
-  year: string
-  usageHours: string
-  condition: number
-  rating: number
-  attachments: {
-    loader: {
-      model: string
-      manufacturer: string
-      condition: number
-      memo: string
-      images: string[]
-    }
-    rotary: {
-      model: string
-      manufacturer: string
-      condition: number
-      memo: string
-      images: string[]
-    }
-    frontWheel: {
-      model: string
-      manufacturer: string
-      condition: number
-      memo: string
-      images: string[]
-    }
-    rearWheel: {
-      model: string
-      manufacturer: string
-      condition: number
-      memo: string
-      images: string[]
-    }
-  }
-  saleType: string | null
-  tradeType: string
-  tradeStatus: string
-  saleStatus: string
-  purchaseStatus: string
-  desiredPrice: string
-  memo: string
-  images: string[]
+interface Equipment extends BaseEquipment {
+  tradeStatus?: string;
 }
 
 interface Farmer {
-  id: string
-  name: string
-  phone: string
-  address: string
-  equipments: Equipment[]
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+  equipments: Equipment[];
+}
+
+interface AttachmentInfo {
+  manufacturer: string;
+  model: string;
+  condition: number;
+  memo: string;
+  images: string[];
+}
+
+function isAttachmentInfo(value: any): value is AttachmentInfo {
+  return value !== null && 
+         typeof value === 'object' && 
+         typeof value.manufacturer === 'string' &&
+         typeof value.model === 'string' &&
+         typeof value.condition === 'number' &&
+         typeof value.memo === 'string' &&
+         Array.isArray(value.images);
 }
 
 export default function TradePage() {
@@ -134,50 +108,42 @@ export default function TradePage() {
 
   // 부착작업기 정보 가져오는 함수 추가
   const getAttachmentInfo = (equipment: Equipment) => {
-    const attachments = equipment.attachments || {};
-    const result = [];
+    const attachments = equipment.attachments || [];
+    const loader = attachments.find(a => a.type === 'loader');
+    const rotary = attachments.find(a => a.type === 'rotary');
+    const frontWheel = attachments.find(a => a.type === 'frontWheel');
+    const rearWheel = attachments.find(a => a.type === 'rearWheel');
 
-    // 로더
-    if (attachments.loader) {
-      result.push({
-        name: '로더',
-        manufacturer: attachments.loader.manufacturer,
-        model: attachments.loader.model,
-        rating: attachments.loader.condition
-      });
-    }
-
-    // 로터리
-    if (attachments.rotary) {
-      result.push({
-        name: '로터리',
-        manufacturer: attachments.rotary.manufacturer,
-        model: attachments.rotary.model,
-        rating: attachments.rotary.condition
-      });
-    }
-
-    // 전륜
-    if (attachments.frontWheel) {
-      result.push({
-        name: '전륜',
-        manufacturer: attachments.frontWheel.manufacturer,
-        model: attachments.frontWheel.model,
-        rating: attachments.frontWheel.condition
-      });
-    }
-
-    // 후륜
-    if (attachments.rearWheel) {
-      result.push({
-        name: '후륜',
-        manufacturer: attachments.rearWheel.manufacturer,
-        model: attachments.rearWheel.model,
-        rating: attachments.rearWheel.condition
-      });
-    }
-
-    return result;
+    return {
+      loader: loader ? {
+        manufacturer: loader.manufacturer,
+        model: loader.model,
+        condition: loader.condition || 0,
+        memo: loader.memo || '',
+        images: loader.images?.filter((img): img is string => typeof img === 'string') || []
+      } : null,
+      rotary: rotary ? {
+        manufacturer: rotary.manufacturer,
+        model: rotary.model,
+        condition: rotary.condition || 0,
+        memo: rotary.memo || '',
+        images: rotary.images?.filter((img): img is string => typeof img === 'string') || []
+      } : null,
+      frontWheel: frontWheel ? {
+        manufacturer: frontWheel.manufacturer,
+        model: frontWheel.model,
+        condition: frontWheel.condition || 0,
+        memo: frontWheel.memo || '',
+        images: frontWheel.images?.filter((img): img is string => typeof img === 'string') || []
+      } : null,
+      rearWheel: rearWheel ? {
+        manufacturer: rearWheel.manufacturer,
+        model: rearWheel.model,
+        condition: rearWheel.condition || 0,
+        memo: rearWheel.memo || '',
+        images: rearWheel.images?.filter((img): img is string => typeof img === 'string') || []
+      } : null
+    };
   };
 
   useEffect(() => {
@@ -263,70 +229,74 @@ export default function TradePage() {
 
   const filteredEquipments = filterEquipments();
 
-  const exportToExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('농기계 거래 목록');
+  const getAttachmentText = (attachments: Array<{
+    type: 'loader' | 'rotary' | 'frontWheel' | 'rearWheel';
+    manufacturer: string;
+    model: string;
+    condition?: number;
+    memo?: string;
+    images?: string[];
+  }> | undefined) => {
+    if (!attachments) return '';
+    
+    const texts = [];
+    const loader = attachments.find(a => a.type === 'loader');
+    const rotary = attachments.find(a => a.type === 'rotary');
+    const frontWheel = attachments.find(a => a.type === 'frontWheel');
+    const rearWheel = attachments.find(a => a.type === 'rearWheel');
 
-    // 헤더 설정
+    if (loader) {
+      texts.push(`로더: ${loader.manufacturer} ${loader.model}`);
+    }
+    if (rotary) {
+      texts.push(`로터리: ${rotary.manufacturer} ${rotary.model}`);
+    }
+    if (frontWheel) {
+      texts.push(`전륜: ${frontWheel.manufacturer} ${frontWheel.model}`);
+    }
+    if (rearWheel) {
+      texts.push(`후륜: ${rearWheel.manufacturer} ${rearWheel.model}`);
+    }
+    return texts.join(', ');
+  };
+
+  const generateExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('농기계 매매');
+
     worksheet.columns = [
-      { header: '거래유형', key: 'tradeType', width: 10 },
-      { header: '농기계종류', key: 'equipmentType', width: 15 },
-      { header: '제조사', key: 'manufacturer', width: 15 },
-      { header: '모델명', key: 'model', width: 20 },
-      { header: '연식', key: 'year', width: 10 },
-      { header: '사용시간', key: 'usageHours', width: 12 },
-      { header: '상태', key: 'rating', width: 10 },
-      { header: '가격', key: 'price', width: 15 },
-      { header: '진행상태', key: 'tradeStatus', width: 12 },
-      { header: '농민', key: 'farmerName', width: 15 },
+      { header: '이름', key: 'name', width: 10 },
       { header: '연락처', key: 'phone', width: 15 },
       { header: '주소', key: 'address', width: 30 },
-      // 부착작업기 컬럼 추가
-      { header: '로더', key: 'loader', width: 30 },
-      { header: '로터리', key: 'rotary', width: 30 },
-      { header: '전륜', key: 'frontWheel', width: 30 },
-      { header: '후륜', key: 'rearWheel', width: 30 }
+      { header: '기종', key: 'type', width: 10 },
+      { header: '제조사', key: 'manufacturer', width: 10 },
+      { header: '모델명', key: 'model', width: 15 },
+      { header: '마력', key: 'horsepower', width: 10 },
+      { header: '연식', key: 'year', width: 10 },
+      { header: '사용시간', key: 'usageHours', width: 10 },
+      { header: '부착물', key: 'attachments', width: 30 },
+      { header: '매매유형', key: 'tradeType', width: 10 },
+      { header: '희망가격', key: 'desiredPrice', width: 15 },
+      { header: '상태', key: 'tradeStatus', width: 10 },
     ];
 
-    // 스타일 설정
-    worksheet.getRow(1).font = { bold: true };
-    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-
-    // 데이터 추가
-    filteredEquipments.forEach(({ farmer, equipment }) => {
-      const tradeTypeText = equipment.tradeType === 'sale' ? '판매' : '구매';
-      const equipmentTypeText = Object.entries(equipmentTypeMap).find(([code, _]) => code === equipment.type)?.[1] || equipment.type;
-      const manufacturerText = getKoreanManufacturer(equipment.manufacturer || '');
-      const price = equipment.tradeType === 'sale' 
-        ? Number(equipment.desiredPrice || 0).toLocaleString() + '만원'
-        : Number(equipment.desiredPrice || 0).toLocaleString() + '만원';
-
-      // 부착작업기 정보 가져오기
-      const attachments = equipment.attachments || {};
-      const getAttachmentText = (type: string, manufacturer?: string, model?: string, rating?: string) => {
-        if (!manufacturer) return '';
-        const mfg = manufacturerMap[manufacturer] || manufacturer;
-        return `${mfg}${model ? ` ${model}` : ''}${rating ? ` (${rating}점)` : ''}`;
-      };
-
-      worksheet.addRow({
-        tradeType: tradeTypeText,
-        equipmentType: equipmentTypeText,
-        manufacturer: manufacturerText,
-        model: equipment.model,
-        year: equipment.year,
-        usageHours: equipment.usageHours + '시간',
-        rating: equipment.rating ? getRatingStars(equipment.rating) : '',
-        price: price,
-        tradeStatus: equipment.tradeStatus || '상담 전',
-        farmerName: farmer.name,
-        phone: farmer.phone,
-        address: farmer.address || '',
-        // 부착작업기 정보 추가
-        loader: getAttachmentText('loader', attachments.loader.manufacturer, attachments.loader.model, attachments.loader.condition ? '가능' : '불가능'),
-        rotary: getAttachmentText('rotary', attachments.rotary.manufacturer, attachments.rotary.model, attachments.rotary.condition ? '가능' : '불가능'),
-        frontWheel: getAttachmentText('frontWheel', attachments.frontWheel.manufacturer, attachments.frontWheel.model, attachments.frontWheel.condition ? '가능' : '불가능'),
-        rearWheel: getAttachmentText('rearWheel', attachments.rearWheel.manufacturer, attachments.rearWheel.model, attachments.rearWheel.condition ? '가능' : '불가능')
+    farmers.forEach((farmer) => {
+      farmer.equipments.forEach((eq) => {
+        worksheet.addRow({
+          name: farmer.name,
+          phone: farmer.phone,
+          address: farmer.address,
+          type: eq.type,
+          manufacturer: eq.manufacturer,
+          model: eq.model,
+          horsepower: eq.horsepower,
+          year: eq.year,
+          usageHours: eq.usageHours,
+          attachments: getAttachmentText(eq.attachments),
+          tradeType: eq.tradeType,
+          desiredPrice: eq.desiredPrice,
+          tradeStatus: eq.tradeStatus,
+        });
       });
     });
 
@@ -364,7 +334,7 @@ export default function TradePage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">농기계 거래 관리</h1>
         <button
-          onClick={exportToExcel}
+          onClick={generateExcel}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -575,23 +545,30 @@ export default function TradePage() {
                   )}
                   
                   {/* 부착작업기 정보 */}
-                  {getAttachmentInfo(equipment).length > 0 && (
+                  {Object.values(getAttachmentInfo(equipment)).some(v => v !== null) && (
                     <div className="mt-3 border-t pt-3">
                       <p className="font-medium mb-2">부착작업기</p>
                       <div className="space-y-2">
-                        {getAttachmentInfo(equipment).map((attachment, idx) => (
-                          <div key={idx} className="bg-gray-50 p-2 rounded">
-                            <p className="font-medium text-gray-700">{attachment.name}</p>
-                            <div className="ml-2">
-                              <p>제조사: {manufacturerMap[attachment.manufacturer] || attachment.manufacturer}</p>
-                              {attachment.model && <p>모델: {attachment.model}</p>}
-                              <div>
-                                <span className="font-medium">상태: </span>
-                                {attachment.rating ? getRatingStars(attachment.rating) : '불가능'}
+                        {Object.entries(getAttachmentInfo(equipment))
+                          .filter(([_, value]) => isAttachmentInfo(value))
+                          .map(([key, value]) => (
+                            <div key={key} className="bg-gray-50 p-2 rounded">
+                              <p className="font-medium text-gray-700">{
+                                key === 'loader' ? '로더' :
+                                key === 'rotary' ? '로터리' :
+                                key === 'frontWheel' ? '전륜' :
+                                key === 'rearWheel' ? '후륜' : key
+                              }</p>
+                              <div className="ml-2">
+                                <p>제조사: {getKoreanManufacturer(value.manufacturer)}</p>
+                                {value.model && <p>모델: {value.model}</p>}
+                                <div>
+                                  <span className="font-medium">상태: </span>
+                                  {getRatingStars(value.condition)}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
                   )}

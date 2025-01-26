@@ -1,4 +1,16 @@
 export const MANUFACTURERS = {
+  MAIN: [
+    { value: 'daedong', label: '대동' },
+    { value: 'kukje', label: '국제' },
+    { value: 'ls', label: 'LS' },
+    { value: 'yanmar', label: '얀마' },
+    { value: 'kubota', label: '구보다' },
+    { value: 'john_deere', label: '존디어' },
+    { value: 'new_holland', label: '뉴홀랜드' },
+    { value: 'mf', label: 'MF' },
+    { value: 'case', label: '케이스' },
+    { value: 'other', label: '기타' }
+  ],
   EQUIPMENT: [
     { value: 'tractor', label: '트랙터' },
     { value: 'transplanter', label: '이앙기' },
@@ -52,4 +64,58 @@ export const TRADE_METHODS = [
 export const TRADE_STATUS = [
   { value: 'available', label: '가능' },
   { value: 'completed', label: '완료' }
+] as const;
+
+export const ATTACHMENT_TYPES = [
+  { value: 'loader', label: '로더' },
+  { value: 'rotary', label: '로타리' },
+  { value: 'frontWheel', label: '전륜' },
+  { value: 'rearWheel', label: '후륜' }
+];
+
+export const COMBINE_ROWS = [
+  { value: '3', label: '3조식' },
+  { value: '4', label: '4조식' },
+  { value: '5', label: '5조식' },
+  { value: '6', label: '6조식' },
+  { value: '7', label: '7조식' },
+  { value: '8', label: '8조식' },
+  { value: '9', label: '9조식' },
+  { value: '10', label: '10조식' }
+] as const;
+
+export const TRANSPLANTER_ROWS = [
+  { value: '4', label: '4조식' },
+  { value: '5', label: '5조식' },
+  { value: '6', label: '6조식' },
+  { value: '7', label: '7조식' },
+  { value: '8', label: '8조식' },
+  { value: '9', label: '9조식' },
+  { value: '10', label: '10조식' }
+] as const;
+
+export const COMBINE_CUTTING_TYPES = [
+  { value: 'binding', label: '결속형' },
+  { value: 'spreading', label: '산포형' }
+] as const;
+
+export const COMBINE_THRESHING_TYPES = [
+  { value: 'axial', label: '축류식' },
+  { value: 'mixed', label: '혼합식' }
+] as const;
+
+export const TRANSPLANTER_TYPES = [
+  { value: 'riding', label: '승용' },
+  { value: 'walking', label: '보행' }
+] as const;
+
+export const FORKLIFT_MAST_TYPES = [
+  { value: '2stage', label: '2단' },
+  { value: '3stage', label: '3단' },
+  { value: '4stage', label: '4단' }
+] as const;
+
+export const FORKLIFT_TIRE_TYPES = [
+  { value: 'solid', label: '솔리드' },
+  { value: 'pneumatic', label: '공기압' }
 ] as const; 

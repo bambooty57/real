@@ -260,8 +260,8 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                   <div>
                     <dt className="text-gray-600">상태등급</dt>
                     <dd className="font-medium">
-                      {'★'.repeat(Number(equipment.rating))}
-                      {'☆'.repeat(5 - Number(equipment.rating))}
+                      {'★'.repeat(Number(equipment.condition || 0))}
+                      {'☆'.repeat(5 - Number(equipment.condition || 0))}
                     </dd>
                   </div>
                   {equipment.memo && (

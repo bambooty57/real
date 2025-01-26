@@ -1,0 +1,1562 @@
+'use client';
+
+import { useState, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import AddressSearch from '@/components/AddressSearch'
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import { storage } from '@/lib/firebase'
+import { v4 as uuidv4 } from 'uuid'
+import { Equipment, Attachment } from '@/types/farmer'
+import {
+  MANUFACTURERS,
+  TRADE_TYPES,
+  TRADE_METHODS,
+  TRADE_STATUS,
+  ATTACHMENT_TYPES,
+  COMBINE_ROWS,
+  TRANSPLANTER_ROWS,
+  COMBINE_CUTTING_TYPES,
+  COMBINE_THRESHING_TYPES,
+  TRANSPLANTER_TYPES,
+  FORKLIFT_MAST_TYPES,
+  FORKLIFT_TIRE_TYPES
+} from '@/constants/manufacturers'
+import { createInitialEquipment, createInitialAttachment } from '@/utils/equipment'
+
+interface FormData {
+  name: string;
+  businessName: string;
+  zipCode: string;
+  roadAddress: string;
+  jibunAddress: string;
+  addressDetail: string;
+  canReceiveMail: boolean;
+  phone: string;
+  ageGroup: string;
+  memo: string;
+  farmerImages: string[];
+  mainCrop: {
+    rice: boolean;
+    barley: boolean;
+    hanwoo: boolean;
+    soybean: boolean;
+    sweetPotato: boolean;
+    persimmon: boolean;
+    pear: boolean;
+    plum: boolean;
+    sorghum: boolean;
+    goat: boolean;
+    other: boolean;
+  };
+  farmingTypes: {
+    paddyFarming: boolean;
+    fieldFarming: boolean;
+    orchard: boolean;
+    livestock: boolean;
+    forageCrop: boolean;
+  };
+  equipments: Equipment[];
+  rating: number;
+}
+
+interface Props {
+  mode?: string;
+  farmerId?: string;
+  initialData?: FormData | null;
+}
+
+export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }: Props) {
+  const router = useRouter()
+  
+  const [formData, setFormData] = useState<FormData>(() => {
+    if (initialData) {
+      return {
+        ...initialData,
+        equipments: initialData.equipments?.map((eq: Equipment) => ({
+          ...eq,
+          id: eq.id || uuidv4()  // 기존 id가 없으면 새로 생성
+        })) || []
+      };
+    }
+    return {
+      name: '',
+      businessName: '',
+      zipCode: '',
+      roadAddress: '',
+      jibunAddress: '',
+      addressDetail: '',
+      canReceiveMail: false,
+      phone: '',
+      ageGroup: '',
+      memo: '',
+      farmerImages: [],
+      mainCrop: {
+        rice: false,
+        barley: false,
+        hanwoo: false,
+        soybean: false,
+        sweetPotato: false,
+        persimmon: false,
+        pear: false,
+        plum: false,
+        sorghum: false,
+        goat: false,
+        other: false
+      },
+      farmingTypes: {
+        paddyFarming: false,
+        fieldFarming: false,
+        orchard: false,
+        livestock: false,
+        forageCrop: false,
+      },
+      equipments: [],  // 빈 배열로 초기화
+      rating: 0
+    }
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      // Firebase에 저장할 데이터 준비
+      const saveData = {
+        name: formData.name,
+        businessName: formData.businessName,
+        zipCode: formData.zipCode,
+        roadAddress: formData.roadAddress,
+        jibunAddress: formData.jibunAddress,
+        addressDetail: formData.addressDetail,
+        canReceiveMail: formData.canReceiveMail,
+        phone: formData.phone,
+        ageGroup: formData.ageGroup,
+        memo: formData.memo,
+        farmerImages: formData.farmerImages,
+        mainCrop: formData.mainCrop,
+        farmingTypes: formData.farmingTypes,
+        equipments: formData.equipments,
+        rating: formData.rating
+      }
+
+      if (mode === 'edit' && farmerId) {
+        // 수정 모드
+        const docRef = doc(db, 'farmers', farmerId)
+        await updateDoc(docRef, saveData)
+        router.push('/farmers')  // 수정 후 목록 페이지로 이동
+      } else {
+        // 새로운 등록 모드
+        const docRef = collection(db, 'farmers')
+        const newFarmerRef = await addDoc(docRef, saveData)
+        router.push(`/farmers/${newFarmerRef.id}`)  // 등록 후 상세 페이지로 이동
+      }
+    } catch (error) {
+      console.error('Error saving farmer:', error)
+      alert('저장 중 오류가 발생했습니다.')
+    }
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">{mode === 'edit' ? '농민 정보 수정' : '새 농민 등록'}</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 기본 정보 */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">기본 정보</h2>
+          
+          {/* 이름 */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">이름 *</label>
+            <input
+              type="text"
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, name: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          {/* 별점 평가 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">별점 평가</label>
+            <div className="flex gap-2 mt-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev: FormData) => ({
+                      ...prev,
+                      rating: star
+                    }))
+                  }}
+                  className={`p-1 ${
+                    formData.rating >= star
+                      ? 'text-yellow-400'
+                      : 'text-gray-300'
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 상호명 */}
+          <div>
+            <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">상호명</label>
+            <input
+              type="text"
+              id="businessName"
+              value={formData.businessName}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, businessName: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* 주소 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">주소 *</label>
+            <AddressSearch
+              onComplete={(data: { zonecode: string; roadAddress: string; jibunAddress?: string; }) => {
+                setFormData(prev => ({
+                  ...prev,
+                  zipCode: data.zonecode,
+                  roadAddress: data.roadAddress,
+                  jibunAddress: data.jibunAddress || '',
+                }))
+              }}
+            />
+            
+            {/* 우편번호 */}
+            <div>
+              <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700">우편번호</label>
+              <input
+                type="text"
+                id="zipCode"
+                value={formData.zipCode}
+                readOnly
+                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+              />
+            </div>
+
+            {/* 도로명 주소 */}
+            <div>
+              <label htmlFor="roadAddress" className="block text-sm font-medium text-gray-700">도로명 주소</label>
+              <input
+                type="text"
+                id="roadAddress"
+                value={formData.roadAddress}
+                readOnly
+                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+              />
+            </div>
+
+            {/* 지번 주소 */}
+            <div>
+              <label htmlFor="jibunAddress" className="block text-sm font-medium text-gray-700">지번 주소</label>
+              <input
+                type="text"
+                id="jibunAddress"
+                value={formData.jibunAddress}
+                readOnly
+                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+              />
+            </div>
+          </div>
+
+          {/* 상세주소 */}
+          <div>
+            <label htmlFor="addressDetail" className="block text-sm font-medium text-gray-700">상세주소</label>
+            <input
+              type="text"
+              id="addressDetail"
+              value={formData.addressDetail}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, addressDetail: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* 우편수취가능여부 */}
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.canReceiveMail}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, canReceiveMail: e.target.checked }))}
+                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">우편수취 가능</span>
+            </label>
+          </div>
+
+          {/* 전화번호 */}
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">전화번호 *</label>
+            <div className="flex items-center">
+              <span className="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                010
+              </span>
+              <input
+                type="text"
+                id="phone"
+                value={formData.phone.replace(/^010/, '')}
+                onChange={(e) => {
+                  let value = e.target.value.replace(/[^0-9]/g, '');
+                  if (value.length > 8) value = value.slice(0, 8);
+                  if (value.length >= 4) {
+                    value = value.slice(0, 4) + '-' + value.slice(4);
+                  }
+                  setFormData((prev: FormData) => ({ ...prev, phone: '010' + value }));
+                }}
+                placeholder="0000-0000"
+                maxLength={9}
+                className="mt-1 block w-full rounded-r-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+          </div>
+
+          {/* 연령대 */}
+          <div>
+            <label htmlFor="ageGroup" className="block text-sm font-medium text-gray-700">연령대 *</label>
+            <select
+              id="ageGroup"
+              value={formData.ageGroup}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, ageGroup: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            >
+              <option value="">선택하세요</option>
+              <option value="20대">20대</option>
+              <option value="30대">30대</option>
+              <option value="40대">40대</option>
+              <option value="50대">50대</option>
+              <option value="60대">60대</option>
+              <option value="70대 이상">70대 이상</option>
+            </select>
+          </div>
+        </div>
+
+        {/* 영농 정보 */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">영농 정보</h2>
+          
+          {/* 영농형태 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">영농형태</label>
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(formData.farmingTypes).map(([key, value]) => (
+                <label key={key} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={value}
+                    onChange={(e) => setFormData((prev: FormData) => ({
+                      ...prev,
+                      farmingTypes: {
+                        ...prev.farmingTypes,
+                        [key]: e.target.checked
+                      }
+                    }))}
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">
+                    {key === 'paddyFarming' ? '벼농사' :
+                     key === 'fieldFarming' ? '밭농사' :
+                     key === 'orchard' ? '과수원' :
+                     key === 'livestock' ? '축산업' :
+                     key === 'forageCrop' ? '사료작물' : key}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 주작물 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">주작물</label>
+            <div className="grid grid-cols-3 gap-4">
+              {Object.entries(formData.mainCrop).map(([key, value]) => (
+                <label key={key} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={value}
+                    onChange={(e) => setFormData((prev: FormData) => ({
+                      ...prev,
+                      mainCrop: {
+                        ...prev.mainCrop,
+                        [key]: e.target.checked
+                      }
+                    }))}
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">
+                    {key === 'rice' ? '벼' :
+                     key === 'barley' ? '보리' :
+                     key === 'hanwoo' ? '한우' :
+                     key === 'soybean' ? '콩' :
+                     key === 'sweetPotato' ? '고구마' :
+                     key === 'persimmon' ? '감' :
+                     key === 'pear' ? '배' :
+                     key === 'plum' ? '매실' :
+                     key === 'sorghum' ? '수수' :
+                     key === 'goat' ? '염소' :
+                     key === 'other' ? '기타' : key}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 메모 */}
+          <div>
+            <label htmlFor="memo" className="block text-sm font-medium text-gray-700">메모</label>
+            <textarea
+              id="memo"
+              value={formData.memo}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, memo: e.target.value }))}
+              rows={4}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* 농민 이미지 */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">농민 이미지</h2>
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                const uploadedUrls = await Promise.all(
+                  files.map(async (file) => {
+                    const storageRef = ref(storage, `farmers/${uuidv4()}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return getDownloadURL(snapshot.ref);
+                  })
+                );
+                setFormData((prev: FormData) => ({
+                  ...prev,
+                  farmerImages: [...prev.farmerImages, ...uploadedUrls]
+                }));
+              }}
+              className="mt-1 block w-full"
+            />
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {formData.farmerImages.map((url, index) => (
+                <div key={url} className="relative">
+                  <img src={url} alt={`농민 이미지 ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const imageRef = ref(storage, url);
+                        await deleteObject(imageRef);
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          farmerImages: prev.farmerImages.filter(u => u !== url)
+                        }));
+                      } catch (error) {
+                        console.error('Error deleting image:', error);
+                      }
+                    }}
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 농기계 정보 */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">농기계 정보</h2>
+          
+          {/* 농기계 목록 */}
+          <div className="space-y-4">
+            {formData.equipments.map((equipment, index) => (
+              <div key={equipment.id} className="p-4 border rounded-lg space-y-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">농기계 {index + 1}</h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev: FormData) => ({
+                        ...prev,
+                        equipments: prev.equipments.filter(eq => eq.id !== equipment.id)
+                      }))
+                    }}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    삭제
+                  </button>
+                </div>
+
+                {/* 1. 기본 정보 */}
+                <div className="space-y-4 border-b pb-4">
+                  <h4 className="font-medium">기본 정보</h4>
+                  
+                  {/* 농기계 종류 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">농기계 종류 *</label>
+                    <select
+                      value={equipment.type}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, type: e.target.value }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">선택하세요</option>
+                      {MANUFACTURERS.EQUIPMENT.map(({ value, label }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 제조사 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">제조사 *</label>
+                    <select
+                      value={equipment.manufacturer}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, manufacturer: e.target.value }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">선택하세요</option>
+                      {MANUFACTURERS.MAIN.map(({ value, label }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 모델명 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">모델명 *</label>
+                    <input
+                      type="text"
+                      value={equipment.model}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, model: e.target.value }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                      placeholder="모델명을 입력하세요"
+                    />
+                  </div>
+
+                  {/* 연식 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">연식 *</label>
+                    <select
+                      value={equipment.year}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, year: e.target.value }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">선택하세요</option>
+                      {Array.from({ length: 35 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                        <option key={year} value={year}>
+                          {year}년
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 사용시간 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">사용시간</label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <input
+                        type="number"
+                        value={equipment.usageHours}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, usageHours: e.target.value }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="0"
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <span className="text-gray-500 sm:text-sm">시간</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 상태평가 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">상태평가</label>
+                    <div className="flex gap-2 mt-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { ...eq, condition: star }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className={`p-1 ${
+                            (equipment.condition || 0) >= star
+                              ? 'text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 이미지 업로드 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">이미지 (최대 4장)</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[...Array(4)].map((_, index) => (
+                        <div key={index} className="relative">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setFormData((prev: FormData) => ({
+                                  ...prev,
+                                  equipments: prev.equipments.map(eq =>
+                                    eq.id === equipment.id
+                                      ? {
+                                          ...eq,
+                                          images: [
+                                            ...(eq.images || []).slice(0, index),
+                                            file,
+                                            ...(eq.images || []).slice(index + 1)
+                                          ]
+                                        }
+                                      : eq
+                                  )
+                                }));
+                              }
+                            }}
+                            className="hidden"
+                            id={`equipment-image-${equipment.id}-${index}`}
+                          />
+                          <label
+                            htmlFor={`equipment-image-${equipment.id}-${index}`}
+                            className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
+                          >
+                            {equipment.images?.[index] ? (
+                              <img
+                                src={
+                                  equipment.images[index] instanceof File
+                                    ? URL.createObjectURL(equipment.images[index] as File)
+                                    : equipment.images[index] as string
+                                }
+                                alt={`농기계 이미지 ${index + 1}`}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-full text-gray-400">
+                                <span>이미지 추가</span>
+                              </div>
+                            )}
+                          </label>
+                          {equipment.images?.[index] && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev: FormData) => ({
+                                  ...prev,
+                                  equipments: prev.equipments.map(eq =>
+                                    eq.id === equipment.id
+                                      ? {
+                                          ...eq,
+                                          images: [
+                                            ...(eq.images || []).slice(0, index),
+                                            null,
+                                            ...(eq.images || []).slice(index + 1)
+                                          ]
+                                        }
+                                      : eq
+                                  )
+                                }));
+                              }}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. 거래 정보 */}
+                <div className="space-y-4 border-b pb-4">
+                  <h4 className="font-medium">거래 정보</h4>
+                  
+                  {/* 거래 유형 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">거래 유형 *</label>
+                    <select
+                      value={equipment.saleType || ''}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, saleType: e.target.value as 'new' | 'used' | null }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">선택하세요</option>
+                      {TRADE_TYPES.map(({ value, label }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 거래 방식 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">거래 방식 *</label>
+                    <select
+                      value={equipment.tradeType || ''}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, tradeType: e.target.value }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">선택하세요</option>
+                      {TRADE_METHODS.map(({ value, label }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 희망가격 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">희망가격 *</label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <input
+                        type="number"
+                        value={equipment.desiredPrice}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, desiredPrice: e.target.value }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="0"
+                        required
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <span className="text-gray-500 sm:text-sm">만원</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 거래 상태 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">거래 상태 *</label>
+                    <select
+                      value={equipment.saleStatus || ''}
+                      onChange={(e) => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          equipments: prev.equipments.map(eq =>
+                            eq.id === equipment.id
+                              ? { ...eq, saleStatus: e.target.value }
+                              : eq
+                          )
+                        }))
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">선택하세요</option>
+                      {TRADE_STATUS.map(({ value, label }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 3. 농기계별 추가 정보 */}
+                {equipment.type === 'transplanter' && (
+                  <div className="space-y-4 border-b pb-4">
+                    <h4 className="font-medium">이앙기 정보</h4>
+                    
+                    {/* 작업 조 수 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">작업 조 수 *</label>
+                      <select
+                        value={equipment.rows || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, rows: e.target.value as '4' | '5' | '6' | '7' | '8' | '9' | '10' }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">선택하세요</option>
+                        {TRANSPLANTER_ROWS.map(({ value, label }) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 승용/보행 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">승용/보행 *</label>
+                      <select
+                        value={equipment.transplanterType || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, transplanterType: e.target.value as 'riding' | 'walking' }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">선택하세요</option>
+                        {TRANSPLANTER_TYPES.map(({ value, label }) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 모판 탑재량 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">모판 탑재량</label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <input
+                          type="number"
+                          value={equipment.seedlingCapacity || ''}
+                          onChange={(e) => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { ...eq, seedlingCapacity: e.target.value }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <span className="text-gray-500 sm:text-sm">매</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 시비기 유무 */}
+                    <div>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={equipment.hasFertilizer || false}
+                          onChange={(e) => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { ...eq, hasFertilizer: e.target.checked }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">시비기 있음</span>
+                      </label>
+                    </div>
+
+                    {/* 측조시비기 유무 */}
+                    <div>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={equipment.hasSideFertilizer || false}
+                          onChange={(e) => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { ...eq, hasSideFertilizer: e.target.checked }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">측조시비기 있음</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {equipment.type === 'combine' && (
+                  <div className="space-y-4 border-b pb-4">
+                    <h4 className="font-medium">콤바인 정보</h4>
+                    
+                    {/* 작업 조 수 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">작업 조 수 *</label>
+                      <select
+                        value={equipment.rows || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, rows: e.target.value as '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">선택하세요</option>
+                        {COMBINE_ROWS.map(({ value, label }) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 예취 방식 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">예취 방식 *</label>
+                      <select
+                        value={equipment.cuttingType || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, cuttingType: e.target.value as 'binding' | 'spreading' }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">선택하세요</option>
+                        {COMBINE_CUTTING_TYPES.map(({ value, label }) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 탈곡 방식 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">탈곡 방식 *</label>
+                      <select
+                        value={equipment.threshingType || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, threshingType: e.target.value as 'axial' | 'mixed' }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">선택하세요</option>
+                        {COMBINE_THRESHING_TYPES.map(({ value, label }) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 곡물 탱크 용량 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">곡물 탱크 용량</label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <input
+                          type="number"
+                          value={equipment.grainTankCapacity || ''}
+                          onChange={(e) => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { ...eq, grainTankCapacity: e.target.value }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <span className="text-gray-500 sm:text-sm">kg</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {equipment.type === 'forklift' && (
+                  <div className="space-y-4 border-b pb-4">
+                    <h4 className="font-medium">지게차 정보</h4>
+                    
+                    {/* 최대 인상 높이 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">최대 인상 높이</label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <input
+                          type="number"
+                          value={equipment.maxLiftHeight || ''}
+                          onChange={(e) => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { ...eq, maxLiftHeight: e.target.value }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <span className="text-gray-500 sm:text-sm">m</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 최대 적재 하중 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">최대 적재 하중</label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <input
+                          type="number"
+                          value={equipment.maxLoadWeight || ''}
+                          onChange={(e) => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { ...eq, maxLoadWeight: e.target.value }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <span className="text-gray-500 sm:text-sm">톤</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 마스트 타입 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">마스트 타입 *</label>
+                      <select
+                        value={equipment.mastType || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, mastType: e.target.value as '2stage' | '3stage' | '4stage' }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">선택하세요</option>
+                        {FORKLIFT_MAST_TYPES.map(({ value, label }) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 타이어 타입 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">타이어 타입 *</label>
+                      <select
+                        value={equipment.tireType || ''}
+                        onChange={(e) => {
+                          setFormData((prev: FormData) => ({
+                            ...prev,
+                            equipments: prev.equipments.map(eq =>
+                              eq.id === equipment.id
+                                ? { ...eq, tireType: e.target.value as 'solid' | 'pneumatic' }
+                                : eq
+                            )
+                          }))
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">선택하세요</option>
+                        {FORKLIFT_TIRE_TYPES.map(({ value, label }) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 사이드 시프트 유무 */}
+                    <div>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={equipment.hasSideShift || false}
+                          onChange={(e) => {
+                            setFormData((prev: FormData) => ({
+                              ...prev,
+                              equipments: prev.equipments.map(eq =>
+                                eq.id === equipment.id
+                                  ? { ...eq, hasSideShift: e.target.checked }
+                                  : eq
+                              )
+                            }))
+                          }}
+                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">사이드 시프트 있음</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. 부착작업기 정보 (트랙터인 경우에만 표시) */}
+                {equipment.type === 'tractor' && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium">부착작업기 정보</h4>
+                    
+                    {ATTACHMENT_TYPES.map(({ value, label }) => {
+                      const attachment = equipment.attachments?.find(a => a.type === value) || null;
+                      
+                      return (
+                        <div key={value} className="p-4 border rounded-lg space-y-4">
+                          <div className="flex justify-between items-center">
+                            <h5 className="font-medium">{label}</h5>
+                            {attachment ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData((prev: FormData) => ({
+                                    ...prev,
+                                    equipments: prev.equipments.map(eq =>
+                                      eq.id === equipment.id
+                                        ? {
+                                            ...eq,
+                                            attachments: (eq.attachments || []).filter(a => a.type !== value)
+                                          }
+                                        : eq
+                                    )
+                                  }))
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                삭제
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData((prev: FormData) => ({
+                                    ...prev,
+                                    equipments: prev.equipments.map(eq =>
+                                      eq.id === equipment.id
+                                        ? {
+                                            ...eq,
+                                            attachments: [
+                                              ...(eq.attachments || []),
+                                              createInitialAttachment(value as 'loader' | 'rotary' | 'frontWheel' | 'rearWheel')
+                                            ]
+                                          }
+                                        : eq
+                                    )
+                                  }))
+                                }}
+                                className="text-blue-500 hover:text-blue-700"
+                              >
+                                추가
+                              </button>
+                            )}
+                          </div>
+
+                          {attachment && (
+                            <div className="space-y-4">
+                              {/* 제조사 */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">제조사 *</label>
+                                <select
+                                  value={attachment.manufacturer}
+                                  onChange={(e) => {
+                                    setFormData((prev: FormData) => ({
+                                      ...prev,
+                                      equipments: prev.equipments.map(eq =>
+                                        eq.id === equipment.id
+                                          ? {
+                                              ...eq,
+                                              attachments: (eq.attachments || []).map(a =>
+                                                a.type === value
+                                                  ? { ...a, manufacturer: e.target.value }
+                                                  : a
+                                              )
+                                            }
+                                          : eq
+                                      )
+                                    }))
+                                  }}
+                                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                  required
+                                >
+                                  <option value="">선택하세요</option>
+                                  {(value === 'loader' ? MANUFACTURERS.LOADER :
+                                    value === 'rotary' ? MANUFACTURERS.ROTARY :
+                                    value === 'frontWheel' || value === 'rearWheel' ? MANUFACTURERS.WHEEL :
+                                    []).map(({ value: mValue, label }) => (
+                                    <option key={mValue} value={mValue}>
+                                      {label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* 모델명 */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">모델명 *</label>
+                                <input
+                                  type="text"
+                                  value={attachment.model}
+                                  onChange={(e) => {
+                                    setFormData((prev: FormData) => ({
+                                      ...prev,
+                                      equipments: prev.equipments.map(eq =>
+                                        eq.id === equipment.id
+                                          ? {
+                                              ...eq,
+                                              attachments: (eq.attachments || []).map(a =>
+                                                a.type === value
+                                                  ? { ...a, model: e.target.value }
+                                                  : a
+                                              )
+                                            }
+                                          : eq
+                                      )
+                                    }))
+                                  }}
+                                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                  required
+                                  placeholder="모델명을 입력하세요"
+                                />
+                              </div>
+
+                              {/* 상태평가 */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">상태평가</label>
+                                <div className="flex gap-2 mt-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                      key={star}
+                                      type="button"
+                                      onClick={() => {
+                                        setFormData((prev: FormData) => ({
+                                          ...prev,
+                                          equipments: prev.equipments.map(eq =>
+                                            eq.id === equipment.id
+                                              ? {
+                                                  ...eq,
+                                                  attachments: (eq.attachments || []).map(a =>
+                                                    a.type === value
+                                                      ? { ...a, condition: star }
+                                                      : a
+                                                  )
+                                                }
+                                              : eq
+                                          )
+                                        }))
+                                      }}
+                                      className={`p-1 ${
+                                        attachment.condition >= star
+                                          ? 'text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    >
+                                      ★
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* 메모 */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">메모</label>
+                                <textarea
+                                  value={attachment.memo}
+                                  onChange={(e) => {
+                                    setFormData((prev: FormData) => ({
+                                      ...prev,
+                                      equipments: prev.equipments.map(eq =>
+                                        eq.id === equipment.id
+                                          ? {
+                                              ...eq,
+                                              attachments: (eq.attachments || []).map(a =>
+                                                a.type === value
+                                                  ? { ...a, memo: e.target.value }
+                                                  : a
+                                              )
+                                            }
+                                          : eq
+                                      )
+                                    }))
+                                  }}
+                                  rows={3}
+                                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                  placeholder="메모를 입력하세요"
+                                />
+                              </div>
+
+                              {/* 이미지 업로드 */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">이미지 (최대 4장)</label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  {[...Array(4)].map((_, index) => (
+                                    <div key={index} className="relative">
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            setFormData((prev: FormData) => ({
+                                              ...prev,
+                                              equipments: prev.equipments.map(eq =>
+                                                eq.id === equipment.id
+                                                  ? {
+                                                      ...eq,
+                                                      attachments: (eq.attachments || []).map(a =>
+                                                        a.type === value
+                                                          ? {
+                                                              ...a,
+                                                              images: [
+                                                                ...(a.images || []).slice(0, index),
+                                                                file,
+                                                                ...(a.images || []).slice(index + 1)
+                                                              ]
+                                                            }
+                                                          : a
+                                                      )
+                                                  }
+                                                : eq
+                                            )
+                                          }))
+                                        }}
+                                        className="hidden"
+                                        id={`attachment-image-${equipment.id}-${value}-${index}`}
+                                      />
+                                      <label
+                                        htmlFor={`attachment-image-${equipment.id}-${value}-${index}`}
+                                        className="block w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-blue-500 cursor-pointer"
+                                      >
+                                        {attachment.images?.[index] ? (
+                                          <img
+                                            src={
+                                              attachment.images[index] instanceof File
+                                                ? URL.createObjectURL(attachment.images[index] as File)
+                                                : attachment.images[index] as string
+                                            }
+                                            alt={`${label} 이미지 ${index + 1}`}
+                                            className="w-full h-full object-cover rounded-lg"
+                                          />
+                                        ) : (
+                                          <div className="flex items-center justify-center h-full text-gray-400">
+                                            <span>이미지 추가</span>
+                                          </div>
+                                        )}
+                                      </label>
+                                      {attachment.images?.[index] && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setFormData((prev: FormData) => ({
+                                              ...prev,
+                                              equipments: prev.equipments.map(eq =>
+                                                eq.id === equipment.id
+                                                  ? {
+                                                      ...eq,
+                                                      attachments: (eq.attachments || []).map(a =>
+                                                        a.type === value
+                                                          ? {
+                                                              ...a,
+                                                              images: [
+                                                                ...(a.images || []).slice(0, index),
+                                                                null,
+                                                                ...(a.images || []).slice(index + 1)
+                                                              ]
+                                                            }
+                                                          : a
+                                                      )
+                                                  }
+                                                : eq
+                                            )
+                                          }))
+                                        }}
+                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                      >
+                                        ×
+                                      </button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* 농기계 추가 버튼 */}
+          <button
+            type="button"
+            onClick={() => {
+              setFormData((prev: FormData) => ({
+                ...prev,
+                equipments: [
+                  ...prev.equipments,
+                  createInitialEquipment()
+                ]
+              }))
+            }}
+            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            농기계 추가
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+        >
+          {mode === 'edit' ? '수정하기' : '등록하기'}
+        </button>
+      </form>
+    </div>
+  );
+} 

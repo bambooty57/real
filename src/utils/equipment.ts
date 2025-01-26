@@ -11,45 +11,22 @@ export const createInitialEquipment = (): Equipment => ({
   usageHours: '',
   condition: 0,
   rating: '',
-  attachments: {
-    loader: {
-      model: '',
-      manufacturer: '',
-      condition: 0,
-      rating: '',
-      memo: '',
-      images: []
-    },
-    rotary: {
-      model: '',
-      manufacturer: '',
-      condition: 0,
-      rating: '',
-      memo: '',
-      images: []
-    },
-    frontWheel: {
-      model: '',
-      manufacturer: '',
-      condition: 0,
-      rating: '',
-      memo: '',
-      images: []
-    },
-    rearWheel: {
-      model: '',
-      manufacturer: '',
-      condition: 0,
-      rating: '',
-      memo: '',
-      images: []
-    }
-  },
+  images: [],
   saleType: null,
   tradeType: '',
-  saleStatus: '',
-  purchaseStatus: '',
   desiredPrice: '',
+  saleStatus: '',
+  forSale: false,
+  forPurchase: false,
+  attachments: []
+});
+
+export const createInitialAttachment = (type: 'loader' | 'rotary' | 'frontWheel' | 'rearWheel') => ({
+  id: uuidv4(),
+  type,
+  manufacturer: '',
+  model: '',
+  condition: 0,
   memo: '',
   images: []
 }); 

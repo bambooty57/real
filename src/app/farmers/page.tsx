@@ -324,10 +324,10 @@ export default function FarmerList() {
           eq.type,
           eq.manufacturer,
           eq.model,
-          eq.attachments?.loader?.manufacturer,
-          eq.attachments?.rotary?.manufacturer,
-          eq.attachments?.frontWheel?.manufacturer,
-          eq.attachments?.rearWheel?.manufacturer
+          eq.attachments?.find(a => a.type === 'loader')?.manufacturer,
+          eq.attachments?.find(a => a.type === 'rotary')?.manufacturer,
+          eq.attachments?.find(a => a.type === 'frontWheel')?.manufacturer,
+          eq.attachments?.find(a => a.type === 'rearWheel')?.manufacturer
         ]).flat() || [])
       ].filter(Boolean).map(field => field?.toLowerCase());
 
