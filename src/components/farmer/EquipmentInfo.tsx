@@ -31,12 +31,12 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
           if (img instanceof File) {
             if (img.size > MAX_FILE_SIZE) {
               alert('이미지 크기는 5MB를 초과할 수 없습니다.');
-              return null;
+              return undefined;
             }
-            return img;
           }
           return img;
-        });
+        }).filter((img): img is string | File => img !== undefined);
+        
         equipment.images = validImages;
       }
 
@@ -268,7 +268,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                               ...equipment,
                               images: [
                                 ...(equipment.images || []).slice(0, imageIndex),
-                                null,
                                 ...(equipment.images || []).slice(imageIndex + 1)
                               ]
                             });

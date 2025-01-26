@@ -118,27 +118,28 @@ const cropDisplayNames: { [key: string]: string } = {
   plum: '자두'
 };
 
-export const getFarmingTypeDisplay = (farmingTypes: FarmingTypes): string => {
-  if (!farmingTypes) return ''
-  
-  const types = Object.entries(farmingTypes)
-    .filter(([_, value]) => value === true)
-    .map(([key]) => farmingTypeDisplayNames[key] || key)
-  
-  return types.join(', ') || '없음'
-}
+export const getFarmingTypeDisplay = (key: string): string => {
+  const farmingTypeMap: { [key: string]: string } = {
+    paddyFarming: '논농사',
+    fieldFarming: '밭농사',
+    orchard: '과수원',
+    livestock: '축산',
+    forageCrop: '사료작물'
+  };
+  return farmingTypeMap[key] || key;
+};
 
-export const getMainCropDisplay = (mainCrop: MainCrop): string => {
-  if (!mainCrop) return ''
-  
-  if (typeof mainCrop === 'string') return mainCrop
-  
-  const crops = Object.entries(mainCrop)
-    .filter(([_, value]) => value === true)
-    .map(([key]) => cropDisplayNames[key] || key)
-  
-  return crops.join(', ') || '없음'
-}
+export const getMainCropDisplay = (key: string): string => {
+  const mainCropMap: { [key: string]: string } = {
+    foodCrops: '식량작물',
+    facilityHort: '시설원예',
+    fieldVeg: '노지채소',
+    fruits: '과수',
+    specialCrops: '특용작물',
+    flowers: '화훼'
+  };
+  return mainCropMap[key] || key;
+};
 
 export const getKoreanEquipmentType = (type: string): string => {
   return equipmentTypeMap[type.toLowerCase()] || type

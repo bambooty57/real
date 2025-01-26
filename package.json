@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "init-db": "ts-node scripts/init-db.ts",
-    "uploadAddress": "ts-node src/scripts/uploadAddressData.ts"
+    "uploadAddress": "ts-node src/scripts/uploadAddressData.ts",
+    "migrate": "ts-node scripts/migrateFarmers.ts",
+    "count-farmers": "ts-node scripts/countFarmers.ts"
   },
   "dependencies": {
     "@types/uuid": "^10.0.0",

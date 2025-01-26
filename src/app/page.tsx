@@ -31,26 +31,20 @@ ChartJS.register(
   ChartDataLabels
 );
 
-const getMainCropText = (mainCrop: Farmer['mainCrop']) => {
-  const cropNames: { [key: string]: string } = {
-    rice: '벼',
-    barley: '보리',
-    hanwoo: '한우',
-    soybean: '콩',
-    sweetPotato: '고구마',
-    persimmon: '감',
-    pear: '배',
-    plum: '자두',
-    sorghum: '수수',
-    goat: '염소',
-    other: '기타'
-  };
-
-  const selectedCrops = Object.entries(mainCrop)
+const getFarmingTypeText = (farmingTypes: any) => {
+  if (!farmingTypes) return '';
+  return Object.entries(farmingTypes)
     .filter(([_, value]) => value)
-    .map(([key]) => cropNames[key]);
+    .map(([key]) => getFarmingTypeDisplay(key))
+    .join(', ');
+};
 
-  return selectedCrops.length > 0 ? selectedCrops.join(', ') : '없음';
+const getMainCropText = (mainCrop: any) => {
+  if (!mainCrop) return '';
+  return Object.entries(mainCrop)
+    .filter(([_, value]) => value)
+    .map(([key]) => getMainCropDisplay(key))
+    .join(', ');
 };
 
 // 드롭다운 옵션 정의
@@ -315,7 +309,7 @@ export default function Dashboard() {
       // 기본 정보
       const baseData = {
         'ID': farmer.id,
-        '이름': farmer.name,
+        '이름': farmer.name || '',
         '상호': farmer.businessName || '',
         '연령대': farmer.ageGroup || '',
         '전화번호': farmer.phone || '',
@@ -324,7 +318,7 @@ export default function Dashboard() {
         '도로명주소': farmer.roadAddress || '',
         '상세주소': farmer.addressDetail || '',
         '우편수취가능여부': farmer.canReceiveMail ? '가능' : '불가능',
-        '영농형태': getFarmingTypeDisplay(farmer.farmingTypes) || '',
+        '영농형태': getFarmingTypeText(farmer.farmingTypes) || '',
         '주작물': getMainCropText(farmer.mainCrop) || '',
       };
 
@@ -893,6 +887,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'right' as const,
@@ -901,6 +896,12 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           text: '지역별 농민/장비 현황',
           padding: {
             bottom: 10
+          }
+        },
+        labels: {
+          padding: 20, // 범례 항목 간 간격
+          font: {
+            size: 14
           }
         }
       },
@@ -912,17 +913,37 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         align: 'end' as const,
         formatter: (value: number) => value,
         font: {
-          weight: 'bold' as const
+          weight: 'bold' as const,
+          size: 12
         },
+        padding: 6,
         color: '#000000'
       }
     },
     scales: {
       y: {
         beginAtZero: true,
+        max: 120, // Y축 최대값을 120으로 설정
         ticks: {
-          stepSize: 1
+          stepSize: 20, // 눈금 간격을 20으로 설정
+          font: {
+            size: 12
+          }
         }
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 12
+          },
+          maxRotation: 45, // X축 라벨 회전
+          minRotation: 45
+        }
+      }
+    },
+    layout: {
+      padding: {
+        right: 50 // 오른쪽 여백 추가
       }
     }
   };

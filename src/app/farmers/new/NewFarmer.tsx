@@ -6,16 +6,62 @@ import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from '@/lib/firebase'
-import { FormData } from '@/types/farmer'
 import { v4 as uuidv4 } from 'uuid'
 import BasicInfo from '@/components/farmer/BasicInfo'
 import FarmingInfo from '@/components/farmer/FarmingInfo'
 import EquipmentInfo from '@/components/farmer/EquipmentInfo'
+import { FormData } from '@/types/farmer'
+
+interface MainCrop {
+  rice: boolean;
+  barley: boolean;
+  hanwoo: boolean;
+  soybean: boolean;
+  sweetPotato: boolean;
+  persimmon: boolean;
+  pear: boolean;
+  plum: boolean;
+  sorghum: boolean;
+  goat: boolean;
+  other: boolean;
+}
+
+interface FarmingTypes {
+  paddyFarming: boolean;
+  fieldFarming: boolean;
+  orchard: boolean;
+  livestock: boolean;
+  forageCrop: boolean;
+}
+
+interface Equipment {
+  id: string;
+  type: string;
+  manufacturer: string;
+  model: string;
+  horsepower: string;
+  year: string;
+  usageHours: string;
+  condition: number;
+  images: string[];
+  saleType: "new" | "used" | null;
+  tradeType: string;
+  desiredPrice: string;
+  saleStatus: string;
+  attachments?: Array<{
+    type: "loader" | "rotary" | "frontWheel" | "rearWheel";
+    manufacturer: string;
+    model: string;
+    condition?: number;
+    memo?: string;
+    images?: (string | File | null)[];
+  }>;
+}
 
 interface Props {
-  mode?: string;
-  farmerId?: string;
-  initialData?: FormData | null;
+  mode?: 'new' | 'edit'
+  farmerId?: string
+  initialData?: FormData | null
 }
 
 export default function NewFarmer({ mode = 'new', farmerId = '', initialData = null }: Props) {
@@ -25,15 +71,47 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     if (initialData) {
       return {
         ...initialData,
+        canReceiveMail: initialData.canReceiveMail ?? false,
         equipments: initialData.equipments?.map((eq) => ({
           ...eq,
-          id: eq.id || uuidv4()  // 기존 id가 없으면 새로 생성
+          id: eq.id || uuidv4()
         })) || []
-      };
+      }
     }
     return {
       name: '',
-      phone: ''
+      phone: '',
+      businessName: '',
+      zipCode: '',
+      roadAddress: '',
+      jibunAddress: '',
+      addressDetail: '',
+      canReceiveMail: false,
+      ageGroup: '',
+      memo: '',
+      farmerImages: [],
+      mainCrop: {
+        rice: false,
+        barley: false,
+        hanwoo: false,
+        soybean: false,
+        sweetPotato: false,
+        persimmon: false,
+        pear: false,
+        plum: false,
+        sorghum: false,
+        goat: false,
+        other: false
+      },
+      farmingTypes: {
+        paddyFarming: false,
+        fieldFarming: false,
+        orchard: false,
+        livestock: false,
+        forageCrop: false
+      },
+      equipments: [],
+      rating: 0
     }
   })
 
@@ -43,8 +121,8 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     try {
       // 데이터 유효성 검사
       if (!formData.name?.trim()) {
-        alert('이름은 필수 입력 항목입니다.');
-        return;
+        alert('이름은 필수 입력 항목입니다.')
+        return
       }
 
       // undefined 값 제거 및 기본값 설정
@@ -60,10 +138,29 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         ageGroup: formData.ageGroup || '',
         memo: formData.memo?.trim() || '',
         farmerImages: formData.farmerImages || [],
-        mainCrop: formData.mainCrop || {},
-        farmingTypes: formData.farmingTypes || {},
+        mainCrop: formData.mainCrop || {
+          rice: false,
+          barley: false,
+          hanwoo: false,
+          soybean: false,
+          sweetPotato: false,
+          persimmon: false,
+          pear: false,
+          plum: false,
+          sorghum: false,
+          goat: false,
+          other: false
+        },
+        farmingTypes: formData.farmingTypes || {
+          paddyFarming: false,
+          fieldFarming: false,
+          orchard: false,
+          livestock: false,
+          forageCrop: false
+        },
         equipments: (formData.equipments || []).map(eq => ({
           ...eq,
+          id: eq.id || uuidv4(),
           type: eq.type || '',
           manufacturer: eq.manufacturer || '',
           model: eq.model || '',
@@ -71,24 +168,30 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           usageHours: eq.usageHours || '',
           condition: eq.condition || 0,
           images: eq.images || [],
-          saleType: eq.saleType || '',
+          saleType: eq.saleType || 'new',
           tradeType: eq.tradeType || '',
           desiredPrice: eq.desiredPrice || '',
           saleStatus: eq.saleStatus || ''
         })),
-        rating: formData.rating || 0
+        rating: formData.rating || 0,
+        updatedAt: new Date().toISOString()
       }
 
       if (mode === 'edit' && farmerId) {
         // 수정 모드
         const docRef = doc(db, 'farmers', farmerId)
         await updateDoc(docRef, saveData)
-        router.push('/farmers')  // 수정 후 목록 페이지로 이동
+        alert('수정이 완료되었습니다.')
+        router.push(`/farmers/${farmerId}`)
       } else {
         // 새로운 등록 모드
         const docRef = collection(db, 'farmers')
-        const newFarmerRef = await addDoc(docRef, saveData)
-        router.push(`/farmers/${newFarmerRef.id}`)  // 등록 후 상세 페이지로 이동
+        const newFarmerRef = await addDoc(docRef, {
+          ...saveData,
+          createdAt: new Date().toISOString()
+        })
+        alert('등록이 완료되었습니다.')
+        router.push(`/farmers/${newFarmerRef.id}`)
       }
     } catch (error) {
       console.error('Error saving farmer:', error)

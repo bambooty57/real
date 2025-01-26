@@ -8,25 +8,12 @@ export interface Equipment {
   usageHours: string;
   condition?: number;
   rating?: number;
-  forSale?: boolean;
-  forPurchase?: boolean;
-  attachments?: Array<{
-    type: 'loader' | 'rotary' | 'frontWheel' | 'rearWheel';
-    manufacturer: string;
-    model: string;
-    condition?: number;
-    memo?: string;
-    images?: (string | File | null)[];
-  }>;
   saleType: 'new' | 'used' | null;
   tradeType: string;
   desiredPrice: string;
   saleStatus: string;
-  purchaseStatus?: string;
-  memo?: string;
-  images?: (string | File | null)[];
-
-  // 트랙터 관련
+  images?: (string | File)[];
+  
   // 이앙기 관련
   rows?: string;
   transplanterType?: 'riding' | 'walking';
@@ -45,6 +32,17 @@ export interface Equipment {
   mastType?: '2stage' | '3stage' | '4stage';
   tireType?: 'solid' | 'pneumatic';
   hasSideShift?: boolean;
+  
+  attachments?: Array<{
+    type: 'loader' | 'rotary' | 'frontWheel' | 'rearWheel';
+    manufacturer: string;
+    model: string;
+    condition?: number;
+    memo?: string;
+    images?: (string | File)[];
+  }>;
+  
+  memo?: string;
 }
 
 export interface AttachmentImages {
@@ -60,50 +58,53 @@ export interface AttachmentImages {
 }
 
 export interface MainCrop {
-  rice: boolean;
-  barley: boolean;
-  hanwoo: boolean;
-  soybean: boolean;
-  sweetPotato: boolean;
-  persimmon: boolean;
-  pear: boolean;
-  plum: boolean;
-  sorghum: boolean;
-  goat: boolean;
-  other: boolean;
+  foodCrops?: boolean;
+  facilityHort?: boolean;
+  fieldVeg?: boolean;
+  fruits?: boolean;
+  specialCrops?: boolean;
+  flowers?: boolean;
 }
 
 export interface FarmingTypes {
-  paddyFarming: boolean;
-  fieldFarming: boolean;
-  livestock: boolean;
-  orchard: boolean;
-  forageCrop: boolean;
+  waterPaddy: boolean;    // 수도작
+  fieldFarming: boolean;  // 밭농사
+  livestock: boolean;     // 축산업
+  orchard: boolean;       // 과수원
+  forageCrop: boolean;    // 사료작물
 }
 
 export interface Farmer {
-  id?: string;
+  id: string;
   name: string;
+  phone: string;
   businessName?: string;
-  zipCode: string;
-  roadAddress: string;
-  jibunAddress: string;
+  zipCode?: string;
+  roadAddress?: string;
+  jibunAddress?: string;
   addressDetail?: string;
   canReceiveMail: boolean;
-  phone: string;
-  ageGroup: string;
+  ageGroup?: string;
   memo?: string;
   farmerImages: string[];
-  mainImages: string[];
-  attachmentImages: {
-    loader: string[];
-    rotary: string[];
-    frontWheel: string[];
-    rearWheel: string[];
+  mainCrop: {
+    foodCrops?: boolean;
+    facilityHort?: boolean;
+    fieldVeg?: boolean;
+    fruits?: boolean;
+    specialCrops?: boolean;
+    flowers?: boolean;
+    [key: string]: boolean | undefined;
   };
-  mainCrop: MainCrop;
-  farmingTypes: FarmingTypes;
+  farmingTypes: {
+    paddyFarming: boolean;
+    fieldFarming: boolean;
+    orchard: boolean;
+    livestock: boolean;
+    forageCrop: boolean;
+  };
   equipments: Equipment[];
+  rating?: number;
 }
 
 export interface Attachment {
@@ -116,21 +117,6 @@ export interface Attachment {
   images?: (string | File | null)[];
 }
 
-export interface FormData {
+export interface FormData extends Omit<Farmer, 'id'> {
   id?: string;
-  name: string;
-  phone: string;
-  businessName?: string;
-  zipCode?: string;
-  roadAddress?: string;
-  jibunAddress?: string;
-  addressDetail?: string;
-  canReceiveMail?: boolean;
-  ageGroup?: string;
-  memo?: string;
-  farmerImages?: string[];
-  mainCrop?: MainCrop;
-  farmingTypes?: FarmingTypes;
-  equipments?: Equipment[];
-  rating?: number;
 }

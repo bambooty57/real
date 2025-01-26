@@ -6,12 +6,12 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import AddressSearch from '@/components/AddressSearch';
 
-interface BasicInfoProps {
+interface Props {
   formData: FormData;
   setFormData: (data: FormData | ((prev: FormData) => FormData)) => void;
 }
 
-export default function BasicInfo({ formData, setFormData }: BasicInfoProps) {
+export default function BasicInfo({ formData, setFormData }: Props) {
   const [isDuplicateChecking, setIsDuplicateChecking] = useState(false);
   const [duplicateMessage, setDuplicateMessage] = useState<string | null>(null);
 

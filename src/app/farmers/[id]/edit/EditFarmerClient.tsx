@@ -5,58 +5,28 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import NewFarmer from '../../new/NewFarmer'
 
-const defaultFormData = {
-  name: '',
-  companyName: '',
-  zipCode: '',
-  roadAddress: '',
-  jibunAddress: '',
-  addressDetail: '',
-  canReceiveMail: false,
-  phone: '',
-  ageGroup: '',
-  memo: '',
-  mainImages: [],
-  attachmentImages: {
-    loader: [],
-    rotary: [],
-    frontWheel: [],
-    rearWheel: [],
-    cutter: [],
-    rows: [],
-    tonnage: [],
-    size: [],
-    bucketSize: []
-  },
-  mainCrop: {
-    rice: false,
-    barley: false,
-    hanwoo: false,
-    soybean: false,
-    sweetPotato: false,
-    persimmon: false,
-    pear: false,
-    plum: false,
-    sorghum: false,
-    goat: false,
-    other: false
-  },
-  farmingTypes: {
-    paddyFarming: false,
-    fieldFarming: false,
-    orchard: false,
-    livestock: false,
-    forageCrop: false,
-  },
-  equipments: []
-}
-
 interface EditFarmerClientProps {
   farmerId: string
 }
 
 export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
-  const [initialData, setInitialData] = useState<any>(defaultFormData)
+  const [initialData, setInitialData] = useState<any>({
+    name: '',
+    businessName: '',
+    zipCode: '',
+    roadAddress: '',
+    jibunAddress: '',
+    addressDetail: '',
+    canReceiveMail: false,
+    phone: '',
+    ageGroup: '',
+    memo: '',
+    farmerImages: [],
+    mainCrop: {},
+    farmingTypes: {},
+    equipments: [],
+    rating: 0
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -69,40 +39,58 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
         if (docSnap.exists()) {
           const data = docSnap.data()
           setInitialData({
-            ...defaultFormData,
-            ...data,
-            equipments: (data.equipments || []).map((equipment: any) => ({
-              ...equipment,
-              images: equipment.images || [],
-              attachments: {
-                ...equipment.attachments,
-                loaderImages: equipment.attachments?.loaderImages || [],
-                rotaryImages: equipment.attachments?.rotaryImages || [],
-                frontWheelImages: equipment.attachments?.frontWheelImages || [],
-                rearWheelImages: equipment.attachments?.rearWheelImages || []
-              }
-            }))
+            id: docSnap.id,
+            name: data.name || '',
+            phone: data.phone || '',
+            businessName: data.businessName || '',
+            zipCode: data.zipCode || '',
+            roadAddress: data.roadAddress || '',
+            jibunAddress: data.jibunAddress || '',
+            addressDetail: data.addressDetail || '',
+            canReceiveMail: data.canReceiveMail || false,
+            ageGroup: data.ageGroup || '',
+            memo: data.memo || '',
+            farmerImages: data.farmerImages || [],
+            mainCrop: data.mainCrop || {},
+            farmingTypes: data.farmingTypes || {},
+            equipments: (data.equipments || []).map((eq: any) => ({
+              ...eq,
+              type: eq.type || '',
+              manufacturer: eq.manufacturer || '',
+              model: eq.model || '',
+              year: eq.year || '',
+              usageHours: eq.usageHours || '',
+              condition: eq.condition || 0,
+              images: eq.images || [],
+              saleType: eq.saleType || '',
+              tradeType: eq.tradeType || '',
+              desiredPrice: eq.desiredPrice || '',
+              saleStatus: eq.saleStatus || ''
+            })),
+            rating: data.rating || 0
           })
         } else {
           setError('농민 정보를 찾을 수 없습니다.')
         }
       } catch (err) {
-        setError('데이터를 불러오는 중 오류가 발생했습니다.')
         console.error('Error fetching farmer data:', err)
+        setError('데이터를 불러오는 중 오류가 발생했습니다.')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchFarmerData()
+    if (farmerId) {
+      fetchFarmerData()
+    }
   }, [farmerId])
 
   if (loading) {
-    return <div>데이터를 불러오는 중...</div>
+    return <div className="p-4">데이터를 불러오는 중...</div>
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>
+    return <div className="p-4 text-red-500">{error}</div>
   }
 
   return <NewFarmer mode="edit" farmerId={farmerId} initialData={initialData} />

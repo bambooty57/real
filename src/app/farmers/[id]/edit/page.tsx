@@ -13,62 +13,80 @@ interface PageProps {
   }>;
 }
 
+interface MainCrop {
+  rice: boolean;
+  barley: boolean;
+  hanwoo: boolean;
+  soybean: boolean;
+  sweetPotato: boolean;
+  persimmon: boolean;
+  pear: boolean;
+  plum: boolean;
+  sorghum: boolean;
+  goat: boolean;
+  other: boolean;
+}
+
+interface FarmingTypes {
+  paddyFarming: boolean;
+  fieldFarming: boolean;
+  orchard: boolean;
+  livestock: boolean;
+  forageCrop: boolean;
+}
+
+interface Equipment {
+  id: string;
+  type: string;
+  manufacturer: string;
+  model: string;
+  horsepower: string;
+  year: string;
+  usageHours: string;
+  condition: number;
+  images: string[];
+  saleType: "new" | "used" | null;
+  tradeType: string;
+  desiredPrice: string;
+  saleStatus: string;
+  attachments?: Array<{
+    type: "loader" | "rotary" | "frontWheel" | "rearWheel";
+    manufacturer: string;
+    model: string;
+    condition?: number;
+    memo?: string;
+    images?: (string | File | null)[];
+  }>;
+}
+
 export default function EditFarmerPage({ params }: PageProps) {
   const { id } = use(params);
   const [initialData, setInitialData] = useState<FormData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchFarmerData() {
-      try {
-        const docRef = doc(db, 'farmers', id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setInitialData({
-            id: docSnap.id,
-            name: data.name || '',
-            phone: data.phone || '',
-            businessName: data.businessName,
-            zipCode: data.zipCode,
-            roadAddress: data.roadAddress,
-            jibunAddress: data.jibunAddress,
-            addressDetail: data.addressDetail,
-            canReceiveMail: data.canReceiveMail,
-            ageGroup: data.ageGroup,
-            memo: data.memo,
-            farmerImages: data.farmerImages,
-            mainCrop: data.mainCrop,
-            farmingTypes: data.farmingTypes,
-            equipments: data.equipments,
-            rating: data.rating
-          });
-        } else {
-          setError('농민 정보를 찾을 수 없습니다.');
-        }
-      } catch (err) {
-        setError('데이터를 불러오는 중 오류가 발생했습니다.');
-        console.error('Error fetching farmer data:', err);
-      } finally {
-        setLoading(false);
+    const fetchFarmer = async () => {
+      const docRef = doc(db, 'farmers', id);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data() as FormData;
+        setInitialData(data);
       }
-    }
+    };
 
-    fetchFarmerData();
+    fetchFarmer();
   }, [id]);
 
-  if (loading) {
-    return <div>데이터를 불러오는 중...</div>;
+  if (!initialData) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse text-center">데이터를 불러오는 중...</div>
+      </div>
+    );
   }
 
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
-  }
-  
   return (
-    <div>
+    <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">농민 정보 수정</h1>
       <Suspense fallback={<div>Loading...</div>}>
         <NewFarmer mode="edit" farmerId={id} initialData={initialData} />

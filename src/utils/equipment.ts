@@ -16,8 +16,6 @@ export const createInitialEquipment = (): Equipment => ({
   tradeType: '',
   desiredPrice: '',
   saleStatus: '',
-  forSale: false,
-  forPurchase: false,
   attachments: []
 });
 

@@ -1,13 +1,13 @@
 'use client';
 
-import { FormData } from '@/types/farmer';
+import { FormData, MainCrop } from '@/types/farmer';
 
-interface FarmingInfoProps {
+interface Props {
   formData: FormData;
   setFormData: (data: FormData | ((prev: FormData) => FormData)) => void;
 }
 
-export default function FarmingInfo({ formData, setFormData }: FarmingInfoProps) {
+export default function FarmingInfo({ formData, setFormData }: Props) {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">영농 정보</h2>
@@ -25,7 +25,7 @@ export default function FarmingInfo({ formData, setFormData }: FarmingInfoProps)
                   ...prev,
                   farmingTypes: {
                     ...(prev.farmingTypes || {
-                      paddyFarming: false,
+                      waterPaddy: false,
                       fieldFarming: false,
                       livestock: false,
                       orchard: false,
@@ -37,7 +37,7 @@ export default function FarmingInfo({ formData, setFormData }: FarmingInfoProps)
                 className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">
-                {key === 'paddyFarming' ? '벼농사' :
+                {key === 'waterPaddy' ? '수도작' :
                  key === 'fieldFarming' ? '밭농사' :
                  key === 'orchard' ? '과수원' :
                  key === 'livestock' ? '축산업' :
@@ -51,60 +51,37 @@ export default function FarmingInfo({ formData, setFormData }: FarmingInfoProps)
       {/* 주작물 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">주작물</label>
-        <div className="grid grid-cols-3 gap-4">
-          {Object.entries(formData.mainCrop || {
-            rice: false,
-            barley: false,
-            hanwoo: false,
-            soybean: false,
-            sweetPotato: false,
-            persimmon: false,
-            pear: false,
-            plum: false,
-            sorghum: false,
-            goat: false,
-            other: false
-          }).map(([key, value]) => (
-            <label key={key} className="flex items-center">
-              <input
-                type="checkbox"
-                checked={value}
-                onChange={(e) => setFormData((prev: FormData) => ({
-                  ...prev,
-                  mainCrop: {
-                    ...(prev.mainCrop || {
-                      rice: false,
-                      barley: false,
-                      hanwoo: false,
-                      soybean: false,
-                      sweetPotato: false,
-                      persimmon: false,
-                      pear: false,
-                      plum: false,
-                      sorghum: false,
-                      goat: false,
-                      other: false
-                    }),
-                    [key]: e.target.checked
-                  }
-                }))}
-                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">
-                {key === 'rice' ? '벼' :
-                 key === 'barley' ? '보리' :
-                 key === 'hanwoo' ? '한우' :
-                 key === 'soybean' ? '콩' :
-                 key === 'sweetPotato' ? '고구마' :
-                 key === 'persimmon' ? '감' :
-                 key === 'pear' ? '배' :
-                 key === 'plum' ? '매실' :
-                 key === 'sorghum' ? '수수' :
-                 key === 'goat' ? '염소' :
-                 key === 'other' ? '기타' : key}
-              </span>
-            </label>
-          ))}
+        <div className="space-y-4">
+          {/* 식량작물 */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-600 mb-2">식량작물</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                ['foodCrops', '식량작물'],
+                ['facilityHort', '시설원예'],
+                ['fieldVeg', '노지채소'],
+                ['fruits', '과수'],
+                ['specialCrops', '특용작물'],
+                ['flowers', '화훼']
+              ].map(([key, label]) => (
+                <label key={key} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.mainCrop?.[key] || false}
+                    onChange={(e) => setFormData((prev: FormData) => ({
+                      ...prev,
+                      mainCrop: {
+                        ...(prev.mainCrop || {}),
+                        [key]: e.target.checked
+                      }
+                    }))}
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
