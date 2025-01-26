@@ -68,20 +68,22 @@ const EQUIPMENT_LIST = [
 ] as const;
 
 // 전화번호 형식 변환 함수 개선
-const formatPhoneNumber = (phone: string | undefined): string => {
+const formatPhoneNumber = (phone: string) => {
   if (!phone) return '';
   
   // 숫자만 추출
   const numbers = phone.replace(/[^0-9]/g, '');
   
-  // 길이에 따라 포맷팅
+  // 길이에 따라 적절한 형식 적용
   if (numbers.length === 11) {
     return numbers.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
   } else if (numbers.length === 10) {
     return numbers.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  } else if (numbers.length === 9) {
+    return numbers.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
   }
   
-  return phone;  // 포맷팅할 수 없는 경우 원본 반환
+  return numbers;
 };
 
 interface ChartData {
@@ -248,53 +250,45 @@ export default function Dashboard() {
   // Firebase 데이터 로드
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadFarmers = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Firebase 연결 확인
-        if (!db) {
-          throw new Error('Firestore 인스턴스가 초기화되지 않았습니다.');
-        }
-        
-        // 데이터 로드
+        console.log('Firebase 데이터 로딩 시작...');
+
         const farmersRef = collection(db, 'farmers');
         const q = query(farmersRef, orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
+        const querySnapshot = await getDocs(q);
         
-        if (snapshot.empty) {
-          console.warn('Firebase에서 가져온 데이터가 없습니다.');
-          if (isMounted) {
-            setFarmers([]);
-            setLoading(false);
-          }
-          return;
-        }
-        
-        const farmersData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Farmer[];
-        
+        const loadedFarmers: Farmer[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          console.log('Firebase 문서 데이터:', data); // 각 문서의 데이터 로깅
+          loadedFarmers.push({
+            id: doc.id,
+            ...data
+          } as Farmer);
+        });
+
         if (isMounted) {
-          setFarmers(farmersData);
-          setLoading(false);
-          console.log('데이터 로드 완료:', farmersData.length);
+          console.log('로드된 농민 데이터:', loadedFarmers.length, '명');
+          setFarmers(loadedFarmers);
         }
       } catch (err) {
-        console.error('Firebase 데이터 로딩 에러:', err);
+        console.error('Firebase 데이터 로딩 오류:', err);
         if (isMounted) {
-          setError(err instanceof Error ? err.message : '데이터를 불러오는데 실패했습니다');
+          setError('데이터를 불러오는 중 오류가 발생했습니다.');
+        }
+      } finally {
+        if (isMounted) {
           setLoading(false);
-          toast.error('데이터 로딩 중 오류가 발생했습니다.');
         }
       }
     };
 
     loadFarmers();
-    
+
     return () => {
       isMounted = false;
     };
@@ -426,15 +420,19 @@ export default function Dashboard() {
         // 데이터 유효성 검사 함수
         const validateData = (row: any) => {
           const errors = [];
-          if (!row['이름']) errors.push('이름이 누락되었습니다');
-          if (!row['전화번호']) errors.push('전화번호가 누락되었습니다');
           
-          // 전화번호 형식 검증
-          if (row['전화번호']) {
-            const phoneRegex = /^[0-9]{2,3}-?[0-9]{3,4}-?[0-9]{4}$/;
-            if (!phoneRegex.test(row['전화번호'].replace(/[-\s]/g, ''))) {
-              errors.push('올바른 전화번호 형식이 아닙니다');
-            }
+          // 이름 검증 - 공백 제거 후 확인
+          const name = (row['이름'] || '').trim();
+          if (!name) {
+            errors.push('이름이 누락되었습니다');
+          }
+          
+          // 전화번호 검증 - 숫자만 추출하여 확인
+          const phone = (row['전화번호'] || '').replace(/[^0-9]/g, '');
+          if (!phone) {
+            errors.push('전화번호가 누락되었습니다');
+          } else if (phone.length < 9 || phone.length > 11) {
+            errors.push('올바른 전화번호 형식이 아닙니다');
           }
           
           return errors;
@@ -467,7 +465,7 @@ export default function Dashboard() {
               name: row['이름'],
               businessName: row['상호'] || '',
               ageGroup: row['연령대'] || '',
-              phone: formatPhoneNumber(row['전화번호']),
+              phone: formatPhoneNumber(row['전화번호'] || ''),
               zipCode: row['우편번호'] || '',
               jibunAddress: row['지번주소'] || '',
               roadAddress: row['도로명주소'] || '',
@@ -477,8 +475,8 @@ export default function Dashboard() {
 
             // 기존 데이터 검색 시 전화번호 형식을 맞춰서 비교
             const existingFarmer = existingFarmers.find(f => {
-              const existingPhone = formatPhoneNumber(f.phone);
-              const newPhone = formatPhoneNumber(row['전화번호']);
+              const existingPhone = formatPhoneNumber(f.phone || '');
+              const newPhone = formatPhoneNumber(row['전화번호'] || '');
               const existingPhoneNumbers = existingPhone.replace(/[^0-9]/g, '');
               const newPhoneNumbers = newPhone.replace(/[^0-9]/g, '');
               
@@ -749,6 +747,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
 
     try {
       console.log('전체 농민 데이터:', farmers.length, '명');
+      console.log('첫 번째 농민 데이터 구조:', JSON.stringify(farmers[0], null, 2));
       const locationData = new Map<string, { customers: number; equipments: number }>();
 
       // 전체 지역일 때는 모든 시/군을 초기화
