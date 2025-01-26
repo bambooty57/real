@@ -4,6 +4,60 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const maxDuration = 60; // 함수 실행 시간을 1분으로 줄임
 
+// 농기계 정보를 문자열로 변환하는 함수
+const formatEquipments = (equipments: any[] | undefined): string => {
+  if (!equipments || !Array.isArray(equipments)) return '';
+  
+  return equipments.map(eq => {
+    if (!eq) return '';
+    const base = `${eq.type || ''}(${eq.manufacturer || ''})`;
+    const attachments = eq.attachments?.map((att: any) => 
+      `${att.type || ''}(${att.manufacturer || ''})`
+    ).filter(Boolean).join(', ') || '';
+    
+    return [base, attachments].filter(Boolean).join(' - ');
+  }).filter(Boolean).join('; ');
+};
+
+// 2D 배열로 변환하는 함수 수정
+const convertToSheetData = (farmers: any[]): any[][] => {
+  // 헤더 행
+  const headers = [
+    'ID', '이름', '전화번호', '상호', '영농형태', '주작물',
+    '우편번호', '도로명주소', '지번주소', '상세주소',
+    '메모', '연령대', '우편수취가능여부', '보유농기계',
+    '생성일', '수정일'
+  ];
+
+  // 데이터 행
+  const rows = farmers.map(farmer => [
+    farmer.id || '',
+    farmer.name || '',
+    farmer.phone || '',
+    farmer.businessName || '',
+    Object.entries(farmer.farmingTypes || {})
+      .filter(([_, value]) => value)
+      .map(([key]) => key)
+      .join(', ') || '',
+    Object.entries(farmer.mainCrop || {})
+      .filter(([_, value]) => value)
+      .map(([key]) => key)
+      .join(', ') || '',
+    farmer.zipCode || '',
+    farmer.roadAddress || '',
+    farmer.jibunAddress || '',
+    farmer.addressDetail || '',
+    farmer.memo || '',
+    farmer.ageGroup || '',
+    farmer.canReceiveMail ? '가능' : '불가능',
+    formatEquipments(farmer.equipments),
+    farmer.createdAt ? new Date(farmer.createdAt).toLocaleString() : '',
+    farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString() : ''
+  ]);
+
+  return [headers, ...rows];
+};
+
 export async function POST(req: Request) {
   try {
     const data = await req.json();
@@ -15,65 +69,7 @@ export async function POST(req: Request) {
     }
 
     // 데이터를 2차원 배열로 변환
-    const headers = [
-      'id',
-      'name',
-      'phone',
-      'businessName',
-      'farmingTypes',
-      'mainCrop',
-      'zipCode',
-      'roadAddress',
-      'jibunAddress',
-      'addressDetail',
-      'memo',
-      'ageGroup',
-      'canReceiveMail',
-      'createdAt',
-      'updatedAt'
-    ];
-
-    const jsonData = [headers];
-
-    // 데이터 변환 및 유효성 검사
-    for (const item of data) {
-      try {
-        const row = headers.map(header => {
-          const value = item[header];
-          
-          if (header === 'farmingTypes' || header === 'mainCrop') {
-            return value ? JSON.stringify(value) : '';
-          }
-          
-          if (header === 'canReceiveMail') {
-            return value ? '가능' : '불가능';
-          }
-          
-          if (header === 'createdAt' || header === 'updatedAt') {
-            if (!value) return '';
-            try {
-              const date = new Date(value);
-              return date.toLocaleString('ko-KR');
-            } catch {
-              return value?.toString() || '';
-            }
-          }
-
-          if (header === 'equipments') {
-            if (!value || !Array.isArray(value)) return '';
-            return value.map(eq => 
-              `${eq.type}(${eq.manufacturer || '제조사미상'})`
-            ).join(', ');
-          }
-          
-          return value?.toString() || '';
-        });
-        jsonData.push(row);
-      } catch (error) {
-        console.error('데이터 변환 중 오류:', error, item);
-        continue; // 오류가 있는 항목은 건너뛰고 계속 진행
-      }
-    }
+    const jsonData = convertToSheetData(data);
 
     // Google Auth 설정
     const auth = new google.auth.GoogleAuth({
