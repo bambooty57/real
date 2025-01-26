@@ -817,6 +817,17 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
       const sortedLocations = Array.from(locationData.entries())
         .sort((a, b) => b[1].customers - a[1].customers);
 
+      // y축 최대값 계산
+      const maxCustomers = Math.max(...sortedLocations.map(([, data]) => data.customers));
+      const maxEquipments = Math.max(...sortedLocations.map(([, data]) => data.equipments));
+      const maxValue = Math.max(maxCustomers, maxEquipments);
+      const yAxisMax = Math.ceil(maxValue * 1.2); // 20% 여유 추가
+      const stepSize = Math.ceil(yAxisMax / 8); // 8개의 눈금으로 나누기
+
+      // options 업데이트
+      options.scales.y.max = yAxisMax;
+      options.scales.y.ticks.stepSize = stepSize;
+
       setChartData({
         labels: sortedLocations.map(([location]) => location),
         datasets: [
@@ -856,7 +867,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           }
         },
         labels: {
-          padding: 20, // 범례 항목 간격
+          padding: 20,
           font: {
             size: 14
           }
@@ -880,9 +891,9 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     scales: {
       y: {
         beginAtZero: true,
-        max: 120, // Y축 최대값을 120으로 설정
+        max: 0, // useEffect에서 동적으로 설정됨
         ticks: {
-          stepSize: 20, // 눈금 간격을 20으로 설정
+          stepSize: 0, // useEffect에서 동적으로 설정됨
           font: {
             size: 12
           }
