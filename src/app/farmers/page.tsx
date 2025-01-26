@@ -20,6 +20,12 @@ export default function FarmersPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedVillage, setSelectedVillage] = useState('');
+  const [availableCities, setAvailableCities] = useState<Set<string>>(new Set());
+  const [availableDistricts, setAvailableDistricts] = useState<Set<string>>(new Set());
+  const [availableVillages, setAvailableVillages] = useState<Set<string>>(new Set());
   const [selectedFarmingType, setSelectedFarmingType] = useState('');
   const [selectedMainCrop, setSelectedMainCrop] = useState('');
   const [selectedMailOption, setSelectedMailOption] = useState('all');
@@ -38,6 +44,41 @@ export default function FarmersPage() {
           ...doc.data()
         })) as Farmer[];
         setFarmers(farmersData);
+        
+        // 주소 데이터 추출
+        const cities = new Set<string>();
+        const districts = new Set<string>();
+        const villages = new Set<string>();
+
+        farmersData.forEach(farmer => {
+          const addresses = [farmer.roadAddress, farmer.jibunAddress].filter(Boolean);
+          addresses.forEach(address => {
+            if (!address) return;
+            if (!address.startsWith('전라남도')) return;
+
+            const parts = address.split(' ');
+            if (parts.length >= 2) {
+              // 시/군 추출
+              const cityMatch = parts[1].match(/^([^0-9]+)/);
+              if (cityMatch) cities.add(cityMatch[1]);
+            }
+            if (parts.length >= 3) {
+              // 읍/면/동 추출
+              const districtMatch = parts[2].match(/^([^0-9]+)/);
+              if (districtMatch) districts.add(districtMatch[1]);
+            }
+            if (parts.length >= 4) {
+              // 리 추출
+              const villageMatch = parts[3].match(/^([^0-9]+리)/);
+              if (villageMatch) villages.add(villageMatch[1]);
+            }
+          });
+        });
+
+        setAvailableCities(cities);
+        setAvailableDistricts(districts);
+        setAvailableVillages(villages);
+
       } catch (error) {
         console.error('Error fetching farmers:', error);
       } finally {
@@ -47,6 +88,24 @@ export default function FarmersPage() {
 
     fetchFarmers();
   }, []);
+
+  // 지역 선택 핸들러
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const city = e.target.value;
+    setSelectedCity(city);
+    setSelectedDistrict('');
+    setSelectedVillage('');
+  };
+
+  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const district = e.target.value;
+    setSelectedDistrict(district);
+    setSelectedVillage('');
+  };
+
+  const handleVillageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedVillage(e.target.value);
+  };
 
   // 필터링 로직 개선
   const filteredFarmers = farmers.filter(farmer => {
@@ -63,6 +122,19 @@ export default function FarmersPage() {
       field.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // 지역 필터링
+    const addresses = [farmer.roadAddress, farmer.jibunAddress].filter(Boolean);
+    const matchesRegion = addresses.some(address => {
+      if (!address) return !selectedCity && !selectedDistrict && !selectedVillage;
+      
+      const parts = address.split(' ');
+      const cityMatch = selectedCity ? parts[1]?.startsWith(selectedCity) : true;
+      const districtMatch = selectedDistrict ? parts[2]?.startsWith(selectedDistrict) : true;
+      const villageMatch = selectedVillage ? parts[3]?.startsWith(selectedVillage) : true;
+      
+      return cityMatch && districtMatch && villageMatch;
+    });
+
     const matchesFarmingType = !selectedFarmingType || 
       (farmer.farmingTypes && farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes]);
 
@@ -72,7 +144,7 @@ export default function FarmersPage() {
     const matchesSaleType = selectedSaleType === 'all' || 
       (farmer.equipments && farmer.equipments.some(eq => eq?.saleType === selectedSaleType));
 
-    return matchesSearch && matchesFarmingType && 
+    return matchesSearch && matchesRegion && matchesFarmingType && 
            matchesMailOption && matchesSaleType;
   });
 
@@ -218,6 +290,65 @@ export default function FarmersPage() {
               placeholder="이름, 전화번호, 상호로 검색"
               className="w-full p-2 border rounded"
             />
+          </div>
+
+          {/* 지역 필터 - 시/군 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              시/군
+            </label>
+            <select
+              value={selectedCity}
+              onChange={handleCityChange}
+              className="w-full p-2 border rounded"
+            >
+              <option value="">전체</option>
+              {Array.from(availableCities).sort().map(city => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 지역 필터 - 읍/면/동 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              읍/면/동
+            </label>
+            <select
+              value={selectedDistrict}
+              onChange={handleDistrictChange}
+              className="w-full p-2 border rounded"
+              disabled={!selectedCity}
+            >
+              <option value="">전체</option>
+              {Array.from(availableDistricts).sort().map(district => (
+                <option key={district} value={district}>
+                  {district}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 지역 필터 - 리 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              리
+            </label>
+            <select
+              value={selectedVillage}
+              onChange={handleVillageChange}
+              className="w-full p-2 border rounded"
+              disabled={!selectedDistrict}
+            >
+              <option value="">전체</option>
+              {Array.from(availableVillages).sort().map(village => (
+                <option key={village} value={village}>
+                  {village}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* 영농형태 필터 */}
