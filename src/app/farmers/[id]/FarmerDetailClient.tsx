@@ -461,7 +461,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
           {farmer.equipments?.map((equipment, eqIndex) => (
             <React.Fragment key={`eq-${eqIndex}`}>
               {/* 농기계 본체 이미지 */}
-              {equipment.images?.map((image, imgIndex) => (
+              {equipment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
                 <div key={`eq-${eqIndex}-${imgIndex}`} className="relative aspect-w-16 aspect-h-9">
                   <img
                     src={image}
@@ -476,7 +476,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
 
               {/* 부착장비 이미지 */}
               {equipment.attachments?.map((attachment, attIndex) => 
-                attachment.images?.map((image, imgIndex) => (
+                attachment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
                   <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="relative aspect-w-16 aspect-h-9">
                     <img
                       src={image}
