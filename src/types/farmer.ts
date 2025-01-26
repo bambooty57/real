@@ -57,13 +57,16 @@ export interface AttachmentImages {
   bucketSize?: string[];
 }
 
-export interface MainCrop {
-  foodCrops?: boolean;
-  facilityHort?: boolean;
-  fieldVeg?: boolean;
-  fruits?: boolean;
-  specialCrops?: boolean;
-  flowers?: boolean;
+export type MainCropType = 'foodCrops' | 'facilityHort' | 'fieldVeg' | 'fruits' | 'specialCrops' | 'flowers' | 'livestock';
+
+export interface MainCrop extends Record<MainCropType, boolean | undefined> {
+  foodCropsDetails?: string[];
+  facilityHortDetails?: string[];
+  fieldVegDetails?: string[];
+  fruitsDetails?: string[];
+  specialCropsDetails?: string[];
+  flowersDetails?: string[];
+  livestockDetails?: string[];
 }
 
 export interface FarmingTypes {
@@ -87,22 +90,8 @@ export interface Farmer {
   ageGroup?: string;
   memo?: string;
   farmerImages: string[];
-  mainCrop: {
-    foodCrops?: boolean;
-    facilityHort?: boolean;
-    fieldVeg?: boolean;
-    fruits?: boolean;
-    specialCrops?: boolean;
-    flowers?: boolean;
-    [key: string]: boolean | undefined;
-  };
-  farmingTypes: {
-    waterPaddy: boolean;
-    fieldFarming: boolean;
-    orchard: boolean;
-    livestock: boolean;
-    forageCrop: boolean;
-  };
+  mainCrop: MainCrop;
+  farmingTypes: FarmingTypes;
   equipments: Equipment[];
   rating?: number;
 }

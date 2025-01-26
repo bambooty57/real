@@ -1,6 +1,7 @@
 'use client';
 
-import { FormData, MainCrop } from '@/types/farmer';
+import { FormData, MainCropType } from '@/types/farmer';
+import { MAIN_CROPS } from '@/constants';
 
 interface Props {
   formData: FormData;
@@ -51,37 +52,71 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
       {/* 주작물 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">주작물</label>
-        <div className="space-y-4">
-          {/* 식량작물 */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">식량작물</h3>
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                ['foodCrops', '식량작물'],
-                ['facilityHort', '시설원예'],
-                ['fieldVeg', '노지채소'],
-                ['fruits', '과수'],
-                ['specialCrops', '특용작물'],
-                ['flowers', '화훼']
-              ].map(([key, label]) => (
-                <label key={key} className="flex items-center">
+        <div className="space-y-6">
+          {Object.entries(MAIN_CROPS).map(([mainType, { label, subTypes }]) => {
+            const cropType = mainType as MainCropType;
+            const detailsKey = `${cropType}Details` as const;
+            
+            return (
+              <div key={mainType} className="space-y-2">
+                <div className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={formData.mainCrop?.[key] || false}
+                    checked={typeof formData.mainCrop?.[cropType] === 'boolean' 
+                      ? formData.mainCrop[cropType] 
+                      : false}
                     onChange={(e) => setFormData((prev: FormData) => ({
                       ...prev,
                       mainCrop: {
                         ...(prev.mainCrop || {}),
-                        [key]: e.target.checked
+                        [cropType]: e.target.checked,
+                        // 체크 해제시 하위 작물도 모두 해제
+                        ...(!e.target.checked && {
+                          [detailsKey]: []
+                        })
                       }
                     }))}
                     className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+                  <span className="ml-2 text-sm font-medium text-gray-700">{label}</span>
+                </div>
+                
+                {/* 세부 작물 선택 */}
+                {formData.mainCrop?.[cropType] && (
+                  <div className="ml-6 grid grid-cols-3 gap-2">
+                    {subTypes.map(({ value, label: subLabel }) => {
+                      const details = formData.mainCrop?.[detailsKey];
+                      const isChecked = Array.isArray(details) && details.includes(value);
+                      
+                      return (
+                        <label key={value} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => setFormData((prev: FormData) => ({
+                              ...prev,
+                              mainCrop: {
+                                ...(prev.mainCrop || {}),
+                                [detailsKey]: e.target.checked
+                                  ? [...(Array.isArray(prev.mainCrop?.[detailsKey]) 
+                                      ? prev.mainCrop[detailsKey] 
+                                      : []), value]
+                                  : (Array.isArray(prev.mainCrop?.[detailsKey])
+                                      ? prev.mainCrop[detailsKey].filter(v => v !== value)
+                                      : [])
+                              }
+                            }))}
+                            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">{subLabel}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

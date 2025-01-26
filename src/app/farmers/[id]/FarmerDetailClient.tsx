@@ -212,7 +212,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             corn: '옥수수',
             potato: '감자',
             soybean: '콩'
-          }).some(([key]) => farmer.mainCrop[key]) && (
+          }).some(([value]) => farmer.mainCrop?.foodCropsDetails?.includes(value)) && (
             <div>
               <h3 className="text-sm font-medium text-gray-600 mb-2">식량작물</h3>
               <div className="grid grid-cols-3 gap-2">
@@ -223,14 +223,11 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                   corn: '옥수수',
                   potato: '감자',
                   soybean: '콩'
-                }).map(([key, label]) => 
-                  farmer.mainCrop[key] && (
-                    <div key={key} className="flex items-center">
-                      <span className="text-blue-600">✓</span>
-                      <span className="ml-2">{label}</span>
-                    </div>
+                }).map(([value, label]) => (
+                  farmer.mainCrop?.foodCropsDetails?.includes(value) && (
+                    <div key={value} className="text-sm text-gray-600">{label}</div>
                   )
-                )}
+                ))}
               </div>
             </div>
           )}
@@ -238,65 +235,53 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
           {/* 시설원예 */}
           {Object.entries({
             tomato: '토마토',
-            cucumber: '오이',
-            melon: '멜론',
-            pepper: '피망',
-            lettuce: '상추',
-            spinach: '시금치',
             strawberry: '딸기',
-            blueberry: '블루베리'
-          }).some(([key]) => farmer.mainCrop[key]) && (
+            cucumber: '오이',
+            pepper: '고추',
+            watermelon: '수박',
+            melon: '멜론'
+          }).some(([value]) => farmer.mainCrop?.facilityHortDetails?.includes(value)) && (
             <div>
               <h3 className="text-sm font-medium text-gray-600 mb-2">시설원예</h3>
               <div className="grid grid-cols-3 gap-2">
                 {Object.entries({
                   tomato: '토마토',
-                  cucumber: '오이',
-                  melon: '멜론',
-                  pepper: '피망',
-                  lettuce: '상추',
-                  spinach: '시금치',
                   strawberry: '딸기',
-                  blueberry: '블루베리'
-                }).map(([key, label]) => 
-                  farmer.mainCrop[key] && (
-                    <div key={key} className="flex items-center">
-                      <span className="text-blue-600">✓</span>
-                      <span className="ml-2">{label}</span>
-                    </div>
+                  cucumber: '오이',
+                  pepper: '고추',
+                  watermelon: '수박',
+                  melon: '멜론'
+                }).map(([value, label]) => (
+                  farmer.mainCrop?.facilityHortDetails?.includes(value) && (
+                    <div key={value} className="text-sm text-gray-600">{label}</div>
                   )
-                )}
+                ))}
               </div>
             </div>
           )}
 
           {/* 노지채소 */}
           {Object.entries({
-            chili: '고추',
+            cabbage: '배추',
+            radish: '무',
             garlic: '마늘',
             onion: '양파',
-            radish: '무',
-            cabbage: '배추',
             carrot: '당근'
-          }).some(([key]) => farmer.mainCrop[key]) && (
+          }).some(([value]) => farmer.mainCrop?.fieldVegDetails?.includes(value)) && (
             <div>
               <h3 className="text-sm font-medium text-gray-600 mb-2">노지채소</h3>
               <div className="grid grid-cols-3 gap-2">
                 {Object.entries({
-                  chili: '고추',
+                  cabbage: '배추',
+                  radish: '무',
                   garlic: '마늘',
                   onion: '양파',
-                  radish: '무',
-                  cabbage: '배추',
                   carrot: '당근'
-                }).map(([key, label]) => 
-                  farmer.mainCrop[key] && (
-                    <div key={key} className="flex items-center">
-                      <span className="text-blue-600">✓</span>
-                      <span className="ml-2">{label}</span>
-                    </div>
+                }).map(([value, label]) => (
+                  farmer.mainCrop?.fieldVegDetails?.includes(value) && (
+                    <div key={value} className="text-sm text-gray-600">{label}</div>
                   )
-                )}
+                ))}
               </div>
             </div>
           )}
@@ -307,11 +292,8 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             pear: '배',
             grape: '포도',
             peach: '복숭아',
-            plum: '자두',
-            persimmon: '감',
-            cherry: '체리',
-            citrus: '귤'
-          }).some(([key]) => farmer.mainCrop[key]) && (
+            citrus: '감귤'
+          }).some(([value]) => farmer.mainCrop?.fruitsDetails?.includes(value)) && (
             <div>
               <h3 className="text-sm font-medium text-gray-600 mb-2">과수</h3>
               <div className="grid grid-cols-3 gap-2">
@@ -320,90 +302,89 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                   pear: '배',
                   grape: '포도',
                   peach: '복숭아',
-                  plum: '자두',
-                  persimmon: '감',
-                  cherry: '체리',
-                  citrus: '귤'
-                }).map(([key, label]) => 
-                  farmer.mainCrop[key] && (
-                    <div key={key} className="flex items-center">
-                      <span className="text-blue-600">✓</span>
-                      <span className="ml-2">{label}</span>
-                    </div>
+                  citrus: '감귤'
+                }).map(([value, label]) => (
+                  farmer.mainCrop?.fruitsDetails?.includes(value) && (
+                    <div key={value} className="text-sm text-gray-600">{label}</div>
                   )
-                )}
+                ))}
               </div>
             </div>
           )}
 
           {/* 특용작물 */}
           {Object.entries({
-            ginseng: '인삼',
             sesame: '참깨',
             perilla: '들깨',
-            tobacco: '연초'
-          }).some(([key]) => farmer.mainCrop[key]) && (
+            ginseng: '인삼',
+            medicinalHerbs: '약용작물'
+          }).some(([value]) => farmer.mainCrop?.specialCropsDetails?.includes(value)) && (
             <div>
               <h3 className="text-sm font-medium text-gray-600 mb-2">특용작물</h3>
               <div className="grid grid-cols-3 gap-2">
                 {Object.entries({
-                  ginseng: '인삼',
                   sesame: '참깨',
                   perilla: '들깨',
-                  tobacco: '연초'
-                }).map(([key, label]) => 
-                  farmer.mainCrop[key] && (
-                    <div key={key} className="flex items-center">
-                      <span className="text-blue-600">✓</span>
-                      <span className="ml-2">{label}</span>
-                    </div>
+                  ginseng: '인삼',
+                  medicinalHerbs: '약용작물'
+                }).map(([value, label]) => (
+                  farmer.mainCrop?.specialCropsDetails?.includes(value) && (
+                    <div key={value} className="text-sm text-gray-600">{label}</div>
                   )
-                )}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 화훼 */}
+          {Object.entries({
+            rose: '장미',
+            chrysanthemum: '국화',
+            lily: '백합',
+            orchid: '난'
+          }).some(([value]) => farmer.mainCrop?.flowersDetails?.includes(value)) && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">화훼</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries({
+                  rose: '장미',
+                  chrysanthemum: '국화',
+                  lily: '백합',
+                  orchid: '난'
+                }).map(([value, label]) => (
+                  farmer.mainCrop?.flowersDetails?.includes(value) && (
+                    <div key={value} className="text-sm text-gray-600">{label}</div>
+                  )
+                ))}
               </div>
             </div>
           )}
 
           {/* 축산 */}
-          {Object.entries({
-            hanwoo: '한우',
-            dairy: '젖소',
-            pig: '돼지',
-            chicken: '닭',
-            duck: '오리',
-            goat: '염소'
-          }).some(([key]) => farmer.mainCrop[key]) && (
+          {farmer.mainCrop?.livestock && (
             <div>
               <h3 className="text-sm font-medium text-gray-600 mb-2">축산</h3>
               <div className="grid grid-cols-3 gap-2">
                 {Object.entries({
-                  hanwoo: '한우',
-                  dairy: '젖소',
+                  cattle: '한우',
                   pig: '돼지',
                   chicken: '닭',
                   duck: '오리',
                   goat: '염소'
-                }).map(([key, label]) => 
-                  farmer.mainCrop[key] && (
-                    <div key={key} className="flex items-center">
-                      <span className="text-blue-600">✓</span>
-                      <span className="ml-2">{label}</span>
-                    </div>
+                }).map(([value, label]) => (
+                  farmer.mainCrop?.livestockDetails?.includes(value) && (
+                    <div key={value} className="text-sm text-gray-600">{label}</div>
                   )
-                )}
+                ))}
               </div>
             </div>
           )}
 
-          {/* 기타 */}
-          {farmer.mainCrop.other && (
+          {/* 메모 */}
+          {farmer.memo && (
             <div>
-              <h3 className="text-sm font-medium text-gray-600 mb-2">기타</h3>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="flex items-center">
-                  <span className="text-blue-600">✓</span>
-                  <span className="ml-2">기타</span>
-                </div>
-              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">메모</h3>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap">{farmer.memo}</p>
             </div>
           )}
         </div>

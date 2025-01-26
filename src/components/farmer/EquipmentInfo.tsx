@@ -112,7 +112,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">선택하세요</option>
-                  {MANUFACTURERS.map(({ value, label }) => (
+                  {MANUFACTURERS.MAIN.map(({ value, label }) => (
                     <option key={value} value={value}>
                       {label}
                     </option>

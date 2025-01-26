@@ -1,15 +1,31 @@
 export const MANUFACTURERS = {
   MAIN: [
-    { value: 'daedong', label: '대동' },
-    { value: 'kukje', label: '국제' },
-    { value: 'ls', label: 'LS' },
-    { value: 'yanmar', label: '얀마' },
-    { value: 'kubota', label: '구보다' },
-    { value: 'john_deere', label: '존디어' },
-    { value: 'new_holland', label: '뉴홀랜드' },
-    { value: 'mf', label: 'MF' },
-    { value: 'case', label: '케이스' },
-    { value: 'other', label: '기타' }
+    { value: 'DAEDONG', label: '대동' },
+    { value: 'LS', label: 'LS' },
+    { value: 'KUKJE', label: '국제' },
+    { value: 'TYM', label: 'TYM' },
+    { value: 'BRANSON', label: '브랜슨' },
+    { value: 'DONGYANG', label: '동양' },
+    { value: 'ASIA', label: '아시아' },
+    { value: 'YANMAR', label: '얀마' },
+    { value: 'ISEKI', label: '이세키' },
+    { value: 'KUBOTA', label: '구보다' },
+    { value: 'MITSUBISHI', label: '미쯔비시' },
+    { value: 'HINOMOTO', label: '히노모토' },
+    { value: 'SHIBAURA', label: '시바우라' },
+    { value: 'JOHN_DEERE', label: '존디어' },
+    { value: 'NEW_HOLLAND', label: '뉴홀랜드' },
+    { value: 'MASSEY_FERGUSON', label: '매시퍼거슨' },
+    { value: 'FENDT', label: '펜트' },
+    { value: 'DEUTZ_FAHR', label: '도이츠파' },
+    { value: 'SAME', label: '세메' },
+    { value: 'LANDINI', label: '란디니' },
+    { value: 'VALTRA', label: '발트라' },
+    { value: 'CLAAS', label: '클라스' },
+    { value: 'CASE_IH', label: '케이스IH' },
+    { value: 'MAHINDRA', label: '마힌드라' },
+    { value: 'KIOTI', label: '키오티' },
+    { value: 'OTHER', label: '기타' }
   ],
   EQUIPMENT: [
     { value: 'tractor', label: '트랙터' },
@@ -52,18 +68,19 @@ export const MANUFACTURERS = {
 } as const;
 
 export const TRADE_TYPES = [
-  { value: 'new', label: '신규' },
+  { value: 'new', label: '신품' },
   { value: 'used', label: '중고' }
 ] as const;
 
 export const TRADE_METHODS = [
-  { value: 'purchase', label: '구매희망' },
-  { value: 'sale', label: '판매희망' }
+  { value: 'sale', label: '판매' },
+  { value: 'purchase', label: '구매' }
 ] as const;
 
 export const TRADE_STATUS = [
-  { value: 'available', label: '가능' },
-  { value: 'completed', label: '완료' }
+  { value: 'available', label: '거래가능' },
+  { value: 'reserved', label: '예약중' },
+  { value: 'completed', label: '거래완료' }
 ] as const;
 
 export const ATTACHMENT_TYPES = [
@@ -74,29 +91,29 @@ export const ATTACHMENT_TYPES = [
 ];
 
 export const COMBINE_ROWS = [
-  { value: '3', label: '3조식' },
-  { value: '4', label: '4조식' },
-  { value: '5', label: '5조식' },
-  { value: '6', label: '6조식' },
-  { value: '7', label: '7조식' },
-  { value: '8', label: '8조식' },
-  { value: '9', label: '9조식' },
-  { value: '10', label: '10조식' }
+  { value: '3', label: '3조' },
+  { value: '4', label: '4조' },
+  { value: '5', label: '5조' },
+  { value: '6', label: '6조' },
+  { value: '7', label: '7조' },
+  { value: '8', label: '8조' },
+  { value: '9', label: '9조' },
+  { value: '10', label: '10조' }
 ] as const;
 
 export const TRANSPLANTER_ROWS = [
-  { value: '4', label: '4조식' },
-  { value: '5', label: '5조식' },
-  { value: '6', label: '6조식' },
-  { value: '7', label: '7조식' },
-  { value: '8', label: '8조식' },
-  { value: '9', label: '9조식' },
-  { value: '10', label: '10조식' }
+  { value: '4', label: '4조' },
+  { value: '5', label: '5조' },
+  { value: '6', label: '6조' },
+  { value: '7', label: '7조' },
+  { value: '8', label: '8조' },
+  { value: '9', label: '9조' },
+  { value: '10', label: '10조' }
 ] as const;
 
 export const COMBINE_CUTTING_TYPES = [
   { value: 'binding', label: '결속형' },
-  { value: 'spreading', label: '산포형' }
+  { value: 'spreading', label: '산취형' }
 ] as const;
 
 export const COMBINE_THRESHING_TYPES = [

@@ -13,17 +13,20 @@ import { FormData } from '@/types/farmer'
 import { toast } from 'react-hot-toast'
 
 interface MainCrop {
-  rice: boolean;
-  barley: boolean;
-  hanwoo: boolean;
-  soybean: boolean;
-  sweetPotato: boolean;
-  persimmon: boolean;
-  pear: boolean;
-  plum: boolean;
-  sorghum: boolean;
-  goat: boolean;
-  other: boolean;
+  foodCrops: boolean;
+  facilityHort: boolean;
+  fieldVeg: boolean;
+  fruits: boolean;
+  specialCrops: boolean;
+  flowers: boolean;
+  livestock: boolean;
+  foodCropsDetails: string[];
+  facilityHortDetails: string[];
+  fieldVegDetails: string[];
+  fruitsDetails: string[];
+  specialCropsDetails: string[];
+  flowersDetails: string[];
+  livestockDetails: string[];
 }
 
 interface FarmingTypes {
@@ -71,12 +74,8 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     if (initialData) {
       return {
         ...initialData,
-        canReceiveMail: initialData.canReceiveMail ?? false,
-        equipments: initialData.equipments?.map((eq) => ({
-          ...eq,
-          id: eq.id || uuidv4()
-        })) || []
-      }
+        farmerImages: initialData.farmerImages || []
+      };
     }
     return {
       name: '',
@@ -91,17 +90,20 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       memo: '',
       farmerImages: [],
       mainCrop: {
-        rice: false,
-        barley: false,
-        hanwoo: false,
-        soybean: false,
-        sweetPotato: false,
-        persimmon: false,
-        pear: false,
-        plum: false,
-        sorghum: false,
-        goat: false,
-        other: false
+        foodCrops: false,
+        facilityHort: false,
+        fieldVeg: false,
+        fruits: false,
+        specialCrops: false,
+        flowers: false,
+        livestock: false,
+        foodCropsDetails: [],
+        facilityHortDetails: [],
+        fieldVegDetails: [],
+        fruitsDetails: [],
+        specialCropsDetails: [],
+        flowersDetails: [],
+        livestockDetails: []
       },
       farmingTypes: {
         waterPaddy: false,
@@ -184,17 +186,20 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         memo: formData.memo?.trim() || '',
         farmerImages: formData.farmerImages || [],
         mainCrop: formData.mainCrop || {
-          rice: false,
-          barley: false,
-          hanwoo: false,
-          soybean: false,
-          sweetPotato: false,
-          persimmon: false,
-          pear: false,
-          plum: false,
-          sorghum: false,
-          goat: false,
-          other: false
+          foodCrops: false,
+          facilityHort: false,
+          fieldVeg: false,
+          fruits: false,
+          specialCrops: false,
+          flowers: false,
+          livestock: false,
+          foodCropsDetails: [],
+          facilityHortDetails: [],
+          fieldVegDetails: [],
+          fruitsDetails: [],
+          specialCropsDetails: [],
+          flowersDetails: [],
+          livestockDetails: []
         },
         farmingTypes: formData.farmingTypes || {
           waterPaddy: false,
