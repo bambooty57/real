@@ -101,10 +101,6 @@ export default function FarmersPage() {
     fetchFarmers();
   }, []);
 
-  // 상태 추가
-  const [districtsByCity, setDistrictsByCity] = useState<Map<string, Set<string>>>(new Map());
-  const [villagesByDistrict, setVillagesByDistrict] = useState<Map<string, Set<string>>>(new Map());
-
   // 선택된 시/군에 해당하는 읍/면/동 목록 가져오기
   const getAvailableDistricts = () => {
     if (!selectedCity) return [];
