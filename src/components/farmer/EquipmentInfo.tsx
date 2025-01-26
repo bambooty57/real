@@ -20,11 +20,34 @@ interface EquipmentInfoProps {
 }
 
 export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoProps) {
-  const handleEquipmentChange = (index: number, equipment: Equipment) => {
-    setFormData((prev: FormData) => ({
-      ...prev,
-      equipments: (prev.equipments || []).map((eq, i) => i === index ? equipment : eq)
-    }));
+  const handleEquipmentChange = async (index: number, equipment: Equipment) => {
+    try {
+      // 이미지 파일 크기 제한 (5MB)
+      const MAX_FILE_SIZE = 5 * 1024 * 1024;
+      
+      // 이미지 파일 체크
+      if (equipment.images) {
+        const validImages = equipment.images.map(img => {
+          if (img instanceof File) {
+            if (img.size > MAX_FILE_SIZE) {
+              alert('이미지 크기는 5MB를 초과할 수 없습니다.');
+              return null;
+            }
+            return img;
+          }
+          return img;
+        });
+        equipment.images = validImages;
+      }
+
+      setFormData((prev: FormData) => ({
+        ...prev,
+        equipments: (prev.equipments || []).map((eq, i) => i === index ? equipment : eq)
+      }));
+    } catch (error) {
+      console.error('Equipment change error:', error);
+      alert('농기계 정보 업데이트 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -57,7 +80,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
               
               {/* 농기계 종류 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">농기계 종류 *</label>
+                <label className="block text-sm font-medium text-gray-700">농기계 종류</label>
                 <select
                   value={equipment.type}
                   onChange={(e) => {
@@ -67,7 +90,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                     });
                   }}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
                 >
                   <option value="">선택하세요</option>
                   {MANUFACTURERS.EQUIPMENT.map(({ value, label }) => (
@@ -80,7 +102,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
 
               {/* 제조사 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">제조사 *</label>
+                <label className="block text-sm font-medium text-gray-700">제조사</label>
                 <select
                   value={equipment.manufacturer}
                   onChange={(e) => {
@@ -90,7 +112,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                     });
                   }}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
                 >
                   <option value="">선택하세요</option>
                   {MANUFACTURERS.MAIN.map(({ value, label }) => (
@@ -103,7 +124,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
 
               {/* 모델명 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">모델명 *</label>
+                <label className="block text-sm font-medium text-gray-700">모델명</label>
                 <input
                   type="text"
                   value={equipment.model}
@@ -114,14 +135,13 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                     });
                   }}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
                   placeholder="모델명을 입력하세요"
                 />
               </div>
 
               {/* 연식 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">연식 *</label>
+                <label className="block text-sm font-medium text-gray-700">연식</label>
                 <select
                   value={equipment.year}
                   onChange={(e) => {
@@ -131,7 +151,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                     });
                   }}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
                 >
                   <option value="">선택하세요</option>
                   {Array.from({ length: 35 }, (_, i) => new Date().getFullYear() - i).map((year) => (
@@ -192,24 +211,30 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
 
               {/* 이미지 업로드 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">이미지 (최대 4장)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">이미지 (최대 4장, 각 5MB 이하)</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[...Array(4)].map((_, imageIndex) => (
                     <div key={imageIndex} className="relative">
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleEquipmentChange(index, {
-                              ...equipment,
-                              images: [
-                                ...(equipment.images || []).slice(0, imageIndex),
-                                file,
-                                ...(equipment.images || []).slice(imageIndex + 1)
-                              ]
-                            });
+                        onChange={async (e) => {
+                          try {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const updatedEquipment = {
+                                ...equipment,
+                                images: [
+                                  ...(equipment.images || []).slice(0, imageIndex),
+                                  file,
+                                  ...(equipment.images || []).slice(imageIndex + 1)
+                                ]
+                              };
+                              await handleEquipmentChange(index, updatedEquipment);
+                            }
+                          } catch (error) {
+                            console.error('Image upload error:', error);
+                            alert('이미지 업로드 중 오류가 발생했습니다.');
                           }
                         }}
                         className="hidden"
@@ -265,7 +290,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
               
               {/* 거래 유형 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">거래 유형 *</label>
+                <label className="block text-sm font-medium text-gray-700">거래 유형</label>
                 <select
                   value={equipment.saleType || ''}
                   onChange={(e) => {
@@ -275,7 +300,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                     });
                   }}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
                 >
                   <option value="">선택하세요</option>
                   {TRADE_TYPES.map(({ value, label }) => (
@@ -288,7 +312,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
 
               {/* 거래 방식 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">거래 방식 *</label>
+                <label className="block text-sm font-medium text-gray-700">거래 방식</label>
                 <select
                   value={equipment.tradeType || ''}
                   onChange={(e) => {
@@ -298,7 +322,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                     });
                   }}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
                 >
                   <option value="">선택하세요</option>
                   {TRADE_METHODS.map(({ value, label }) => (
@@ -311,7 +334,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
 
               {/* 희망가격 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">희망가격 *</label>
+                <label className="block text-sm font-medium text-gray-700">희망가격</label>
                 <div className="mt-1 relative rounded-md shadow-sm">
                   <input
                     type="number"
@@ -324,7 +347,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                     }}
                     className="block w-full rounded-md border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500"
                     placeholder="0"
-                    required
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                     <span className="text-gray-500 sm:text-sm">만원</span>
@@ -334,7 +356,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
 
               {/* 거래 상태 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">거래 상태 *</label>
+                <label className="block text-sm font-medium text-gray-700">거래 상태</label>
                 <select
                   value={equipment.saleStatus || ''}
                   onChange={(e) => {
@@ -344,7 +366,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                     });
                   }}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
                 >
                   <option value="">선택하세요</option>
                   {TRADE_STATUS.map(({ value, label }) => (

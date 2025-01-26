@@ -896,10 +896,16 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     plugins: {
       legend: {
         position: 'right' as const,
+        title: {
+          display: true,
+          text: '지역별 농민/장비 현황',
+          padding: {
+            bottom: 10
+          }
+        }
       },
       title: {
-        display: true,
-        text: '지역별 농민/장비 현황'
+        display: false
       },
       datalabels: {
         anchor: 'end' as const,

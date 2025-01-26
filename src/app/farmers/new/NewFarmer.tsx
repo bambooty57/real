@@ -41,23 +41,42 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     e.preventDefault()
     
     try {
-      // Firebase에 저장할 데이터 준비
+      // 데이터 유효성 검사
+      if (!formData.name?.trim()) {
+        alert('이름은 필수 입력 항목입니다.');
+        return;
+      }
+
+      // undefined 값 제거 및 기본값 설정
       const saveData = {
-        name: formData.name,
-        businessName: formData.businessName,
-        zipCode: formData.zipCode,
-        roadAddress: formData.roadAddress,
-        jibunAddress: formData.jibunAddress,
-        addressDetail: formData.addressDetail,
-        canReceiveMail: formData.canReceiveMail,
-        phone: formData.phone,
-        ageGroup: formData.ageGroup,
-        memo: formData.memo,
-        farmerImages: formData.farmerImages,
-        mainCrop: formData.mainCrop,
-        farmingTypes: formData.farmingTypes,
-        equipments: formData.equipments,
-        rating: formData.rating
+        name: formData.name?.trim() || '',
+        businessName: formData.businessName?.trim() || '',
+        zipCode: formData.zipCode?.trim() || '',
+        roadAddress: formData.roadAddress?.trim() || '',
+        jibunAddress: formData.jibunAddress?.trim() || '',
+        addressDetail: formData.addressDetail?.trim() || '',
+        canReceiveMail: formData.canReceiveMail || false,
+        phone: formData.phone?.trim() || '',
+        ageGroup: formData.ageGroup || '',
+        memo: formData.memo?.trim() || '',
+        farmerImages: formData.farmerImages || [],
+        mainCrop: formData.mainCrop || {},
+        farmingTypes: formData.farmingTypes || {},
+        equipments: (formData.equipments || []).map(eq => ({
+          ...eq,
+          type: eq.type || '',
+          manufacturer: eq.manufacturer || '',
+          model: eq.model || '',
+          year: eq.year || '',
+          usageHours: eq.usageHours || '',
+          condition: eq.condition || 0,
+          images: eq.images || [],
+          saleType: eq.saleType || '',
+          tradeType: eq.tradeType || '',
+          desiredPrice: eq.desiredPrice || '',
+          saleStatus: eq.saleStatus || ''
+        })),
+        rating: formData.rating || 0
       }
 
       if (mode === 'edit' && farmerId) {

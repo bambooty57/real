@@ -215,6 +215,17 @@ export default function FarmerList() {
   const [towns, setTowns] = useState<string[]>([])
   const [ris, setRis] = useState<string[]>([])
 
+  const [farmingTypeFilters, setFarmingTypeFilters] = useState<{[key: string]: boolean}>({
+    '수도작': false,
+    '밭농사': false,
+    '과수원': false,
+    '축산업': false,
+    '시설원예': false,
+    '복합영농': false,
+    '특용작물': false,
+    '기타': false
+  })
+
   // 필터 초기화 함수
   const resetFilters = () => {
     setFilter({
@@ -226,6 +237,16 @@ export default function FarmerList() {
       saleType: '',
       farmingType: '',
       mainCrop: ''
+    })
+    setFarmingTypeFilters({
+      '수도작': false,
+      '밭농사': false,
+      '과수원': false,
+      '축산업': false,
+      '시설원예': false,
+      '복합영농': false,
+      '특용작물': false,
+      '기타': false
     })
     setSearchTerm('')
   }
@@ -313,25 +334,38 @@ export default function FarmerList() {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       const searchFields = [
-        farmer.name,
-        farmer.businessName,
-        farmer.roadAddress,
-        farmer.jibunAddress,
-        farmer.phone,
-        farmer.memo,
+        farmer.name || '',
+        farmer.businessName || '',
+        farmer.roadAddress || '',
+        farmer.jibunAddress || '',
+        farmer.phone || '',
+        farmer.memo || '',
         // 농기계 정보 검색
         ...(Array.isArray(farmer.equipments) ? farmer.equipments.map(eq => [
-          getKoreanEquipmentType(eq.type),
-          getKoreanManufacturer(eq.manufacturer),
-          eq.model,
-          ...(Array.isArray(eq.attachments) ? eq.attachments.map(a => [
-            getKoreanManufacturer(a.manufacturer),
-            a.model
+          eq?.type ? getKoreanEquipmentType(eq.type) : '',
+          eq?.manufacturer ? getKoreanManufacturer(eq.manufacturer) : '',
+          eq?.model || '',
+          ...(Array.isArray(eq?.attachments) ? eq.attachments.map(a => [
+            a?.manufacturer ? getKoreanManufacturer(a.manufacturer) : '',
+            a?.model || ''
           ]).flat() : [])
         ]).flat() : [])
-      ].filter(Boolean).map(field => field?.toLowerCase());
+      ].filter(Boolean).map(field => field.toLowerCase());
 
-      if (!searchFields.some(field => field?.includes(searchLower))) {
+      if (!searchFields.some(field => field.includes(searchLower))) {
+        return false;
+      }
+    }
+
+    // 영농형태 필터링
+    const selectedFarmingTypes = Object.entries(farmingTypeFilters)
+      .filter(([_, isSelected]) => isSelected)
+      .map(([type]) => type.toLowerCase());
+
+    if (selectedFarmingTypes.length > 0) {
+      if (!farmer.farmingTypes || !selectedFarmingTypes.some(type => 
+        farmer.farmingTypes[type as keyof typeof farmer.farmingTypes]
+      )) {
         return false;
       }
     }
@@ -727,25 +761,23 @@ export default function FarmerList() {
           {/* 영농형태 필터 */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">영농형태</label>
-            <div className="relative">
-              <select
-                value={filter.farmingType}
-                onChange={(e) => setFilter(prev => ({ ...prev, farmingType: e.target.value }))}
-                className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
-              >
-                <option value="전체">전체</option>
-                {[
-                  '벼농사', '밭농사', '과수원', '축산업', '시설원예', 
-                  '복합영농', '특용작물', '기타'
-                ].map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                </svg>
-              </div>
+            <div className="grid grid-cols-2 gap-2 p-2 border rounded-lg bg-white">
+              {Object.keys(farmingTypeFilters).map(type => (
+                <label key={type} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={farmingTypeFilters[type]}
+                    onChange={(e) => {
+                      setFarmingTypeFilters(prev => ({
+                        ...prev,
+                        [type]: e.target.checked
+                      }))
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{type}</span>
+                </label>
+              ))}
             </div>
           </div>
 
@@ -775,6 +807,31 @@ export default function FarmerList() {
                 <option value="땅콩">땅콩</option>
                 <option value="인삼">인삼</option>
                 <option value="버섯">버섯</option>
+                <option value="파">파</option>
+                <option value="생강">생강</option>
+                <option value="당근">당근</option>
+                <option value="상추">상추</option>
+                <option value="시금치">시금치</option>
+                <option value="호박">호박</option>
+                <option value="오이">오이</option>
+                <option value="가지">가지</option>
+                <option value="토마토">토마토</option>
+                <option value="딸기">딸기</option>
+                <option value="포도">포도</option>
+                <option value="사과">사과</option>
+                <option value="배">배</option>
+                <option value="복숭아">복숭아</option>
+                <option value="감귤">감귤</option>
+                <option value="자두">자두</option>
+                <option value="매실">매실</option>
+                <option value="블루베리">블루베리</option>
+                <option value="한우">한우</option>
+                <option value="젖소">젖소</option>
+                <option value="돼지">돼지</option>
+                <option value="닭">닭</option>
+                <option value="오리">오리</option>
+                <option value="염소">염소</option>
+                <option value="양봉">양봉</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -819,7 +876,10 @@ export default function FarmerList() {
                 {[
                   '대동', '국제', '엘에스', '얀마', '구보다', '존디어', '뉴홀랜드', 
                   '엠에프', '케이스', '현대', '삼성', '볼보', '히타치', '두산', 
-                  '클라스', '아그리코', '스타', '시보레', '발메트'
+                  '클라스', '아그리코', '스타', '시보레', '발메트', '동양', '아세아',
+                  '이세키', '펜트', '도이츠', '세임', '란디니', '발트라', '제토',
+                  '키오티', '금성', '피아트', '대우', '텍스트론', '맥코믹', '시바우마',
+                  'TYM', '마힌드라'
                 ].map(manufacturer => (
                   <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
                 ))}
