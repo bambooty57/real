@@ -36,11 +36,12 @@ export default function FarmersPage() {
 
   // 필터링 로직
   const filteredFarmers = farmers.filter(farmer => {
-    const matchesSearch = 
-      farmer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      farmer.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      farmer.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      farmer.roadAddress?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = searchTerm === '' || [
+      farmer.name,
+      farmer.phone,
+      farmer.businessName,
+      farmer.roadAddress
+    ].some(field => field?.toLowerCase?.()?.includes(searchTerm.toLowerCase()));
 
     const matchesFarmingType = !selectedFarmingType || 
       (farmer.farmingTypes && farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes]);
@@ -153,4 +154,4 @@ export default function FarmersPage() {
       </div>
     </div>
   );
-} 
+}
