@@ -232,7 +232,8 @@ export default function TradePage() {
 
         // 제조사 필터
         if (filters.manufacturer) {
-          if (equipment.manufacturer !== filters.manufacturer) return;
+          if (!equipment.manufacturer || 
+              equipment.manufacturer.toLowerCase() !== filters.manufacturer.toLowerCase()) return;
         }
 
         result.push({ farmer, equipment });

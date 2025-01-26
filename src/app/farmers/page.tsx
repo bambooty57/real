@@ -27,6 +27,8 @@ export default function FarmersPage() {
   const [selectedMainCrop, setSelectedMainCrop] = useState('');
   const [selectedEquipment, setSelectedEquipment] = useState('');
   const [selectedMailOption, setSelectedMailOption] = useState('all');
+  const [selectedSaleType, setSelectedSaleType] = useState('all');
+  const [villages, setVillages] = useState<Array<{ value: string, label: string }>>([]);
   const farmersPerPage = 15;
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -100,8 +102,244 @@ export default function FarmersPage() {
         { value: '북일면', label: '북일면' },
         { value: '북이면', label: '북이면' },
         { value: '북하면', label: '북하면' }
+      ],
+      '목포시': [
+        { value: '용당1동', label: '용당1동' },
+        { value: '용당2동', label: '용당2동' },
+        { value: '연동', label: '연동' },
+        { value: '산정동', label: '산정동' },
+        { value: '연산동', label: '연산동' },
+        { value: '원산동', label: '원산동' },
+        { value: '대성동', label: '대성동' },
+        { value: '목원동', label: '목원동' }
+      ],
+      '순천시': [
+        { value: '승주읍', label: '승주읍' },
+        { value: '해룡면', label: '해룡면' },
+        { value: '서면', label: '서면' },
+        { value: '황전면', label: '황전면' },
+        { value: '월등면', label: '월등면' },
+        { value: '주암면', label: '주암면' },
+        { value: '송광면', label: '송광면' },
+        { value: '외서면', label: '외서면' },
+        { value: '낙안면', label: '낙안면' },
+        { value: '별량면', label: '별량면' }
+      ],
+      '여수시': [
+        { value: '돌산읍', label: '돌산읍' },
+        { value: '소라면', label: '소라면' },
+        { value: '율촌면', label: '율촌면' },
+        { value: '화양면', label: '화양면' },
+        { value: '남면', label: '남면' },
+        { value: '화정면', label: '화정면' }
+      ],
+      '광양시': [
+        { value: '광양읍', label: '광양읍' },
+        { value: '봉강면', label: '봉강면' },
+        { value: '옥룡면', label: '옥룡면' },
+        { value: '옥곡면', label: '옥곡면' },
+        { value: '진상면', label: '진상면' },
+        { value: '진월면', label: '진월면' },
+        { value: '다압면', label: '다압면' }
+      ],
+      '곡성군': [
+        { value: '곡성읍', label: '곡성읍' },
+        { value: '오곡면', label: '오곡면' },
+        { value: '삼기면', label: '삼기면' },
+        { value: '석곡면', label: '석곡면' },
+        { value: '목사동면', label: '목사동면' },
+        { value: '죽곡면', label: '죽곡면' },
+        { value: '고달면', label: '고달면' },
+        { value: '옥과면', label: '옥과면' },
+        { value: '입면', label: '입면' },
+        { value: '겸면', label: '겸면' },
+        { value: '오산면', label: '오산면' }
+      ],
+      '구례군': [
+        { value: '구례읍', label: '구례읍' },
+        { value: '문척면', label: '문척면' },
+        { value: '간전면', label: '간전면' },
+        { value: '토지면', label: '토지면' },
+        { value: '마산면', label: '마산면' },
+        { value: '광의면', label: '광의면' },
+        { value: '용방면', label: '용방면' },
+        { value: '산동면', label: '산동면' }
+      ],
+      '고흥군': [
+        { value: '고흥읍', label: '고흥읍' },
+        { value: '도양읍', label: '도양읍' },
+        { value: '풍양면', label: '풍양면' },
+        { value: '도덕면', label: '도덕면' },
+        { value: '금산면', label: '금산면' },
+        { value: '도화면', label: '도화면' },
+        { value: '포두면', label: '포두면' },
+        { value: '봉래면', label: '봉래면' },
+        { value: '동일면', label: '동일면' },
+        { value: '점암면', label: '점암면' },
+        { value: '영남면', label: '영남면' },
+        { value: '과역면', label: '과역면' },
+        { value: '남양면', label: '남양면' },
+        { value: '동강면', label: '동강면' },
+        { value: '대서면', label: '대서면' },
+        { value: '두원면', label: '두원면' }
+      ],
+      '보성군': [
+        { value: '보성읍', label: '보성읍' },
+        { value: '벌교읍', label: '벌교읍' },
+        { value: '노동면', label: '노동면' },
+        { value: '미력면', label: '미력면' },
+        { value: '겸백면', label: '겸백면' },
+        { value: '율어면', label: '율어면' },
+        { value: '복내면', label: '복내면' },
+        { value: '문덕면', label: '문덕면' },
+        { value: '조성면', label: '조성면' },
+        { value: '득량면', label: '득량면' },
+        { value: '회천면', label: '회천면' },
+        { value: '웅치면', label: '웅치면' }
+      ],
+      '화순군': [
+        { value: '화순읍', label: '화순읍' },
+        { value: '한천면', label: '한천면' },
+        { value: '춘양면', label: '춘양면' },
+        { value: '청풍면', label: '청풍면' },
+        { value: '이양면', label: '이양면' },
+        { value: '능주면', label: '능주면' },
+        { value: '도곡면', label: '도곡면' },
+        { value: '도암면', label: '도암면' },
+        { value: '이서면', label: '이서면' },
+        { value: '북면', label: '북면' },
+        { value: '동복면', label: '동복면' },
+        { value: '남면', label: '남면' },
+        { value: '동면', label: '동면' }
+      ],
+      '장흥군': [
+        { value: '장흥읍', label: '장흥읍' },
+        { value: '관산읍', label: '관산읍' },
+        { value: '대덕읍', label: '대덕읍' },
+        { value: '용산면', label: '용산면' },
+        { value: '안양면', label: '안양면' },
+        { value: '장동면', label: '장동면' },
+        { value: '장평면', label: '장평면' },
+        { value: '유치면', label: '유치면' },
+        { value: '부산면', label: '부산면' },
+        { value: '회진면', label: '회진면' }
+      ],
+      '강진군': [
+        { value: '강진읍', label: '강진읍' },
+        { value: '군동면', label: '군동면' },
+        { value: '칠량면', label: '칠량면' },
+        { value: '대구면', label: '대구면' },
+        { value: '도암면', label: '도암면' },
+        { value: '신전면', label: '신전면' },
+        { value: '성전면', label: '성전면' },
+        { value: '작천면', label: '작천면' },
+        { value: '병영면', label: '병영면' },
+        { value: '옴천면', label: '옴천면' },
+        { value: '마량면', label: '마량면' }
+      ],
+      '해남군': [
+        { value: '해남읍', label: '해남읍' },
+        { value: '삼산면', label: '삼산면' },
+        { value: '화산면', label: '화산면' },
+        { value: '현산면', label: '현산면' },
+        { value: '송지면', label: '송지면' },
+        { value: '북평면', label: '북평면' },
+        { value: '북일면', label: '북일면' },
+        { value: '옥천면', label: '옥천면' },
+        { value: '계곡면', label: '계곡면' },
+        { value: '마산면', label: '마산면' },
+        { value: '황산면', label: '황산면' },
+        { value: '산이면', label: '산이면' },
+        { value: '문내면', label: '문내면' },
+        { value: '화원면', label: '화원면' }
+      ],
+      '영암군': [
+        { value: '영암읍', label: '영암읍' },
+        { value: '삼호읍', label: '삼호읍' },
+        { value: '덕진면', label: '덕진면' },
+        { value: '금정면', label: '금정면' },
+        { value: '신북면', label: '신북면' },
+        { value: '시종면', label: '시종면' },
+        { value: '도포면', label: '도포면' },
+        { value: '군서면', label: '군서면' },
+        { value: '서호면', label: '서호면' },
+        { value: '학산면', label: '학산면' },
+        { value: '미암면', label: '미암면' }
+      ],
+      '무안군': [
+        { value: '무안읍', label: '무안읍' },
+        { value: '일로읍', label: '일로읍' },
+        { value: '삼향읍', label: '삼향읍' },
+        { value: '몽탄면', label: '몽탄면' },
+        { value: '청계면', label: '청계면' },
+        { value: '현경면', label: '현경면' },
+        { value: '망운면', label: '망운면' },
+        { value: '해제면', label: '해제면' },
+        { value: '운남면', label: '운남면' }
+      ],
+      '함평군': [
+        { value: '함평읍', label: '함평읍' },
+        { value: '손불면', label: '손불면' },
+        { value: '신광면', label: '신광면' },
+        { value: '학교면', label: '학교면' },
+        { value: '엄다면', label: '엄다면' },
+        { value: '대동면', label: '대동면' },
+        { value: '나산면', label: '나산면' },
+        { value: '해보면', label: '해보면' },
+        { value: '월야면', label: '월야면' }
+      ],
+      '영광군': [
+        { value: '영광읍', label: '영광읍' },
+        { value: '백수읍', label: '백수읍' },
+        { value: '홍농읍', label: '홍농읍' },
+        { value: '대마면', label: '대마면' },
+        { value: '묘량면', label: '묘량면' },
+        { value: '불갑면', label: '불갑면' },
+        { value: '군서면', label: '군서면' },
+        { value: '군남면', label: '군남면' },
+        { value: '염산면', label: '염산면' },
+        { value: '법성면', label: '법성면' },
+        { value: '낙월면', label: '낙월면' }
+      ],
+      '완도군': [
+        { value: '완도읍', label: '완도읍' },
+        { value: '금일읍', label: '금일읍' },
+        { value: '노화읍', label: '노화읍' },
+        { value: '군외면', label: '군외면' },
+        { value: '신지면', label: '신지면' },
+        { value: '고금면', label: '고금면' },
+        { value: '약산면', label: '약산면' },
+        { value: '청산면', label: '청산면' },
+        { value: '소안면', label: '소안면' },
+        { value: '금당면', label: '금당면' },
+        { value: '보길면', label: '보길면' },
+        { value: '생일면', label: '생일면' }
+      ],
+      '진도군': [
+        { value: '진도읍', label: '진도읍' },
+        { value: '군내면', label: '군내면' },
+        { value: '고군면', label: '고군면' },
+        { value: '의신면', label: '의신면' },
+        { value: '임회면', label: '임회면' },
+        { value: '지산면', label: '지산면' },
+        { value: '조도면', label: '조도면' }
+      ],
+      '신안군': [
+        { value: '지도읍', label: '지도읍' },
+        { value: '압해읍', label: '압해읍' },
+        { value: '증도면', label: '증도면' },
+        { value: '임자면', label: '임자면' },
+        { value: '자은면', label: '자은면' },
+        { value: '비금면', label: '비금면' },
+        { value: '도초면', label: '도초면' },
+        { value: '흑산면', label: '흑산면' },
+        { value: '하의면', label: '하의면' },
+        { value: '신의면', label: '신의면' },
+        { value: '장산면', label: '장산면' },
+        { value: '안좌면', label: '안좌면' },
+        { value: '팔금면', label: '팔금면' },
+        { value: '암태면', label: '암태면' }
       ]
-      // 나머지 시군구별 읍면동은 필요에 따라 추가...
     };
     return districtMap[city] || [];
   };
@@ -125,6 +363,13 @@ export default function FarmersPage() {
           { value: '대산리', label: '대산리' },
           { value: '성산리', label: '성산리' },
           { value: '덕산리', label: '덕산리' }
+        ],
+        '왕곡면': [
+          { value: '신원리', label: '신원리' },
+          { value: '월천리', label: '월천리' },
+          { value: '옥곡리', label: '옥곡리' },
+          { value: '장산리', label: '장산리' },
+          { value: '본양리', label: '본양리' }
         ]
       },
       '담양군': {
@@ -140,9 +385,33 @@ export default function FarmersPage() {
           { value: '주산리', label: '주산리' },
           { value: '원강리', label: '원강리' },
           { value: '덕촌리', label: '덕촌리' }
+        ],
+        '창평면': [
+          { value: '유곡리', label: '유곡리' },
+          { value: '장화리', label: '장화리' },
+          { value: '도곡리', label: '도곡리' },
+          { value: '용수리', label: '용수리' }
+        ]
+      },
+      '영암군': {
+        '영암읍': [
+          { value: '동무리', label: '동무리' },
+          { value: '서무리', label: '서무리' },
+          { value: '남풍리', label: '남풍리' },
+          { value: '북풍리', label: '북풍리' },
+          { value: '회문리', label: '회문리' },
+          { value: '교동리', label: '교동리' },
+          { value: '춘양리', label: '춘양리' },
+          { value: '망호리', label: '망호리' }
+        ],
+        '삼호읍': [
+          { value: '난전리', label: '난전리' },
+          { value: '용당리', label: '용당리' },
+          { value: '서호리', label: '서호리' },
+          { value: '나불리', label: '나불리' },
+          { value: '삼포리', label: '삼포리' }
         ]
       }
-      // 나머지 읍면동별 리는 필요에 따라 추가...
     };
     return villageMap[city]?.[district] || [];
   };
@@ -159,6 +428,16 @@ export default function FarmersPage() {
     const district = e.target.value;
     setSelectedDistrict(district);
     setSelectedVillage('');
+    if (selectedCity && district) {
+      const villageList = getVillages(selectedCity, district);
+      setVillages(villageList);
+    } else {
+      setVillages([]);
+    }
+  };
+
+  const handleVillageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedVillage(e.target.value);
   };
 
   useEffect(() => {
@@ -181,7 +460,7 @@ export default function FarmersPage() {
     fetchFarmers();
   }, []);
 
-  // 주소에서 지역 정보 추출 함수
+  // 주소에서 지역 정보 추출 함수 개선
   const parseAddress = (address: string | undefined) => {
     if (!address) return { city: '', district: '', village: '' };
 
@@ -194,10 +473,9 @@ export default function FarmersPage() {
     let district = '';
     let village = '';
 
-    // 시/군 추출 (정확한 매칭을 위해 공백 추가)
+    // 시/군 추출
     for (const cityOption of cities) {
-      const cityPattern = new RegExp(`전라남도\\s+${cityOption.value}\\s+`);
-      if (cityPattern.test(address)) {
+      if (address.includes(cityOption.value)) {
         city = cityOption.value;
         break;
       }
@@ -207,9 +485,7 @@ export default function FarmersPage() {
     if (city) {
       const districts = getDistricts(city);
       for (const districtOption of districts) {
-        // 읍/면/동 패턴 매칭 (앞뒤 공백 고려)
-        const districtPattern = new RegExp(`\\s+${districtOption.value}\\s+`);
-        if (districtPattern.test(address)) {
+        if (address.includes(districtOption.value)) {
           district = districtOption.value;
           break;
         }
@@ -220,9 +496,8 @@ export default function FarmersPage() {
     if (city && district) {
       const villages = getVillages(city, district);
       for (const villageOption of villages) {
-        // 리 패턴 매칭 (리로 끝나거나 공백이 있는 경우)
-        const villagePattern = new RegExp(`${villageOption.value}(리\\s+|리$)`);
-        if (villagePattern.test(address)) {
+        const pattern = new RegExp(`${villageOption.value}리(?![가-힣])`);
+        if (pattern.test(address)) {
           village = villageOption.value;
           break;
         }
@@ -245,19 +520,14 @@ export default function FarmersPage() {
       field && typeof field === 'string' && field.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // 주소에서 지역 정보 추출 (도로명 주소 우선, 없으면 지번 주소 사용)
     const addressParts = parseAddress(farmer.roadAddress || farmer.jibunAddress);
     
-    // 지역 매칭 확인 (정확한 매칭)
     const matchesRegion = (!selectedCity || addressParts.city === selectedCity) &&
       (!selectedDistrict || addressParts.district === selectedDistrict) &&
       (!selectedVillage || addressParts.village === selectedVillage);
 
     const matchesFarmingType = !selectedFarmingType || 
       (farmer.farmingTypes && farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes]);
-
-    const matchesMainCrop = !selectedMainCrop || 
-      (farmer.mainCrop && farmer.mainCrop[selectedMainCrop as keyof typeof farmer.mainCrop]);
 
     const matchesEquipment = !selectedEquipment ||
       (Array.isArray(farmer.equipments) && farmer.equipments.length > 0 && 
@@ -266,8 +536,11 @@ export default function FarmersPage() {
     const matchesMailOption = selectedMailOption === 'all' || 
       (selectedMailOption === 'yes' ? farmer.canReceiveMail : !farmer.canReceiveMail);
 
+    const matchesSaleType = selectedSaleType === 'all' || 
+      (farmer.equipments && farmer.equipments.some(eq => eq?.saleType === selectedSaleType));
+
     return matchesSearch && matchesRegion && matchesFarmingType && 
-           matchesMainCrop && matchesEquipment && matchesMailOption;
+           matchesEquipment && matchesMailOption && matchesSaleType;
   });
 
   // 페이지네이션 로직
@@ -313,7 +586,7 @@ export default function FarmersPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">농민 목록</h1>
@@ -400,12 +673,12 @@ export default function FarmersPage() {
             </label>
             <select
               value={selectedVillage}
-              onChange={(e) => setSelectedVillage(e.target.value)}
+              onChange={handleVillageChange}
               className="w-full p-2 border rounded"
               disabled={!selectedDistrict}
             >
               <option value="">전체</option>
-              {getVillages(selectedCity, selectedDistrict).map(village => (
+              {villages.map(village => (
                 <option key={village.value} value={village.value}>
                   {village.label}
                 </option>
@@ -432,23 +705,19 @@ export default function FarmersPage() {
             </select>
           </div>
 
-          {/* 주작물 필터 */}
+          {/* 판매유형 필터 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              주작물
+              판매유형
             </label>
             <select
-              value={selectedMainCrop}
-              onChange={(e) => setSelectedMainCrop(e.target.value)}
+              value={selectedSaleType}
+              onChange={(e) => setSelectedSaleType(e.target.value)}
               className="w-full p-2 border rounded"
             >
-              <option value="">전체</option>
-              <option value="foodCrops">식량작물</option>
-              <option value="facilityHort">시설원예</option>
-              <option value="fieldVeg">노지채소</option>
-              <option value="fruits">과수</option>
-              <option value="specialCrops">특용작물</option>
-              <option value="flowers">화훼</option>
+              <option value="all">전체</option>
+              <option value="new">신규</option>
+              <option value="used">중고</option>
             </select>
           </div>
 
@@ -616,71 +885,95 @@ export default function FarmersPage() {
 
       {/* 페이지네이션 */}
       {totalPages > 1 && (
-        <div className="flex justify-center mt-6 space-x-2">
-          {/* 처음으로 버튼 */}
-          <button
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border rounded disabled:opacity-50 hover:bg-gray-100"
-          >
-            처음으로
-          </button>
+        <div className="mt-6">
+          {/* 페이지 정보 */}
+          <div className="text-center mb-4 text-gray-600">
+            전체 {filteredFarmers.length}개 중 {indexOfFirstFarmer + 1}-{Math.min(indexOfLastFarmer, filteredFarmers.length)}
+            <span className="mx-2">|</span>
+            페이지 {currentPage}/{totalPages}
+          </div>
+          
+          {/* 페이지 버튼 */}
+          <div className="flex justify-center items-center space-x-1">
+            {/* 처음으로 */}
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            >
+              &#171;
+            </button>
 
-          {/* 이전 버튼 */}
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border rounded disabled:opacity-50 hover:bg-gray-100"
-          >
-            이전
-          </button>
+            {/* 이전 */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            >
+              &#8249;
+            </button>
 
-          {/* 페이지 번호들 */}
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            let pageNum;
-            if (totalPages <= 5) {
-              pageNum = i + 1;
-            } else if (currentPage <= 3) {
-              pageNum = i + 1;
-            } else if (currentPage >= totalPages - 2) {
-              pageNum = totalPages - 4 + i;
-            } else {
-              pageNum = currentPage - 2 + i;
-            }
+            {/* 페이지 번호들 */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(pageNum => {
+                if (totalPages <= 7) return true;
+                if (pageNum === 1 || pageNum === totalPages) return true;
+                if (pageNum >= currentPage - 2 && pageNum <= currentPage + 2) return true;
+                return false;
+              })
+              .map((pageNum, index, array) => {
+                // 줄임표 표시 로직
+                if (index > 0 && pageNum > array[index - 1] + 1) {
+                  return (
+                    <React.Fragment key={`ellipsis-${pageNum}`}>
+                      <span className="px-2 py-1">...</span>
+                      <button
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-1 rounded border ${
+                          currentPage === pageNum
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'border-gray-300 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    </React.Fragment>
+                  );
+                }
 
-            return (
-              <button
-                key={pageNum}
-                onClick={() => setCurrentPage(pageNum)}
-                disabled={currentPage === pageNum}
-                className={`px-4 py-2 border rounded ${
-                  currentPage === pageNum
-                    ? 'bg-blue-500 text-white'
-                    : 'hover:bg-gray-100'
-                }`}
-              >
-                {pageNum}
-              </button>
-            );
-          })}
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3 py-1 rounded border ${
+                      currentPage === pageNum
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
 
-          {/* 다음 버튼 */}
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded disabled:opacity-50 hover:bg-gray-100"
-          >
-            다음
-          </button>
+            {/* 다음 */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            >
+              &#8250;
+            </button>
 
-          {/* 끝으로 버튼 */}
-          <button
-            onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded disabled:opacity-50 hover:bg-gray-100"
-          >
-            끝으로
-          </button>
+            {/* 끝으로 */}
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            >
+              &#187;
+            </button>
+          </div>
         </div>
       )}
     </div>
