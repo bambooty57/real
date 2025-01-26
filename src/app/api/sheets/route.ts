@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: GOOGLE_CLIENT_EMAIL,
-        private_key: GOOGLE_SERVICE_ACCOUNT_KEY?.split(String.raw`\n`).join('\n'),
+        private_key: GOOGLE_SERVICE_ACCOUNT_KEY,
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
