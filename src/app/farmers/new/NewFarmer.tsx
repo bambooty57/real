@@ -2,15 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { db, storage } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { storage } from '@/lib/firebase'
 import { v4 as uuidv4 } from 'uuid'
 import BasicInfo from '@/components/farmer/BasicInfo'
 import FarmingInfo from '@/components/farmer/FarmingInfo'
 import EquipmentInfo from '@/components/farmer/EquipmentInfo'
 import { FormData } from '@/types/farmer'
+import { toast } from 'react-hot-toast'
 
 interface MainCrop {
   rice: boolean;
@@ -115,15 +115,60 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     }
   })
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+    setIsSubmitting(true)
+
     try {
       // 데이터 유효성 검사
       if (!formData.name?.trim()) {
         alert('이름은 필수 입력 항목입니다.')
         return
       }
+
+      // 이미지 파일들을 Storage에 업로드하고 URL 받아오기
+      const uploadImages = async (images: (string | File)[]) => {
+        const uploadedUrls = await Promise.all(
+          images.map(async (image) => {
+            if (image instanceof File) {
+              const storageRef = ref(storage, `farmers/${Date.now()}_${image.name}`);
+              const snapshot = await uploadBytes(storageRef, image);
+              return await getDownloadURL(snapshot.ref);
+            }
+            return image; // 이미 URL인 경우 그대로 반환
+          })
+        );
+        return uploadedUrls;
+      };
+
+      // 장비 이미지 업로드
+      const equipmentsWithUrls = await Promise.all(
+        formData.equipments.map(async (equipment) => {
+          const equipmentWithUrls = { ...equipment };
+          
+          // 장비 이미지 업로드
+          if (equipment.images?.length) {
+            equipmentWithUrls.images = await uploadImages(equipment.images);
+          }
+
+          // 부착물 이미지 업로드
+          if (equipment.attachments?.length) {
+            equipmentWithUrls.attachments = await Promise.all(
+              equipment.attachments.map(async (attachment) => {
+                const attachmentWithUrls = { ...attachment };
+                if (attachment.images?.length) {
+                  attachmentWithUrls.images = await uploadImages(attachment.images);
+                }
+                return attachmentWithUrls;
+              })
+            );
+          }
+
+          return equipmentWithUrls;
+        })
+      );
 
       // undefined 값 제거 및 기본값 설정
       const saveData = {
@@ -158,23 +203,10 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           livestock: false,
           forageCrop: false
         },
-        equipments: (formData.equipments || []).map(eq => ({
-          ...eq,
-          id: eq.id || uuidv4(),
-          type: eq.type || '',
-          manufacturer: eq.manufacturer || '',
-          model: eq.model || '',
-          year: eq.year || '',
-          usageHours: eq.usageHours || '',
-          condition: eq.condition || 0,
-          images: eq.images || [],
-          saleType: eq.saleType || 'new',
-          tradeType: eq.tradeType || '',
-          desiredPrice: eq.desiredPrice || '',
-          saleStatus: eq.saleStatus || ''
-        })),
+        equipments: equipmentsWithUrls,
         rating: formData.rating || 0,
-        updatedAt: new Date().toISOString()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       }
 
       if (mode === 'edit' && farmerId) {
@@ -186,16 +218,15 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
       } else {
         // 새로운 등록 모드
         const docRef = collection(db, 'farmers')
-        const newFarmerRef = await addDoc(docRef, {
-          ...saveData,
-          createdAt: new Date().toISOString()
-        })
-        alert('등록이 완료되었습니다.')
+        const newFarmerRef = await addDoc(docRef, saveData)
+        toast.success('농가 정보가 성공적으로 등록되었습니다.')
         router.push(`/farmers/${newFarmerRef.id}`)
       }
     } catch (error) {
       console.error('Error saving farmer:', error)
-      alert('저장 중 오류가 발생했습니다.')
+      toast.error('농가 등록 중 오류가 발생했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -267,6 +298,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         <button
           type="submit"
           className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+          disabled={isSubmitting}
         >
           {mode === 'edit' ? '수정하기' : '등록하기'}
         </button>
