@@ -30,6 +30,7 @@ export default function FarmersPage() {
   const [villages, setVillages] = useState<Array<{ value: string, label: string }>>([]);
   const farmersPerPage = 15;
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedFarmers, setSelectedFarmers] = useState<string[]>([]);
 
   // 시/군/구 목록
   const cities = [
@@ -611,6 +612,41 @@ export default function FarmersPage() {
     }
   };
 
+  // 전체 선택/해제 핸들러
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedFarmers(currentFarmers.map(farmer => farmer.id));
+    } else {
+      setSelectedFarmers([]);
+    }
+  };
+
+  // 개별 선택/해제 핸들러
+  const handleSelectFarmer = (farmerId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedFarmers(prev => [...prev, farmerId]);
+    } else {
+      setSelectedFarmers(prev => prev.filter(id => id !== farmerId));
+    }
+  };
+
+  // 선택된 농민 삭제 핸들러
+  const handleDeleteSelected = async () => {
+    if (!selectedFarmers.length) return;
+    
+    if (window.confirm(`선택한 ${selectedFarmers.length}명의 농민을 삭제하시겠습니까?`)) {
+      try {
+        await Promise.all(selectedFarmers.map(id => deleteDoc(doc(db, 'farmers', id))));
+        setFarmers(prev => prev.filter(farmer => !selectedFarmers.includes(farmer.id)));
+        setSelectedFarmers([]);
+        toast.success('선택한 농민들이 삭제되었습니다.');
+      } catch (error) {
+        console.error('Error deleting farmers:', error);
+        toast.error('삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
   if (loading) {
     return <div>로딩 중...</div>;
   }
@@ -632,12 +668,35 @@ export default function FarmersPage() {
             />
           </button>
         </div>
-        <Link 
-          href="/farmers/new" 
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          새 농민 등록
-        </Link>
+        <div className="flex items-center gap-4">
+          {selectedFarmers.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              선택 삭제 ({selectedFarmers.length})
+            </button>
+          )}
+          <Link 
+            href="/farmers/new" 
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            새 농민 등록
+          </Link>
+        </div>
+      </div>
+
+      {/* 필터 섹션 위에 전체 선택 체크박스 추가 */}
+      <div className="mb-4 flex items-center">
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={selectedFarmers.length === currentFarmers.length && currentFarmers.length > 0}
+            onChange={(e) => handleSelectAll(e.target.checked)}
+            className="form-checkbox h-5 w-5 text-blue-600"
+          />
+          <span className="text-gray-700">전체 선택</span>
+        </label>
       </div>
 
       {/* 필터 섹션 */}
@@ -772,7 +831,17 @@ export default function FarmersPage() {
       {/* 농민 목록 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {currentFarmers.map((farmer) => (
-          <div key={farmer.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+          <div key={farmer.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow relative">
+            {/* 체크박스 추가 */}
+            <div className="absolute top-2 left-2 z-10">
+              <input
+                type="checkbox"
+                checked={selectedFarmers.includes(farmer.id)}
+                onChange={(e) => handleSelectFarmer(farmer.id, e.target.checked)}
+                className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300"
+              />
+            </div>
+
             {/* 이미지 갤러리 */}
             <div className="relative h-48 rounded-t-lg overflow-hidden farmer-image-gallery">
               <Swiper
