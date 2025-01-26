@@ -116,43 +116,55 @@ export default function FarmersPage() {
   // 필터링 로직 개선
   const filteredFarmers = farmers.filter(farmer => {
     // 검색어 필터링
-    const searchFields = [
-      farmer.name,
-      farmer.phone,
-      farmer.businessName,
-      farmer.roadAddress,
-      farmer.jibunAddress
-    ].filter(Boolean).map(field => field?.toLowerCase() || '');
-
-    const searchTermLower = searchTerm.toLowerCase();
-    const matchesSearch = searchTerm === '' || searchFields.some(field => 
-      field.includes(searchTermLower)
-    );
+    if (searchTerm) {
+      const searchTermLower = searchTerm.toLowerCase();
+      const hasMatch = [
+        farmer.name,
+        farmer.phone,
+        farmer.businessName,
+        farmer.roadAddress,
+        farmer.jibunAddress
+      ].some(field => field && field.toLowerCase().includes(searchTermLower));
+      
+      if (!hasMatch) return false;
+    }
 
     // 지역 필터링
-    const addresses = [farmer.roadAddress, farmer.jibunAddress].filter(Boolean);
-    const matchesRegion = !selectedCity && !selectedDistrict && !selectedVillage || addresses.some(address => {
-      if (!address) return false;
+    if (selectedCity || selectedDistrict || selectedVillage) {
+      const addresses = [farmer.roadAddress, farmer.jibunAddress].filter(Boolean);
+      const hasMatch = addresses.some(address => {
+        if (!address) return false;
+        const parts = address.split(' ');
+        
+        if (selectedCity && !parts[1]?.includes(selectedCity)) return false;
+        if (selectedDistrict && !parts[2]?.includes(selectedDistrict)) return false;
+        if (selectedVillage && !parts[3]?.includes(selectedVillage)) return false;
+        
+        return true;
+      });
       
-      const parts = address.split(' ');
-      const cityMatch = !selectedCity || (parts[1] && parts[1].startsWith(selectedCity));
-      const districtMatch = !selectedDistrict || (parts[2] && parts[2].startsWith(selectedDistrict));
-      const villageMatch = !selectedVillage || (parts[3] && parts[3].startsWith(selectedVillage));
-      
-      return cityMatch && districtMatch && villageMatch;
-    });
+      if (!hasMatch) return false;
+    }
 
-    const matchesFarmingType = !selectedFarmingType || 
-      (farmer.farmingTypes && farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes]);
+    // 영농형태 필터링
+    if (selectedFarmingType && (!farmer.farmingTypes || !farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes])) {
+      return false;
+    }
 
-    const matchesMailOption = selectedMailOption === 'all' || 
-      (selectedMailOption === 'yes' ? farmer.canReceiveMail : !farmer.canReceiveMail);
+    // 우편수취여부 필터링
+    if (selectedMailOption !== 'all') {
+      const wantsMail = selectedMailOption === 'yes';
+      if (farmer.canReceiveMail !== wantsMail) return false;
+    }
 
-    const matchesSaleType = selectedSaleType === 'all' || 
-      (farmer.equipments && farmer.equipments.some(eq => eq?.saleType === selectedSaleType));
+    // 판매유형 필터링
+    if (selectedSaleType !== 'all') {
+      if (!farmer.equipments?.some(eq => eq?.saleType === selectedSaleType)) {
+        return false;
+      }
+    }
 
-    return matchesSearch && matchesRegion && matchesFarmingType && 
-           matchesMailOption && matchesSaleType;
+    return true;
   });
 
   // 페이지네이션 로직
