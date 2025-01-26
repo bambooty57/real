@@ -743,11 +743,12 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     }, 3000);
   }, [farmers]);
 
-  // 차트 데이터 생성 로직을 useEffect로 이동
+  // 차트 데이터 업데이트
   useEffect(() => {
     if (!farmers.length) return;
 
     try {
+      console.log('전체 농민 데이터:', farmers.length, '명');
       const locationData = new Map<string, { customers: number; equipments: number }>();
 
       // 전체 지역일 때는 모든 시/군을 초기화
@@ -758,113 +759,77 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
       }
 
       // 데이터 집계
-      console.log('전체 농민 수:', farmers.length);
-      
-      // 담양군 데이터 확인
-      const damyangFarmers = farmers.filter(farmer => {
-        const address = farmer.jibunAddress;
-        return address && address.includes('담양군');
-      });
-      console.log('담양군 농민 목록:', damyangFarmers.map(farmer => ({
-        name: farmer.name,
-        address: farmer.jibunAddress,
-        equipments: farmer.equipments?.length || 0
-      })));
-
       farmers.forEach(farmer => {
-        const address = farmer.jibunAddress;  // 지번주소만 사용
+        const address = farmer.roadAddress || farmer.jibunAddress;
         if (!address) {
-          console.log('지번주소 없음:', farmer.name);
+          console.log('주소 없음:', farmer.name);
           return;
         }
 
-        // 주소에서 시군 추출
-        let city = '';
-        let town = '';
+        // 시/군 및 읍/면/동 추출
+        let foundCity = null;
+        let foundTown = null;
 
-        // 모든 시군구에 대해 처리
-        for (const cityName of CITIES) {
-          if (address.includes(cityName)) {
-            city = cityName;
-            const addressParts = address.split(cityName);
-            if (addressParts.length > 1) {
-              // 시군구 이후의 첫 번째 읍/면/동 찾기
-              const matches = addressParts[1].trim().match(/^[가-힣]+(읍|면|동)/);
-              if (matches) {
-                town = matches[0];
-              }
+        // 시/군 추출
+        for (const city of CITIES) {
+          if (address.includes(city)) {
+            foundCity = city;
+            // 읍/면/동 추출
+            const townMatch = address.match(/([가-힣]+(?:읍|면|동))/);
+            if (townMatch) {
+              foundTown = townMatch[1];
             }
-            break;  // 시군구를 찾았으면 반복 중단
+            break;
           }
         }
 
-        if (!city) {
-          console.log('시군구 파싱 실패:', address);
+        if (!foundCity) {
+          console.log('지역 매칭 실패:', address);
           return;
         }
 
-        // 장비 수 계산
         const equipmentCount = farmer.equipments?.length || 0;
-        console.log('데이터 처리:', {
+        console.log('농민 데이터 처리:', {
           name: farmer.name,
-          address,
-          city,
-          town,
+          city: foundCity,
+          town: foundTown,
+          address: address,
           equipments: equipmentCount
         });
 
+        // 전체 보기일 때는 시/군별 통계
         if (selectedCity === '전체') {
-          if (locationData.has(city)) {
-            const data = locationData.get(city)!;
-            data.customers++;
-            data.equipments += equipmentCount;
-            console.log('시/군 집계:', city, '누적 장비 수:', data.equipments);
-          }
-        } else if (city === selectedCity && locationData.has(town)) {
-          const data = locationData.get(town)!;
+          const data = locationData.get(foundCity)!;
           data.customers++;
           data.equipments += equipmentCount;
-          console.log('읍/면/동 집계:', town, '누적 장비 수:', data.equipments);
+        } 
+        // 특정 시/군 선택시 읍/면/동별 통계
+        else if (selectedCity === foundCity && foundTown) {
+          if (!locationData.has(foundTown)) {
+            locationData.set(foundTown, { customers: 0, equipments: 0 });
+          }
+          const data = locationData.get(foundTown)!;
+          data.customers++;
+          data.equipments += equipmentCount;
         }
       });
 
-      // 최종 집계 결과 출력
-      console.log('최종 집계 결과:', Array.from(locationData.entries()));
-
-      let sortedLocations: [string, { customers: number; equipments: number }][];
-      
-      if (selectedCity === '전체') {
-        // 전체 지역일 때는 CITIES 배열의 순서대로 정렬
-        sortedLocations = CITIES.map(city => [
-          city,
-          locationData.get(city) || { customers: 0, equipments: 0 }
-        ]);
-      } else {
-        // 특정 시/군이 선택된 경우, 해당 지역의 읍/면/동 순서대로 정렬
-        const selectedRegions = REGIONS[selectedCity as keyof typeof REGIONS];
-        if (selectedRegions) {
-          sortedLocations = selectedRegions.map(region => [
-            region,
-            locationData.get(region) || { customers: 0, equipments: 0 }
-          ]);
-        } else {
-          sortedLocations = Array.from(locationData.entries())
-            .sort((a, b) => a[0].localeCompare(b[0]));
-        }
-      }
+      // 차트 데이터 생성
+      const sortedLocations = Array.from(locationData.entries())
+        .sort((a, b) => b[1].customers - a[1].customers);
 
       setChartData({
         labels: sortedLocations.map(([location]) => location),
         datasets: [
           {
-            label: '고객 수',
+            label: selectedCity === '전체' ? '시/군별 고객 수' : '읍/면/동별 고객 수',
             data: sortedLocations.map(([, data]) => data.customers),
             backgroundColor: 'rgba(53, 162, 235, 0.5)',
             borderColor: 'rgba(53, 162, 235, 1)',
             borderWidth: 1
           },
           {
-            label: '장비 수',
+            label: selectedCity === '전체' ? '시/군별 장비 수' : '읍/면/동별 장비 수',
             data: sortedLocations.map(([, data]) => data.equipments),
             backgroundColor: 'rgba(75, 192, 192, 0.5)',
             borderColor: 'rgba(75, 192, 192, 1)',
@@ -892,7 +857,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           }
         },
         labels: {
-          padding: 20, // 범례 항목 간 간격
+          padding: 20, // 범례 항목 간격
           font: {
             size: 14
           }
