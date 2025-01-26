@@ -42,4 +42,33 @@
   :root {
     --color-green-25: #f2f9f2;
   }
+}
+
+/* Swiper 스타일 커스터마이징 */
+.swiper-button-next,
+.swiper-button-prev {
+  color: white !important;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+  scale: 0.7;
+}
+
+.swiper-pagination-bullet {
+  background: white !important;
+  opacity: 0.8 !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: #3b82f6 !important;
+}
+
+/* 이미지 갤러리 호버 효과 */
+.farmer-image-gallery:hover .swiper-button-next,
+.farmer-image-gallery:hover .swiper-button-prev {
+  opacity: 1;
+}
+
+.farmer-image-gallery .swiper-button-next,
+.farmer-image-gallery .swiper-button-prev {
+  opacity: 0;
+  transition: opacity 0.3s ease;
 } 
