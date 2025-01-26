@@ -389,8 +389,8 @@ export default function Dashboard() {
         // 엑셀 파일 읽기 설정 개선
         const jsonData = XLSX.utils.sheet_to_json<ExcelRow>(sheet, {
           raw: true,  // 원본 데이터 타입 보존
-          defval: null,  // 빈 값을 null로 처리
-          header: 1,  // 첫 번째 행을 헤더로 사용
+          defval: '',  // 빈 값을 빈 문자열로 처리
+          header: 0,  // 첫 번째 행을 헤더로 사용
           blankrows: false  // 빈 행 제외
         });
 
