@@ -100,21 +100,19 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                 </select>
               </div>
 
-              {/* 제조사 */}
+              {/* 제조회사 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">제조사</label>
+                <label className="block text-sm font-medium text-gray-700">제조회사</label>
                 <select
-                  value={equipment.manufacturer}
-                  onChange={(e) => {
-                    handleEquipmentChange(index, {
-                      ...equipment,
-                      manufacturer: e.target.value
-                    });
-                  }}
+                  value={equipment.manufacturer || ''}
+                  onChange={(e) => handleEquipmentChange(index, {
+                    ...equipment,
+                    manufacturer: e.target.value
+                  })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">선택하세요</option>
-                  {MANUFACTURERS.MAIN.map(({ value, label }) => (
+                  {MANUFACTURERS.map(({ value, label }) => (
                     <option key={value} value={value}>
                       {label}
                     </option>
