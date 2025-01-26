@@ -126,7 +126,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                           });
                         }}
                         className={`p-1 ${
-                          attachment.condition >= star
+    attachment.condition ?? 0 >= star
                             ? 'text-yellow-400'
                             : 'text-gray-300'
                         }`}
@@ -222,8 +222,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                                         ...a,
                                         images: [
                                           ...(a.images || []).slice(0, index),
-                                          null,
-                                          ...(a.images || []).slice(index + 1)
+                                          ...(a.images || []).slice(index + 1).filter(Boolean)
                                         ]
                                       }
                                     : a
@@ -246,4 +245,4 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
       })}
     </div>
   );
-} 
+}

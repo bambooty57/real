@@ -10,7 +10,7 @@ export const createInitialEquipment = (): Equipment => ({
   year: '',
   usageHours: '',
   condition: 0,
-  rating: '',
+  rating: 0,
   images: [],
   saleType: null,
   tradeType: '',

@@ -235,7 +235,7 @@ export default function TradePage() {
     model: string;
     condition?: number;
     memo?: string;
-    images?: string[];
+    images?: (string | File | null)[];
   }> | undefined) => {
     if (!attachments) return '';
     
@@ -560,11 +560,11 @@ export default function TradePage() {
                                 key === 'rearWheel' ? '후륜' : key
                               }</p>
                               <div className="ml-2">
-                                <p>제조사: {getKoreanManufacturer(value.manufacturer)}</p>
-                                {value.model && <p>모델: {value.model}</p>}
+                                <p>제조사: {getKoreanManufacturer(value?.manufacturer ?? '')}</p>
+                                {value?.model && <p>모델: {value.model ?? ''}</p>}
                                 <div>
                                   <span className="font-medium">상태: </span>
-                                  {getRatingStars(value.condition)}
+                                  {getRatingStars(value?.condition ?? 0)}
                                 </div>
                               </div>
                             </div>
@@ -588,4 +588,4 @@ export default function TradePage() {
       </div>
     </div>
   )
-} 
+}
