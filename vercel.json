@@ -1,12 +1,12 @@
 {
   "functions": {
-    "/api/sheets": {
+    "api/sheets": {
       "maxDuration": 60
     },
-    "/api/upload": {
+    "api/upload": {
       "maxDuration": 60
     },
-    "/api/auth/[...nextauth]": {
+    "api/auth/[...nextauth]": {
       "maxDuration": 60
     }
   }
