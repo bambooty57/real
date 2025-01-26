@@ -25,7 +25,6 @@ export default function FarmersPage() {
   const [selectedVillage, setSelectedVillage] = useState('');
   const [selectedFarmingType, setSelectedFarmingType] = useState('');
   const [selectedMainCrop, setSelectedMainCrop] = useState('');
-  const [selectedEquipment, setSelectedEquipment] = useState('');
   const [selectedMailOption, setSelectedMailOption] = useState('all');
   const [selectedSaleType, setSelectedSaleType] = useState('all');
   const [villages, setVillages] = useState<Array<{ value: string, label: string }>>([]);
@@ -554,10 +553,6 @@ export default function FarmersPage() {
     const matchesFarmingType = !selectedFarmingType || 
       (farmer.farmingTypes && farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes]);
 
-    const matchesEquipment = !selectedEquipment ||
-      (Array.isArray(farmer.equipments) && farmer.equipments.length > 0 && 
-       farmer.equipments.some(eq => eq?.type === selectedEquipment));
-
     const matchesMailOption = selectedMailOption === 'all' || 
       (selectedMailOption === 'yes' ? farmer.canReceiveMail : !farmer.canReceiveMail);
 
@@ -565,14 +560,16 @@ export default function FarmersPage() {
       (farmer.equipments && farmer.equipments.some(eq => eq?.saleType === selectedSaleType));
 
     return matchesSearch && matchesRegion && matchesFarmingType && 
-           matchesEquipment && matchesMailOption && matchesSaleType;
+           matchesMailOption && matchesSaleType;
   });
 
   // 페이지네이션 로직
-  const indexOfLastFarmer = currentPage * farmersPerPage;
-  const indexOfFirstFarmer = indexOfLastFarmer - farmersPerPage;
-  const currentFarmers = filteredFarmers.slice(indexOfFirstFarmer, indexOfLastFarmer);
-  const totalPages = Math.ceil(filteredFarmers.length / farmersPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredFarmers.length / farmersPerPage));
+  // 현재 페이지가 총 페이지 수를 초과하지 않도록 보정
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const safeIndexOfLastFarmer = safeCurrentPage * farmersPerPage;
+  const safeIndexOfFirstFarmer = safeIndexOfLastFarmer - farmersPerPage;
+  const currentFarmers = filteredFarmers.slice(safeIndexOfFirstFarmer, safeIndexOfLastFarmer);
 
   const handleDelete = async (farmerId: string) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
@@ -746,25 +743,6 @@ export default function FarmersPage() {
             </select>
           </div>
 
-          {/* 농기계 필터 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              보유 농기계
-            </label>
-            <select
-              value={selectedEquipment}
-              onChange={(e) => setSelectedEquipment(e.target.value)}
-              className="w-full p-2 border rounded"
-            >
-              <option value="">전체</option>
-              <option value="tractor">트랙터</option>
-              <option value="combine">콤바인</option>
-              <option value="rice_transplanter">이앙기</option>
-              <option value="cultivator">경운기</option>
-              <option value="excavator">굴삭기</option>
-            </select>
-          </div>
-
           {/* 우편수취여부 필터 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -870,16 +848,6 @@ export default function FarmersPage() {
                 </span>
               </div>
 
-              {/* 보유 농기계 */}
-              {farmer.equipments && farmer.equipments.length > 0 && (
-                <div className="mb-2">
-                  <span className="font-medium">보유 농기계: </span>
-                  <span className="text-sm">
-                    {farmer.equipments.map(eq => getKoreanEquipmentType(eq.type)).join(', ')}
-                  </span>
-                </div>
-              )}
-
               {/* 우편수취여부 */}
               <div className="mb-4">
                 <span className="font-medium">우편수취: </span>
@@ -909,13 +877,13 @@ export default function FarmersPage() {
       </div>
 
       {/* 페이지네이션 */}
-      {totalPages > 1 && (
+      {filteredFarmers.length > 0 && (
         <div className="mt-6">
           {/* 페이지 정보 */}
           <div className="text-center mb-4 text-gray-600">
-            전체 {filteredFarmers.length}개 중 {indexOfFirstFarmer + 1}-{Math.min(indexOfLastFarmer, filteredFarmers.length)}
+            전체 {filteredFarmers.length}개 중 {safeIndexOfFirstFarmer + 1}-{Math.min(safeIndexOfLastFarmer, filteredFarmers.length)}
             <span className="mx-2">|</span>
-            페이지 {currentPage}/{totalPages}
+            페이지 {safeCurrentPage}/{totalPages}
           </div>
           
           {/* 페이지 버튼 */}
@@ -923,7 +891,7 @@ export default function FarmersPage() {
             {/* 처음으로 */}
             <button
               onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
+              disabled={safeCurrentPage === 1}
               className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
             >
               &#171;
@@ -932,7 +900,7 @@ export default function FarmersPage() {
             {/* 이전 */}
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
+              disabled={safeCurrentPage === 1}
               className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
             >
               &#8249;
@@ -943,7 +911,7 @@ export default function FarmersPage() {
               .filter(pageNum => {
                 if (totalPages <= 7) return true;
                 if (pageNum === 1 || pageNum === totalPages) return true;
-                if (pageNum >= currentPage - 2 && pageNum <= currentPage + 2) return true;
+                if (pageNum >= safeCurrentPage - 2 && pageNum <= safeCurrentPage + 2) return true;
                 return false;
               })
               .map((pageNum, index, array) => {
@@ -955,7 +923,7 @@ export default function FarmersPage() {
                       <button
                         onClick={() => setCurrentPage(pageNum)}
                         className={`px-3 py-1 rounded border ${
-                          currentPage === pageNum
+                          safeCurrentPage === pageNum
                             ? 'bg-blue-500 text-white border-blue-500'
                             : 'border-gray-300 hover:bg-gray-100'
                         }`}
@@ -971,7 +939,7 @@ export default function FarmersPage() {
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
                     className={`px-3 py-1 rounded border ${
-                      currentPage === pageNum
+                      safeCurrentPage === pageNum
                         ? 'bg-blue-500 text-white border-blue-500'
                         : 'border-gray-300 hover:bg-gray-100'
                     }`}
@@ -984,7 +952,7 @@ export default function FarmersPage() {
             {/* 다음 */}
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
+              disabled={safeCurrentPage === totalPages}
               className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
             >
               &#8250;
@@ -993,7 +961,7 @@ export default function FarmersPage() {
             {/* 끝으로 */}
             <button
               onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
+              disabled={safeCurrentPage === totalPages}
               className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
             >
               &#187;
