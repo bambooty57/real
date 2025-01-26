@@ -5,6 +5,7 @@ import Script from 'next/script'
 import { getServerSession } from 'next-auth'
 import SessionProvider from './components/SessionProvider'
 import { authOptions } from '@/auth'
+import { Toaster } from 'react-hot-toast'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -36,6 +37,7 @@ export default async function RootLayout({
             {children}
           </main>
         </SessionProvider>
+        <Toaster />
       </body>
     </html>
   )
