@@ -125,7 +125,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
 
     try {
       // 데이터 유효성 검사
-      if (!formData.name?.trim()) {
+      if (!String(formData.name).trim()) {
         alert('이름은 필수 입력 항목입니다.')
         return
       }
@@ -174,7 +174,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
 
       // undefined 값 제거 및 기본값 설정
       const saveData = {
-        name: formData.name?.trim() || '',
+        name: String(formData.name).trim() || '',
         businessName: formData.businessName?.trim() || '',
         zipCode: formData.zipCode?.trim() || '',
         roadAddress: formData.roadAddress?.trim() || '',
