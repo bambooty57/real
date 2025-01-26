@@ -50,6 +50,17 @@ export default function FarmersPage() {
         const districts = new Set<string>();
         const villages = new Set<string>();
 
+        // 전라남도 모든 시/군 추가
+        const allCities = [
+          '목포시', '여수시', '순천시', '나주시', '광양시', 
+          '담양군', '곡성군', '구례군', '고흥군', '보성군',
+          '화순군', '장흥군', '강진군', '해남군', '영암군',
+          '무안군', '함평군', '영광군', '장성군', '완도군',
+          '진도군', '신안군'
+        ];
+        allCities.forEach(city => cities.add(city));
+
+        // 파이어베이스 데이터에서 읍면동, 리 추출
         farmersData.forEach(farmer => {
           const addresses = [farmer.roadAddress, farmer.jibunAddress].filter(Boolean);
           addresses.forEach(address => {
@@ -57,18 +68,13 @@ export default function FarmersPage() {
             if (!address.startsWith('전라남도')) return;
 
             const parts = address.split(' ');
-            if (parts.length >= 2) {
-              // 시/군 추출
-              const cityMatch = parts[1].match(/^([^0-9]+)/);
-              if (cityMatch) cities.add(cityMatch[1]);
-            }
             if (parts.length >= 3) {
-              // 읍/면/동 추출
-              const districtMatch = parts[2].match(/^([^0-9]+)/);
+              // 읍/면/동 추출 (숫자 제거)
+              const districtMatch = parts[2].match(/^([^0-9]+[읍면동])/);
               if (districtMatch) districts.add(districtMatch[1]);
             }
             if (parts.length >= 4) {
-              // 리 추출
+              // 리 추출 (숫자 제거)
               const villageMatch = parts[3].match(/^([^0-9]+리)/);
               if (villageMatch) villages.add(villageMatch[1]);
             }
@@ -111,26 +117,27 @@ export default function FarmersPage() {
   const filteredFarmers = farmers.filter(farmer => {
     // 검색어 필터링
     const searchFields = [
-      farmer.name || '',
-      farmer.phone || '',
-      farmer.businessName || '',
-      farmer.roadAddress || '',
-      farmer.jibunAddress || ''
-    ];
-    
+      farmer.name,
+      farmer.phone,
+      farmer.businessName,
+      farmer.roadAddress,
+      farmer.jibunAddress
+    ].filter(Boolean).map(field => field?.toLowerCase() || '');
+
+    const searchTermLower = searchTerm.toLowerCase();
     const matchesSearch = searchTerm === '' || searchFields.some(field => 
-      field.toLowerCase().includes(searchTerm.toLowerCase())
+      field.includes(searchTermLower)
     );
 
     // 지역 필터링
     const addresses = [farmer.roadAddress, farmer.jibunAddress].filter(Boolean);
-    const matchesRegion = addresses.some(address => {
-      if (!address) return !selectedCity && !selectedDistrict && !selectedVillage;
+    const matchesRegion = !selectedCity && !selectedDistrict && !selectedVillage || addresses.some(address => {
+      if (!address) return false;
       
       const parts = address.split(' ');
-      const cityMatch = selectedCity ? parts[1]?.startsWith(selectedCity) : true;
-      const districtMatch = selectedDistrict ? parts[2]?.startsWith(selectedDistrict) : true;
-      const villageMatch = selectedVillage ? parts[3]?.startsWith(selectedVillage) : true;
+      const cityMatch = !selectedCity || (parts[1] && parts[1].startsWith(selectedCity));
+      const districtMatch = !selectedDistrict || (parts[2] && parts[2].startsWith(selectedDistrict));
+      const villageMatch = !selectedVillage || (parts[3] && parts[3].startsWith(selectedVillage));
       
       return cityMatch && districtMatch && villageMatch;
     });
