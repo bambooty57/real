@@ -11,7 +11,12 @@ const equipmentTypeMap: { [key: string]: string } = {
   'dryer': '건조기',
   'silo': '싸일론',
   'claas': '클라스',
-  'drone': '드론'
+  'drone': '드론',
+  'cultivator': '경운기',
+  'sprayer': '방제기',
+  'seeder': '파종기',
+  'harvester': '수확기',
+  'thresher': '탈곡기'
 };
 
 // 제조사 매핑
