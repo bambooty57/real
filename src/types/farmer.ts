@@ -97,7 +97,7 @@ export interface Farmer {
     [key: string]: boolean | undefined;
   };
   farmingTypes: {
-    paddyFarming: boolean;
+    waterPaddy: boolean;
     fieldFarming: boolean;
     orchard: boolean;
     livestock: boolean;

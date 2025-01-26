@@ -27,7 +27,7 @@ interface MainCrop {
 }
 
 interface FarmingTypes {
-  paddyFarming: boolean;
+  waterPaddy: boolean;
   fieldFarming: boolean;
   orchard: boolean;
   livestock: boolean;
@@ -104,7 +104,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
         other: false
       },
       farmingTypes: {
-        paddyFarming: false,
+        waterPaddy: false,
         fieldFarming: false,
         orchard: false,
         livestock: false,
@@ -197,7 +197,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
           other: false
         },
         farmingTypes: formData.farmingTypes || {
-          paddyFarming: false,
+          waterPaddy: false,
           fieldFarming: false,
           orchard: false,
           livestock: false,
