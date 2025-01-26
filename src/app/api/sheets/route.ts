@@ -11,9 +11,15 @@ const formatEquipments = (equipments: any[] | undefined): string => {
   return equipments.map(eq => {
     if (!eq) return '';
     const base = `${eq.type || ''}(${eq.manufacturer || ''})`;
-    const attachments = eq.attachments?.map((att: any) => 
-      `${att.type || ''}(${att.manufacturer || ''})`
-    ).filter(Boolean).join(', ') || '';
+    
+    // attachments가 배열인지 확인하고 안전하게 처리
+    const attachments = Array.isArray(eq.attachments) 
+      ? eq.attachments
+        .filter((att: any) => att && typeof att === 'object')
+        .map((att: any) => `${att.type || ''}(${att.manufacturer || ''})`)
+        .filter(Boolean)
+        .join(', ')
+      : '';
     
     return [base, attachments].filter(Boolean).join(' - ');
   }).filter(Boolean).join('; ');
