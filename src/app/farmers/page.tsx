@@ -74,7 +74,12 @@ export default function FarmersPage() {
         { value: '금천면', label: '금천면' },
         { value: '산포면', label: '산포면' },
         { value: '다도면', label: '다도면' },
-        { value: '봉황면', label: '봉황면' }
+        { value: '봉황면', label: '봉황면' },
+        { value: '송월동', label: '송월동' },
+        { value: '영강동', label: '영강동' },
+        { value: '금남동', label: '금남동' },
+        { value: '성북동', label: '성북동' },
+        { value: '영산동', label: '영산동' }
       ],
       '담양군': [
         { value: '담양읍', label: '담양읍' },
@@ -111,7 +116,18 @@ export default function FarmersPage() {
         { value: '연산동', label: '연산동' },
         { value: '원산동', label: '원산동' },
         { value: '대성동', label: '대성동' },
-        { value: '목원동', label: '목원동' }
+        { value: '목원동', label: '목원동' },
+        { value: '동명동', label: '동명동' },
+        { value: '삼학동', label: '삼학동' },
+        { value: '만호동', label: '만호동' },
+        { value: '유달동', label: '유달동' },
+        { value: '죽교동', label: '죽교동' },
+        { value: '북항동', label: '북항동' },
+        { value: '용해동', label: '용해동' },
+        { value: '이로동', label: '이로동' },
+        { value: '상동', label: '상동' },
+        { value: '하당동', label: '하당동' },
+        { value: '신흥동', label: '신흥동' }
       ],
       '순천시': [
         { value: '승주읍', label: '승주읍' },
@@ -492,11 +508,12 @@ export default function FarmersPage() {
       }
     }
 
-    // 리 추출
+    // 리 추출 로직 개선
     if (city && district) {
       const villages = getVillages(city, district);
       for (const villageOption of villages) {
-        const pattern = new RegExp(`${villageOption.value}리(?![가-힣])`);
+        // 리 이름 뒤에 '리'가 붙은 경우와 숫자가 붙은 경우 모두 처리
+        const pattern = new RegExp(`${villageOption.value}(리)?([0-9]*)?(?![가-힣])`);
         if (pattern.test(address)) {
           village = villageOption.value;
           break;
@@ -509,22 +526,30 @@ export default function FarmersPage() {
 
   // 필터링 로직 수정
   const filteredFarmers = farmers.filter(farmer => {
+    // 검색어 필터링
     const searchFields = [
-      farmer.name,
-      farmer.phone,
-      farmer.businessName,
-      farmer.roadAddress
+      farmer.name || '',
+      farmer.phone || '',
+      farmer.businessName || '',
+      farmer.roadAddress || '',
+      farmer.jibunAddress || ''
     ];
     
     const matchesSearch = searchTerm === '' || searchFields.some(field => 
-      field && typeof field === 'string' && field.toLowerCase().includes(searchTerm.toLowerCase())
+      field.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const addressParts = parseAddress(farmer.roadAddress || farmer.jibunAddress);
+    // 주소 파싱 및 필터링 개선
+    const roadAddressParts = parseAddress(farmer.roadAddress);
+    const jibunAddressParts = parseAddress(farmer.jibunAddress);
     
-    const matchesRegion = (!selectedCity || addressParts.city === selectedCity) &&
-      (!selectedDistrict || addressParts.district === selectedDistrict) &&
-      (!selectedVillage || addressParts.village === selectedVillage);
+    // 도로명주소와 지번주소 모두에서 매칭 확인
+    const matchesRegion = (!selectedCity || 
+      (roadAddressParts.city === selectedCity || jibunAddressParts.city === selectedCity)) &&
+      (!selectedDistrict || 
+      (roadAddressParts.district === selectedDistrict || jibunAddressParts.district === selectedDistrict)) &&
+      (!selectedVillage || 
+      (roadAddressParts.village === selectedVillage || jibunAddressParts.village === selectedVillage));
 
     const matchesFarmingType = !selectedFarmingType || 
       (farmer.farmingTypes && farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes]);
