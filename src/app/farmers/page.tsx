@@ -488,32 +488,33 @@ export default function FarmersPage() {
     let district = '';
     let village = '';
 
-    // 시/군 추출
+    // 시/군 추출 - 정확한 매칭을 위해 패턴 사용
     for (const cityOption of cities) {
-      if (address.includes(cityOption.value)) {
+      const cityPattern = new RegExp(`전라남도\\s+${cityOption.value}\\b`);
+      if (cityPattern.test(address)) {
         city = cityOption.value;
         break;
       }
     }
 
-    // 읍/면/동 추출
+    // 읍/면/동 추출 - 정확한 매칭을 위해 패턴 사용
     if (city) {
       const districts = getDistricts(city);
       for (const districtOption of districts) {
-        if (address.includes(districtOption.value)) {
+        const districtPattern = new RegExp(`${districtOption.value}\\b`);
+        if (districtPattern.test(address)) {
           district = districtOption.value;
           break;
         }
       }
     }
 
-    // 리 추출 로직 개선
+    // 리 추출 - 정확한 매칭을 위해 패턴 사용
     if (city && district) {
       const villages = getVillages(city, district);
       for (const villageOption of villages) {
-        // 리 이름 뒤에 '리'가 붙은 경우와 숫자가 붙은 경우 모두 처리
-        const pattern = new RegExp(`${villageOption.value}(리)?([0-9]*)?(?![가-힣])`);
-        if (pattern.test(address)) {
+        const villagePattern = new RegExp(`${villageOption.value}(리)?\\b`);
+        if (villagePattern.test(address)) {
           village = villageOption.value;
           break;
         }
@@ -523,7 +524,7 @@ export default function FarmersPage() {
     return { city, district, village };
   };
 
-  // 필터링 로직 수정
+  // 필터링 로직 개선
   const filteredFarmers = farmers.filter(farmer => {
     // 검색어 필터링
     const searchFields = [
@@ -538,17 +539,24 @@ export default function FarmersPage() {
       field.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // 주소 파싱 및 필터링 개선
+    // 주소 파싱
     const roadAddressParts = parseAddress(farmer.roadAddress);
     const jibunAddressParts = parseAddress(farmer.jibunAddress);
     
-    // 도로명주소와 지번주소 모두에서 매칭 확인
-    const matchesRegion = (!selectedCity || 
-      (roadAddressParts.city === selectedCity || jibunAddressParts.city === selectedCity)) &&
-      (!selectedDistrict || 
-      (roadAddressParts.district === selectedDistrict || jibunAddressParts.district === selectedDistrict)) &&
-      (!selectedVillage || 
-      (roadAddressParts.village === selectedVillage || jibunAddressParts.village === selectedVillage));
+    // 지역 필터링 - 도로명주소나 지번주소 중 하나라도 매칭되면 통과
+    const matchesCity = !selectedCity || 
+      roadAddressParts.city === selectedCity || 
+      jibunAddressParts.city === selectedCity;
+
+    const matchesDistrict = !selectedDistrict || 
+      roadAddressParts.district === selectedDistrict || 
+      jibunAddressParts.district === selectedDistrict;
+
+    const matchesVillage = !selectedVillage || 
+      roadAddressParts.village === selectedVillage || 
+      jibunAddressParts.village === selectedVillage;
+
+    const matchesRegion = matchesCity && matchesDistrict && matchesVillage;
 
     const matchesFarmingType = !selectedFarmingType || 
       (farmer.farmingTypes && farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes]);
@@ -776,14 +784,21 @@ export default function FarmersPage() {
                 {/* 기본 사진들 */}
                 {farmer.farmerImages && farmer.farmerImages.length > 0 ? (
                   farmer.farmerImages.map((image, index) => (
-                    <SwiperSlide key={`farmer-${index}`}>
-                      <Image
-                        src={image.toString()}
-                        alt={`${farmer.name}의 사진 ${index + 1}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </SwiperSlide>
+                    image && (
+                      <SwiperSlide key={`farmer-${index}`}>
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={image.toString()}
+                            alt={`${farmer.name}의 사진 ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            onError={(e: any) => {
+                              e.target.src = '/placeholder-image.jpg';
+                            }}
+                          />
+                        </div>
+                      </SwiperSlide>
+                    )
                   ))
                 ) : (
                   <SwiperSlide>
@@ -795,33 +810,43 @@ export default function FarmersPage() {
 
                 {/* 농기계 및 부착장비 사진들 */}
                 {farmer.equipments?.map((equipment, eqIndex) => (
-                  <>
+                  <React.Fragment key={`eq-fragment-${eqIndex}`}>
                     {/* 농기계 이미지 */}
-                    {equipment.images?.map((image, imgIndex) => (
+                    {equipment.images?.filter(Boolean).map((image, imgIndex) => (
                       <SwiperSlide key={`eq-${eqIndex}-${imgIndex}`}>
-                        <Image
-                          src={image.toString()}
-                          alt={`${getKoreanEquipmentType(equipment.type)} 사진 ${imgIndex + 1}`}
-                          fill
-                          className="object-cover"
-                        />
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={image.toString()}
+                            alt={`${getKoreanEquipmentType(equipment.type)} 사진 ${imgIndex + 1}`}
+                            fill
+                            className="object-cover"
+                            onError={(e: any) => {
+                              e.target.src = '/placeholder-image.jpg';
+                            }}
+                          />
+                        </div>
                       </SwiperSlide>
                     ))}
 
                     {/* 부착장비 이미지 */}
                     {equipment.attachments?.map((attachment, attIndex) => 
-                      attachment.images?.map((image, imgIndex) => (
+                      attachment.images?.filter(Boolean).map((image, imgIndex) => (
                         <SwiperSlide key={`att-${eqIndex}-${attIndex}-${imgIndex}`}>
-                          <Image
-                            src={image.toString()}
-                            alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 사진 ${imgIndex + 1}`}
-                            fill
-                            className="object-cover"
-                          />
+                          <div className="relative w-full h-full">
+                            <Image
+                              src={image.toString()}
+                              alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 사진 ${imgIndex + 1}`}
+                              fill
+                              className="object-cover"
+                              onError={(e: any) => {
+                                e.target.src = '/placeholder-image.jpg';
+                              }}
+                            />
+                          </div>
                         </SwiperSlide>
                       ))
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </Swiper>
             </div>
