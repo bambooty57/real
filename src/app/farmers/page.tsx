@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { ref, deleteObject, listAll } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
 import Link from 'next/link';
 import { Farmer } from '@/types/farmer';
 import { getFarmingTypeDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
@@ -188,9 +189,31 @@ export default function FarmersPage() {
   const safeIndexOfFirstFarmer = safeIndexOfLastFarmer - farmersPerPage;
   const currentFarmers = filteredFarmers.slice(safeIndexOfFirstFarmer, safeIndexOfLastFarmer);
 
+  // 농민 이미지 삭제 함수
+  const deleteFarmerImages = async (farmerId: string) => {
+    try {
+      // 농민 이미지 폴더 참조
+      const farmerImagesRef = ref(storage, `farmers/${farmerId}`);
+      
+      // 폴더 내의 모든 파일 리스트 가져오기
+      const filesList = await listAll(farmerImagesRef);
+      
+      // 모든 파일 삭제
+      const deletePromises = filesList.items.map(item => deleteObject(item));
+      await Promise.all(deletePromises);
+    } catch (error) {
+      console.error('Error deleting farmer images:', error);
+      throw error;
+    }
+  };
+
+  // 단일 농민 삭제 핸들러
   const handleDelete = async (farmerId: string) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       try {
+        // 농민 이미지 삭제
+        await deleteFarmerImages(farmerId);
+        // Firestore 문서 삭제
         await deleteDoc(doc(db, 'farmers', farmerId));
         setFarmers(prev => prev.filter(farmer => farmer.id !== farmerId));
         toast.success('삭제되었습니다.');
@@ -220,16 +243,16 @@ export default function FarmersPage() {
     }
   };
 
-  // 전체 선택/해제 핸들러
+  // 전체 농민 선택 핸들러
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedFarmers(currentFarmers.map(farmer => farmer.id));
+      setSelectedFarmers(filteredFarmers.map(farmer => farmer.id));
     } else {
       setSelectedFarmers([]);
     }
   };
 
-  // 개별 선택/해제 핸들러
+  // 개별 농민 선택 핸들러
   const handleSelectFarmer = (farmerId: string, checked: boolean) => {
     if (checked) {
       setSelectedFarmers(prev => [...prev, farmerId]);
@@ -244,12 +267,39 @@ export default function FarmersPage() {
     
     if (window.confirm(`선택한 ${selectedFarmers.length}명의 농민을 삭제하시겠습니까?`)) {
       try {
-        await Promise.all(selectedFarmers.map(id => deleteDoc(doc(db, 'farmers', id))));
+        // 선택된 모든 농민의 이미지와 문서 삭제
+        await Promise.all(selectedFarmers.map(async (id) => {
+          await deleteFarmerImages(id);
+          await deleteDoc(doc(db, 'farmers', id));
+        }));
+        
         setFarmers(prev => prev.filter(farmer => !selectedFarmers.includes(farmer.id)));
         setSelectedFarmers([]);
         toast.success('선택한 농민들이 삭제되었습니다.');
       } catch (error) {
         console.error('Error deleting farmers:', error);
+        toast.error('삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
+  // 전체 농민 일괄 삭제 핸들러
+  const handleDeleteAll = async () => {
+    if (!farmers.length) return;
+    
+    if (window.confirm(`등록된 모든 농민(${farmers.length}명)을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      try {
+        // 모든 농민의 이미지와 문서 삭제
+        await Promise.all(farmers.map(async (farmer) => {
+          await deleteFarmerImages(farmer.id);
+          await deleteDoc(doc(db, 'farmers', farmer.id));
+        }));
+        
+        setFarmers([]);
+        setSelectedFarmers([]);
+        toast.success('모든 농민이 삭제되었습니다.');
+      } catch (error) {
+        console.error('Error deleting all farmers:', error);
         toast.error('삭제 중 오류가 발생했습니다.');
       }
     }
@@ -277,12 +327,30 @@ export default function FarmersPage() {
           </button>
         </div>
         <div className="flex items-center gap-4">
+          {/* 전체 선택 체크박스 */}
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={selectedFarmers.length === filteredFarmers.length && filteredFarmers.length > 0}
+              onChange={(e) => handleSelectAll(e.target.checked)}
+              className="form-checkbox h-5 w-5 text-blue-600"
+            />
+            <span className="text-gray-700">전체 선택 ({selectedFarmers.length}/{filteredFarmers.length})</span>
+          </label>
           {selectedFarmers.length > 0 && (
             <button
               onClick={handleDeleteSelected}
               className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
             >
               선택 삭제 ({selectedFarmers.length})
+            </button>
+          )}
+          {farmers.length > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              전체 일괄삭제 ({farmers.length})
             </button>
           )}
           <Link 
