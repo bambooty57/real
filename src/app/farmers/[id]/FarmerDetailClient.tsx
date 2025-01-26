@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Farmer, Equipment } from '@/types/farmer'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
 import { FaPrint } from 'react-icons/fa'
+import React from 'react'
 
 interface AttachmentImages {
   loader?: string[]
@@ -439,22 +440,59 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
       )}
 
       {/* 이미지 섹션 */}
-      {(farmer.farmerImages?.length > 0) && (
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">이미지</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {farmer.farmerImages.map((image, index) => (
-              <div key={index} className="relative aspect-w-16 aspect-h-9">
-                <img
-                  src={image}
-                  alt={`농민 이미지 ${index + 1}`}
-                  className="object-cover rounded-lg"
-                />
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">모든 이미지</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {/* 농민 이미지 */}
+          {farmer.farmerImages?.map((image, index) => (
+            <div key={`farmer-${index}`} className="relative aspect-w-16 aspect-h-9">
+              <img
+                src={image}
+                alt={`농민 이미지 ${index + 1}`}
+                className="object-cover rounded-lg w-full h-full"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                농민 이미지 {index + 1}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+
+          {/* 농기계 이미지 */}
+          {farmer.equipments?.map((equipment, eqIndex) => (
+            <React.Fragment key={`eq-${eqIndex}`}>
+              {/* 농기계 본체 이미지 */}
+              {equipment.images?.map((image, imgIndex) => (
+                <div key={`eq-${eqIndex}-${imgIndex}`} className="relative aspect-w-16 aspect-h-9">
+                  <img
+                    src={image}
+                    alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
+                    className="object-cover rounded-lg w-full h-full"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                    {getKoreanEquipmentType(equipment.type)} {imgIndex + 1}
+                  </div>
+                </div>
+              ))}
+
+              {/* 부착장비 이미지 */}
+              {equipment.attachments?.map((attachment, attIndex) => 
+                attachment.images?.map((image, imgIndex) => (
+                  <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="relative aspect-w-16 aspect-h-9">
+                    <img
+                      src={image}
+                      alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
+                      className="object-cover rounded-lg w-full h-full"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                      {getKoreanEquipmentType(equipment.type)}의 {attachment.type} {imgIndex + 1}
+                    </div>
+                  </div>
+                ))
+              )}
+            </React.Fragment>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   )
 } 

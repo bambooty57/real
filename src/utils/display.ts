@@ -16,7 +16,8 @@ export function getMainCropDisplay(type: string): string {
     fieldVeg: '노지채소',
     fruits: '과수',
     specialCrops: '특용작물',
-    flowers: '화훼'
+    flowers: '화훼',
+    livestock: '축산'
   };
   return displayMap[type] || type;
 } 

@@ -61,5 +61,16 @@ export const MAIN_CROPS = {
       { value: 'lily', label: '백합' },
       { value: 'orchid', label: '난' }
     ]
+  },
+  livestock: {
+    label: '축산',
+    subTypes: [
+      { value: 'cattle', label: '한우' },
+      { value: 'pig', label: '돼지' },
+      { value: 'chicken', label: '닭' },
+      { value: 'duck', label: '오리' },
+      { value: 'goat', label: '염소' },
+      { value: 'sheep', label: '양' }
+    ]
   }
 }; 

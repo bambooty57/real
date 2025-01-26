@@ -824,9 +824,68 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
       const yAxisMax = Math.ceil(maxValue * 1.2); // 20% 여유 추가
       const stepSize = Math.ceil(yAxisMax / 8); // 8개의 눈금으로 나누기
 
-      // options 업데이트
-      options.scales.y.max = yAxisMax;
-      options.scales.y.ticks.stepSize = stepSize;
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right' as const,
+            title: {
+              display: true,
+              text: '지역별 농민/장비 현황',
+              padding: {
+                bottom: 10
+              }
+            },
+            labels: {
+              padding: 20,
+              font: {
+                size: 14
+              }
+            }
+          },
+          title: {
+            display: false
+          },
+          datalabels: {
+            anchor: 'end' as const,
+            align: 'end' as const,
+            formatter: (value: number) => value,
+            font: {
+              weight: 'bold' as const,
+              size: 12
+            },
+            padding: 6,
+            color: '#000000'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: yAxisMax,
+            ticks: {
+              stepSize: stepSize,
+              font: {
+                size: 12
+              }
+            }
+          },
+          x: {
+            ticks: {
+              font: {
+                size: 12
+              },
+              maxRotation: 45,
+              minRotation: 45
+            }
+          }
+        },
+        layout: {
+          padding: {
+            right: 50
+          }
+        }
+      };
 
       setChartData({
         labels: sortedLocations.map(([location]) => location),
@@ -847,13 +906,17 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           }
         ]
       });
+
+      setOptions(chartOptions);
+
     } catch (err) {
       console.error('차트 데이터 생성 중 오류:', err);
       toast.error('차트 데이터 생성 중 오류가 발생했습니다.');
     }
   }, [farmers, selectedCity]);
 
-  const options = {
+  // 차트 옵션 상태 추가
+  const [options, setOptions] = useState({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -891,9 +954,9 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     scales: {
       y: {
         beginAtZero: true,
-        max: 0, // useEffect에서 동적으로 설정됨
+        max: 0,
         ticks: {
-          stepSize: 0, // useEffect에서 동적으로 설정됨
+          stepSize: 0,
           font: {
             size: 12
           }
@@ -904,17 +967,17 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           font: {
             size: 12
           },
-          maxRotation: 45, // X축 라벨 회전
+          maxRotation: 45,
           minRotation: 45
         }
       }
     },
     layout: {
       padding: {
-        right: 50 // 오른쪽 여백 추가
+        right: 50
       }
     }
-  };
+  });
 
   if (error) {
     return <div className="text-center py-10 text-red-500">{error}</div>;

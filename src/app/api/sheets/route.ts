@@ -58,6 +58,13 @@ export async function POST(req: Request) {
               return value?.toString() || '';
             }
           }
+
+          if (header === 'equipments') {
+            if (!value || !Array.isArray(value)) return '';
+            return value.map(eq => 
+              `${eq.type}(${eq.manufacturer || '제조사미상'})`
+            ).join(', ');
+          }
           
           return value?.toString() || '';
         });

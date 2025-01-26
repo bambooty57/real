@@ -194,9 +194,10 @@ export default function FarmersPage() {
     let district = '';
     let village = '';
 
-    // 시/군 추출
+    // 시/군 추출 (정확한 매칭을 위해 공백 추가)
     for (const cityOption of cities) {
-      if (address.includes(cityOption.value)) {
+      const cityPattern = new RegExp(`전라남도\\s+${cityOption.value}\\s+`);
+      if (cityPattern.test(address)) {
         city = cityOption.value;
         break;
       }
@@ -206,7 +207,9 @@ export default function FarmersPage() {
     if (city) {
       const districts = getDistricts(city);
       for (const districtOption of districts) {
-        if (address.includes(districtOption.value)) {
+        // 읍/면/동 패턴 매칭 (앞뒤 공백 고려)
+        const districtPattern = new RegExp(`\\s+${districtOption.value}\\s+`);
+        if (districtPattern.test(address)) {
           district = districtOption.value;
           break;
         }
@@ -217,7 +220,9 @@ export default function FarmersPage() {
     if (city && district) {
       const villages = getVillages(city, district);
       for (const villageOption of villages) {
-        if (address.includes(villageOption.value)) {
+        // 리 패턴 매칭 (리로 끝나거나 공백이 있는 경우)
+        const villagePattern = new RegExp(`${villageOption.value}(리\\s+|리$)`);
+        if (villagePattern.test(address)) {
           village = villageOption.value;
           break;
         }
@@ -234,12 +239,12 @@ export default function FarmersPage() {
       farmer.phone,
       farmer.businessName,
       farmer.roadAddress
-    ].some(field => field?.toLowerCase?.()?.includes(searchTerm.toLowerCase()));
+    ].some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    // 주소에서 지역 정보 추출
+    // 주소에서 지역 정보 추출 (도로명 주소 우선, 없으면 지번 주소 사용)
     const addressParts = parseAddress(farmer.roadAddress || farmer.jibunAddress);
     
-    // 지역 매칭 확인
+    // 지역 매칭 확인 (정확한 매칭)
     const matchesRegion = (!selectedCity || addressParts.city === selectedCity) &&
       (!selectedDistrict || addressParts.district === selectedDistrict) &&
       (!selectedVillage || addressParts.village === selectedVillage);
@@ -251,7 +256,8 @@ export default function FarmersPage() {
       (farmer.mainCrop && farmer.mainCrop[selectedMainCrop as keyof typeof farmer.mainCrop]);
 
     const matchesEquipment = !selectedEquipment ||
-      farmer.equipments?.some(eq => eq.type === selectedEquipment);
+      (Array.isArray(farmer.equipments) && farmer.equipments.length > 0 && 
+       farmer.equipments.some(eq => eq?.type === selectedEquipment));
 
     const matchesMailOption = selectedMailOption === 'all' || 
       (selectedMailOption === 'yes' ? farmer.canReceiveMail : !farmer.canReceiveMail);
