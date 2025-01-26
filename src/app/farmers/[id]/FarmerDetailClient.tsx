@@ -106,6 +106,39 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
 
   return (
     <div className="max-w-4xl mx-auto">
+      <style jsx global>{`
+        @media print {
+          /* 기본 인쇄 스타일 */
+          body {
+            padding: 20px;
+          }
+          
+          /* 1페이지에 표시될 내용 */
+          .farmer-info-section {
+            page-break-after: always;
+          }
+          
+          /* 2페이지부터 표시될 이미지 섹션 */
+          .farmer-images-section {
+            page-break-before: always;
+          }
+          
+          /* 인쇄 시 숨길 요소들 */
+          .print-hide {
+            display: none !important;
+          }
+          
+          /* 이미지 크기 조절 */
+          .print-image {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            margin: 10px;
+            page-break-inside: avoid;
+          }
+        }
+      `}</style>
+
       <div className="flex justify-between items-center mb-6 print-hide">
         <h1 className="text-2xl font-bold">{farmer.name} 상세 정보</h1>
         <div className="space-x-2">
@@ -481,37 +514,4 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
       </div>
     </div>
   )
-}
-
-<style jsx global>{`
-  @media print {
-    /* 기본 인쇄 스타일 */
-    body {
-      padding: 20px;
-    }
-    
-    /* 1페이지에 표시될 내용 */
-    .farmer-info-section {
-      page-break-after: always;
-    }
-    
-    /* 2페이지부터 표시될 이미지 섹션 */
-    .farmer-images-section {
-      page-break-before: always;
-    }
-    
-    /* 인쇄 시 숨길 요소들 */
-    .print-hide {
-      display: none !important;
-    }
-    
-    /* 이미지 크기 조절 */
-    .print-image {
-      width: 100%;
-      max-width: 300px;
-      height: auto;
-      margin: 10px;
-      page-break-inside: avoid;
-    }
-  }
-</style> 
+} 
