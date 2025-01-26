@@ -64,7 +64,7 @@ export default function FarmersPage() {
 
         // 주소에서 읍면동, 리 추출
         farmersData.forEach(farmer => {
-          const address = farmer.roadAddress || farmer.jibunAddress;
+          const address = farmer.jibunAddress || farmer.roadAddress;
           if (!address?.startsWith('전라남도')) return;
 
           const parts = address.split(' ');
@@ -142,8 +142,8 @@ export default function FarmersPage() {
         farmer.name,
         farmer.phone,
         farmer.businessName,
-        farmer.roadAddress,
-        farmer.jibunAddress
+        farmer.jibunAddress,
+        farmer.roadAddress
       ].join(' ').toLowerCase();
       
       if (!searchTarget.includes(searchLower)) return false;
@@ -151,7 +151,7 @@ export default function FarmersPage() {
 
     // 2. 주소 필터
     if (selectedCity || selectedDistrict || selectedVillage) {
-      const address = farmer.roadAddress || farmer.jibunAddress;
+      const address = farmer.jibunAddress || farmer.roadAddress;
       if (!address) return false;
 
       if (selectedCity && !address.includes(selectedCity)) return false;
