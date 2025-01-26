@@ -69,39 +69,69 @@ export async function POST(req: Request) {
     const data = await req.json();
     console.log('받은 데이터 길이:', data.length);
 
-    // 필수 환경 변수 체크
-    if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEET_ID) {
-      throw new Error('필수 환경 변수가 설정되지 않았습니다.');
+    // 필수 환경 변수 체크 및 로깅
+    const requiredEnvVars = {
+      GOOGLE_CLIENT_EMAIL: process.env.GOOGLE_CLIENT_EMAIL,
+      GOOGLE_SERVICE_ACCOUNT_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
+      GOOGLE_SHEET_ID: process.env.GOOGLE_SHEET_ID
+    };
+
+    const missingVars = Object.entries(requiredEnvVars)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingVars.length > 0) {
+      throw new Error(`다음 환경 변수가 설정되지 않았습니다: ${missingVars.join(', ')}`);
     }
 
     // 데이터를 2차원 배열로 변환
     const jsonData = convertToSheetData(data);
+    console.log('변환된 데이터 행 수:', jsonData.length);
 
-    // Google Auth 설정
+    // Google Auth 설정 및 검증
+    const credentials = {
+      client_email: process.env.GOOGLE_CLIENT_EMAIL!,
+      private_key: process.env.GOOGLE_SERVICE_ACCOUNT_KEY!.replace(/\\n/g, '\n'),
+    };
+
+    console.log('인증 정보 확인:', {
+      hasClientEmail: !!credentials.client_email,
+      privateKeyLength: credentials.private_key.length,
+    });
+
     const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_SERVICE_ACCOUNT_KEY?.replace(/\\n/g, '\n'),
-      },
+      credentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
     
+    // 시트 존재 여부 확인
+    try {
+      await sheets.spreadsheets.get({
+        spreadsheetId: process.env.GOOGLE_SHEET_ID,
+      });
+      console.log('시트 접근 확인 완료');
+    } catch (error) {
+      console.error('시트 접근 실패:', error);
+      throw new Error('구글 시트에 접근할 수 없습니다. 권한을 확인해주세요.');
+    }
+
     // 기존 데이터 삭제
     try {
-      await sheets.spreadsheets.values.clear({
+      const clearResponse = await sheets.spreadsheets.values.clear({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
         range: '시트1!A1:Z10000',
       });
-    } catch (error) {
-      console.error('시트 클리어 중 오류:', error);
-      throw new Error('기존 데이터 삭제 중 오류가 발생했습니다.');
+      console.log('기존 데이터 삭제 완료:', clearResponse.status);
+    } catch (error: any) {
+      console.error('시트 클리어 중 오류:', error?.message);
+      throw new Error(`기존 데이터 삭제 중 오류: ${error?.message || '알 수 없는 오류'}`);
     }
 
     // 새 데이터 추가
     try {
-      await sheets.spreadsheets.values.append({
+      const appendResponse = await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
         range: '시트1!A1',
         valueInputOption: 'RAW',
@@ -109,9 +139,10 @@ export async function POST(req: Request) {
           values: jsonData,
         },
       });
-    } catch (error) {
-      console.error('데이터 추가 중 오류:', error);
-      throw new Error('새 데이터 추가 중 오류가 발생했습니다.');
+      console.log('새 데이터 추가 완료:', appendResponse.status);
+    } catch (error: any) {
+      console.error('데이터 추가 중 오류:', error?.message);
+      throw new Error(`새 데이터 추가 중 오류: ${error?.message || '알 수 없는 오류'}`);
     }
 
     return Response.json({ 
@@ -119,21 +150,17 @@ export async function POST(req: Request) {
       message: `${jsonData.length - 1}건의 데이터가 성공적으로 동기화되었습니다.`
     });
 
-  } catch (error) {
-    console.error('구글 시트 동기화 에러:', error);
-    
-    let errorMessage = '구글 시트 연동 중 오류가 발생했습니다.';
-    let errorDetails = '';
-    
-    if (error instanceof Error) {
-      errorMessage = error.message;
-      errorDetails = error.stack || '';
-    }
+  } catch (error: any) {
+    console.error('구글 시트 동기화 에러:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+    });
     
     return Response.json({ 
       success: false,
-      error: errorMessage,
-      details: errorDetails,
+      error: error?.message || '구글 시트 연동 중 오류가 발생했습니다.',
+      details: error?.stack || '',
       timestamp: new Date().toISOString()
     }, { 
       status: 500 
