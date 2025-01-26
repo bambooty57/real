@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { collection, getDocs, doc, setDoc, updateDoc, query, where, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, updateDoc, query, where, writeBatch, orderBy, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { FaFileExcel, FaGoogle } from 'react-icons/fa';
@@ -20,6 +20,7 @@ import { google } from 'googleapis';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
 import { Farmer } from '@/types/farmer';
+import { toast } from 'react-hot-toast';
 
 ChartJS.register(
   CategoryScale,
@@ -96,12 +97,10 @@ interface ChartData {
 
 // 전체 시/군 목록 정의
 const CITIES = [
-  '강진군', '고흥군', '곡성군', '광양시', '구례군',
-  '나주시', '담양군', '목포시', '무안군', '보성군',
-  '순천시', '신안군', '여수시', '영광군', '영암군',
-  '완도군', '장성군', '장흥군', '진도군', '함평군',
-  '해남군', '화순군'
-] as const;
+  '나주시', '목포시', '순천시', '여수시', '광양시', '담양군', '곡성군', 
+  '구례군', '고흥군', '보성군', '화순군', '장흥군', '강진군', '해남군', 
+  '영암군', '무안군', '함평군', '영광군', '장성군', '완도군', '진도군', '신안군'
+];
 
 // 각 시/군의 읍/면/동 목록 정의
 const REGIONS = {
@@ -252,57 +251,54 @@ export default function Dashboard() {
     
     const loadFarmers = async () => {
       try {
-        console.log('Firebase 데이터 로딩 시작...');
+        setLoading(true);
+        setError(null);
         
-        // Firebase 연결 테스트
+        // Firebase 연결 확인
         if (!db) {
           throw new Error('Firestore 인스턴스가 초기화되지 않았습니다.');
         }
         
-        console.log('Firebase 설정:', {
-          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-          apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? '설정됨' : '미설정'
-        });
-        
+        // 데이터 로드
         const farmersRef = collection(db, 'farmers');
-        console.log('farmers 컬렉션 참조 생성');
+        const q = query(farmersRef, orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
         
-        const snapshot = await getDocs(farmersRef);
-        console.log('farmers 컬렉션 조회 완료, 문서 수:', snapshot.size);
+        if (snapshot.empty) {
+          console.warn('Firebase에서 가져온 데이터가 없습니다.');
+          if (isMounted) {
+            setFarmers([]);
+            setLoading(false);
+          }
+          return;
+        }
+        
+        const farmersData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Farmer[];
         
         if (isMounted) {
-          const farmersData = snapshot.docs.map(doc => {
-            const data = doc.data();
-            console.log('농민 데이터:', doc.id, data);
-            return {
-              id: doc.id,
-              ...data
-            };
-          });
-          
-          if (farmersData.length === 0) {
-            console.warn('Firebase에서 가져온 데이터가 없습니다.');
-          }
-          
-          setFarmers(farmersData as Farmer[]);
+          setFarmers(farmersData);
           setLoading(false);
-          console.log('총 농민 수:', farmersData.length);
+          console.log('데이터 로드 완료:', farmersData.length);
         }
       } catch (err) {
+        console.error('Firebase 데이터 로딩 에러:', err);
         if (isMounted) {
-          console.error('Firebase 데이터 로딩 에러:', err);
           setError(err instanceof Error ? err.message : '데이터를 불러오는데 실패했습니다');
           setLoading(false);
+          toast.error('데이터 로딩 중 오류가 발생했습니다.');
         }
       }
     };
-    
+
     loadFarmers();
     
     return () => {
       isMounted = false;
     };
-  }, []); // 빈 의존성 배열로 한 번만 실행되도록 설정
+  }, []);
 
   const handleExcelDownload = () => {
     const excelData = farmers.map(farmer => {
@@ -751,139 +747,136 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
   useEffect(() => {
     if (!farmers.length) return;
 
-    const locationData = new Map<string, { customers: number; equipments: number }>();
+    try {
+      const locationData = new Map<string, { customers: number; equipments: number }>();
 
-    // 전체 지역일 때는 모든 시/군을 초기화
-    if (selectedCity === '전체') {
-      CITIES.forEach(city => {
-        locationData.set(city, { customers: 0, equipments: 0 });
-      });
-    } else {
-      // 특정 시/군이 선택된 경우, 해당 지역의 모든 읍/면/동을 초기화
-      const selectedRegions = REGIONS[selectedCity as keyof typeof REGIONS];
-      if (selectedRegions) {
-        selectedRegions.forEach(region => {
-          locationData.set(region, { customers: 0, equipments: 0 });
+      // 전체 지역일 때는 모든 시/군을 초기화
+      if (selectedCity === '전체') {
+        CITIES.forEach(city => {
+          locationData.set(city, { customers: 0, equipments: 0 });
         });
       }
-    }
 
-    // 데이터 집계
-    console.log('전체 농민 수:', farmers.length);
-    
-    // 담양군 데이터 확인
-    const damyangFarmers = farmers.filter(farmer => {
-      const address = farmer.jibunAddress;
-      return address && address.includes('담양군');
-    });
-    console.log('담양군 농민 목록:', damyangFarmers.map(farmer => ({
-      name: farmer.name,
-      address: farmer.jibunAddress,
-      equipments: farmer.equipments?.length || 0
-    })));
-
-    farmers.forEach(farmer => {
-      const address = farmer.jibunAddress;  // 지번주소만 사용
-      if (!address) {
-        console.log('지번주소 없음:', farmer.name);
-        return;
-      }
-
-      // 주소에서 시군 추출
-      let city = '';
-      let town = '';
-
-      // 모든 시군구에 대해 처리
-      for (const cityName of CITIES) {
-        if (address.includes(cityName)) {
-          city = cityName;
-          const addressParts = address.split(cityName);
-          if (addressParts.length > 1) {
-            // 시군구 이후의 첫 번째 읍/면/동 찾기
-            const matches = addressParts[1].trim().match(/^[가-힣]+(읍|면|동)/);
-            if (matches) {
-              town = matches[0];
-            }
-          }
-          break;  // 시군구를 찾았으면 반복 중단
-        }
-      }
-
-      if (!city) {
-        console.log('시군구 파싱 실패:', address);
-        return;
-      }
-
-      // 장비 수 계산
-      const equipmentCount = farmer.equipments?.length || 0;
-      console.log('데이터 처리:', {
-        name: farmer.name,
-        address,
-        city,
-        town,
-        equipments: equipmentCount
+      // 데이터 집계
+      console.log('전체 농민 수:', farmers.length);
+      
+      // 담양군 데이터 확인
+      const damyangFarmers = farmers.filter(farmer => {
+        const address = farmer.jibunAddress;
+        return address && address.includes('담양군');
       });
+      console.log('담양군 농민 목록:', damyangFarmers.map(farmer => ({
+        name: farmer.name,
+        address: farmer.jibunAddress,
+        equipments: farmer.equipments?.length || 0
+      })));
 
-      if (selectedCity === '전체') {
-        if (locationData.has(city)) {
-          const data = locationData.get(city)!;
+      farmers.forEach(farmer => {
+        const address = farmer.jibunAddress;  // 지번주소만 사용
+        if (!address) {
+          console.log('지번주소 없음:', farmer.name);
+          return;
+        }
+
+        // 주소에서 시군 추출
+        let city = '';
+        let town = '';
+
+        // 모든 시군구에 대해 처리
+        for (const cityName of CITIES) {
+          if (address.includes(cityName)) {
+            city = cityName;
+            const addressParts = address.split(cityName);
+            if (addressParts.length > 1) {
+              // 시군구 이후의 첫 번째 읍/면/동 찾기
+              const matches = addressParts[1].trim().match(/^[가-힣]+(읍|면|동)/);
+              if (matches) {
+                town = matches[0];
+              }
+            }
+            break;  // 시군구를 찾았으면 반복 중단
+          }
+        }
+
+        if (!city) {
+          console.log('시군구 파싱 실패:', address);
+          return;
+        }
+
+        // 장비 수 계산
+        const equipmentCount = farmer.equipments?.length || 0;
+        console.log('데이터 처리:', {
+          name: farmer.name,
+          address,
+          city,
+          town,
+          equipments: equipmentCount
+        });
+
+        if (selectedCity === '전체') {
+          if (locationData.has(city)) {
+            const data = locationData.get(city)!;
+            data.customers++;
+            data.equipments += equipmentCount;
+            console.log('시/군 집계:', city, '누적 장비 수:', data.equipments);
+          }
+        } else if (city === selectedCity && locationData.has(town)) {
+          const data = locationData.get(town)!;
           data.customers++;
           data.equipments += equipmentCount;
-          console.log('시/군 집계:', city, '누적 장비 수:', data.equipments);
+          console.log('읍/면/동 집계:', town, '누적 장비 수:', data.equipments);
         }
-      } else if (city === selectedCity && locationData.has(town)) {
-        const data = locationData.get(town)!;
-        data.customers++;
-        data.equipments += equipmentCount;
-        console.log('읍/면/동 집계:', town, '누적 장비 수:', data.equipments);
-      }
-    });
+      });
 
-    // 최종 집계 결과 출력
-    console.log('최종 집계 결과:', Array.from(locationData.entries()));
+      // 최종 집계 결과 출력
+      console.log('최종 집계 결과:', Array.from(locationData.entries()));
 
-    let sortedLocations: [string, { customers: number; equipments: number }][];
-    
-    if (selectedCity === '전체') {
-      // 전체 지역일 때는 CITIES 배열의 순서대로 정렬
-      sortedLocations = CITIES.map(city => [
-        city,
-        locationData.get(city) || { customers: 0, equipments: 0 }
-      ]);
-    } else {
-      // 특정 시/군이 선택된 경우, 해당 지역의 읍/면/동 순서대로 정렬
-      const selectedRegions = REGIONS[selectedCity as keyof typeof REGIONS];
-      if (selectedRegions) {
-        sortedLocations = selectedRegions.map(region => [
-          region,
-          locationData.get(region) || { customers: 0, equipments: 0 }
+      let sortedLocations: [string, { customers: number; equipments: number }][];
+      
+      if (selectedCity === '전체') {
+        // 전체 지역일 때는 CITIES 배열의 순서대로 정렬
+        sortedLocations = CITIES.map(city => [
+          city,
+          locationData.get(city) || { customers: 0, equipments: 0 }
         ]);
       } else {
-        sortedLocations = Array.from(locationData.entries())
-          .sort((a, b) => a[0].localeCompare(b[0]));
-      }
-    }
-
-    setChartData({
-      labels: sortedLocations.map(([location]) => location),
-      datasets: [
-        {
-          label: '고객 수',
-          data: sortedLocations.map(([, data]) => data.customers),
-          backgroundColor: 'rgba(53, 162, 235, 0.5)',
-          borderColor: 'rgba(53, 162, 235, 1)',
-          borderWidth: 1
-        },
-        {
-          label: '장비 수',
-          data: sortedLocations.map(([, data]) => data.equipments),
-          backgroundColor: 'rgba(75, 192, 192, 0.5)',
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 1
+        // 특정 시/군이 선택된 경우, 해당 지역의 읍/면/동 순서대로 정렬
+        const selectedRegions = REGIONS[selectedCity as keyof typeof REGIONS];
+        if (selectedRegions) {
+          sortedLocations = selectedRegions.map(region => [
+            region,
+            locationData.get(region) || { customers: 0, equipments: 0 }
+          ]);
+        } else {
+          sortedLocations = Array.from(locationData.entries())
+            .sort((a, b) => a[0].localeCompare(b[0]));
         }
-      ]
-    });
-  }, [farmers, selectedCity]); // farmers와 selectedCity가 변경될 때만 차트 업데이트
+      }
+
+      setChartData({
+        labels: sortedLocations.map(([location]) => location),
+        datasets: [
+          {
+            label: '고객 수',
+            data: sortedLocations.map(([, data]) => data.customers),
+            backgroundColor: 'rgba(53, 162, 235, 0.5)',
+            borderColor: 'rgba(53, 162, 235, 1)',
+            borderWidth: 1
+          },
+          {
+            label: '장비 수',
+            data: sortedLocations.map(([, data]) => data.equipments),
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }
+        ]
+      });
+    } catch (err) {
+      console.error('차트 데이터 생성 중 오류:', err);
+      toast.error('차트 데이터 생성 중 오류가 발생했습니다.');
+    }
+  }, [farmers, selectedCity]);
 
   const options = {
     responsive: true,
