@@ -1,6 +1,6 @@
 {
   "functions": {
-    ".vercel/output/functions/**": {
+    "*": {
       "maxDuration": 60
     }
   }
