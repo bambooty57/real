@@ -33,38 +33,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     }
     return {
       name: '',
-      businessName: '',
-      zipCode: '',
-      roadAddress: '',
-      jibunAddress: '',
-      addressDetail: '',
-      canReceiveMail: false,
-      phone: '',
-      ageGroup: '',
-      memo: '',
-      farmerImages: [],
-      mainCrop: {
-        rice: false,
-        barley: false,
-        hanwoo: false,
-        soybean: false,
-        sweetPotato: false,
-        persimmon: false,
-        pear: false,
-        plum: false,
-        sorghum: false,
-        goat: false,
-        other: false
-      },
-      farmingTypes: {
-        paddyFarming: false,
-        fieldFarming: false,
-        orchard: false,
-        livestock: false,
-        forageCrop: false,
-      },
-      equipments: [],
-      rating: 0
+      phone: ''
     }
   })
 
@@ -137,13 +106,13 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                 );
                 setFormData((prev: FormData) => ({
                   ...prev,
-                  farmerImages: [...prev.farmerImages, ...uploadedUrls]
+                  farmerImages: [...(prev.farmerImages || []), ...uploadedUrls]
                 }));
               }}
               className="mt-1 block w-full"
             />
             <div className="mt-2 grid grid-cols-4 gap-2">
-              {formData.farmerImages.filter((url): url is string => url !== null).map((url, index) => (
+              {(formData.farmerImages || []).filter((url): url is string => url !== null).map((url, index) => (
                 <div key={url} className="relative">
                   <img src={url} alt={`농민 이미지 ${index + 1}`} className="w-full h-32 object-cover rounded" />
                   <button
@@ -154,7 +123,7 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
                         await deleteObject(imageRef);
                         setFormData((prev: FormData) => ({
                           ...prev,
-                          farmerImages: prev.farmerImages.filter(u => u !== url)
+                          farmerImages: (prev.farmerImages || []).filter(u => u !== url)
                         }));
                       } catch (error) {
                         console.error('Error deleting image:', error);

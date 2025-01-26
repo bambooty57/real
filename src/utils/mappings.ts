@@ -17,24 +17,63 @@ const equipmentTypeMap: { [key: string]: string } = {
 // 제조사 매핑
 export const getKoreanManufacturer = (manufacturer: string): string => {
   const manufacturerMap: { [key: string]: string } = {
-    'john_deere': '존디어',
-    'kubota': '구보다',
+    // 국내 제조사
     'daedong': '대동',
     'kukje': '국제',
     'ls': '엘에스',
-    'yanmar': '얀마',
-    'newholland': '뉴홀랜드',
-    'mf': '엠에프',
-    'case': '케이스',
+    'dongyang': '동양',
+    'asia': '아시아',
     'hyundai': '현대',
     'samsung': '삼성',
+    'doosan': '두산',
+    'tong_yang': '동양',
+    'kumsung': '금성',
+    'hansung': '한성',
+    'tymnet': '티와이엠',
+    'branson': '브랜슨',
+
+    // 일본 제조사
+    'yanmar': '얀마',
+    'kubota': '구보다',
+    'iseki': '이세키',
+    'mitsubishi': '미쯔비시',
+    'hinomoto': '히노모토',
+    'shibaura': '시바우라',
+
+    // 미국 제조사
+    'john_deere': '존디어',
+    'case': '케이스',
+    'new_holland': '뉴홀랜드',
+    'massey_ferguson': '매시퍼거슨',
+    'agco': '아그코',
+    'caterpillar': '캐터필러',
+    'mccormick': '맥코믹',
+
+    // 유럽 제조사
+    'fendt': '펜트',
+    'claas': '클라스',
+    'deutz_fahr': '도이츠파',
+    'same': '세임',
+    'landini': '란디니',
+    'valtra': '발트라',
+    'zetor': '제토',
+    'lamborghini': '람보르기니',
+    'antonio_carraro': '안토니오 카라로',
+
+    // 중국 제조사
+    'foton': '포톤',
+    'jinma': '진마',
+    'dfam': '동펑',
+    'lovol': '로볼',
+
+    // 건설장비 제조사
     'volvo': '볼보',
     'hitachi': '히타치',
-    'doosan': '두산',
-    'agrico': '아그리코',
-    'star': '스타',
-    'chevrolet': '시보레',
-    'valmet': '발메트'
+    'komatsu': '코마츠',
+    'bobcat': '밥캣',
+    'jcb': 'JCB',
+    'liebherr': '리브헤르',
+    'terex': '테렉스'
   };
   return manufacturerMap[manufacturer] || manufacturer;
 };

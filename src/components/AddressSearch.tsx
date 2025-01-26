@@ -45,7 +45,12 @@ export default function AddressSearch({ onComplete }: AddressSearchProps) {
     }
 
     new window.daum.Postcode({
-      oncomplete: onComplete
+      oncomplete: (data) => {
+        onComplete({
+          ...data,
+          jibunAddress: data.jibunAddress || data.autoJibunAddress || ''
+        });
+      }
     }).open();
   };
 

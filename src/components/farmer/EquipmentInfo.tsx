@@ -23,7 +23,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
   const handleEquipmentChange = (index: number, equipment: Equipment) => {
     setFormData((prev: FormData) => ({
       ...prev,
-      equipments: prev.equipments.map((eq, i) => i === index ? equipment : eq)
+      equipments: (prev.equipments || []).map((eq, i) => i === index ? equipment : eq)
     }));
   };
 
@@ -33,7 +33,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
       
       {/* 농기계 목록 */}
       <div className="space-y-4">
-        {formData.equipments.map((equipment, index) => (
+        {(formData.equipments || []).map((equipment, index) => (
           <div key={equipment.id} className="p-4 border rounded-lg space-y-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">농기계 {index + 1}</h3>
@@ -42,7 +42,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                 onClick={() => {
                   setFormData((prev: FormData) => ({
                     ...prev,
-                    equipments: prev.equipments.filter(eq => eq.id !== equipment.id)
+                    equipments: (prev.equipments || []).filter(eq => eq.id !== equipment.id)
                   }))
                 }}
                 className="text-red-500 hover:text-red-700"
@@ -395,7 +395,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
           setFormData((prev: FormData) => ({
             ...prev,
             equipments: [
-              ...prev.equipments,
+              ...(prev.equipments || []),
               createInitialEquipment()
             ]
           }))

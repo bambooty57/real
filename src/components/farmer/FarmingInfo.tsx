@@ -16,7 +16,7 @@ export default function FarmingInfo({ formData, setFormData }: FarmingInfoProps)
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">영농형태</label>
         <div className="grid grid-cols-2 gap-4">
-          {Object.entries(formData.farmingTypes).map(([key, value]) => (
+          {Object.entries(formData.farmingTypes || {}).map(([key, value]) => (
             <label key={key} className="flex items-center">
               <input
                 type="checkbox"
@@ -24,7 +24,13 @@ export default function FarmingInfo({ formData, setFormData }: FarmingInfoProps)
                 onChange={(e) => setFormData((prev: FormData) => ({
                   ...prev,
                   farmingTypes: {
-                    ...prev.farmingTypes,
+                    ...(prev.farmingTypes || {
+                      paddyFarming: false,
+                      fieldFarming: false,
+                      livestock: false,
+                      orchard: false,
+                      forageCrop: false
+                    }),
                     [key]: e.target.checked
                   }
                 }))}
@@ -46,7 +52,19 @@ export default function FarmingInfo({ formData, setFormData }: FarmingInfoProps)
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">주작물</label>
         <div className="grid grid-cols-3 gap-4">
-          {Object.entries(formData.mainCrop).map(([key, value]) => (
+          {Object.entries(formData.mainCrop || {
+            rice: false,
+            barley: false,
+            hanwoo: false,
+            soybean: false,
+            sweetPotato: false,
+            persimmon: false,
+            pear: false,
+            plum: false,
+            sorghum: false,
+            goat: false,
+            other: false
+          }).map(([key, value]) => (
             <label key={key} className="flex items-center">
               <input
                 type="checkbox"
@@ -54,7 +72,19 @@ export default function FarmingInfo({ formData, setFormData }: FarmingInfoProps)
                 onChange={(e) => setFormData((prev: FormData) => ({
                   ...prev,
                   mainCrop: {
-                    ...prev.mainCrop,
+                    ...(prev.mainCrop || {
+                      rice: false,
+                      barley: false,
+                      hanwoo: false,
+                      soybean: false,
+                      sweetPotato: false,
+                      persimmon: false,
+                      pear: false,
+                      plum: false,
+                      sorghum: false,
+                      goat: false,
+                      other: false
+                    }),
                     [key]: e.target.checked
                   }
                 }))}

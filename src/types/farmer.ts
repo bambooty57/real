@@ -117,19 +117,20 @@ export interface Attachment {
 }
 
 export interface FormData {
+  id?: string;
   name: string;
-  businessName: string;
-  zipCode: string;
-  roadAddress: string;
-  jibunAddress: string;
-  addressDetail: string;
-  canReceiveMail: boolean;
   phone: string;
-  ageGroup: string;
-  memo: string;
-  farmerImages: string[];
-  mainCrop: MainCrop;
-  farmingTypes: FarmingTypes;
-  equipments: Equipment[];
-  rating: number;
+  businessName?: string;
+  zipCode?: string;
+  roadAddress?: string;
+  jibunAddress?: string;
+  addressDetail?: string;
+  canReceiveMail?: boolean;
+  ageGroup?: string;
+  memo?: string;
+  farmerImages?: string[];
+  mainCrop?: MainCrop;
+  farmingTypes?: FarmingTypes;
+  equipments?: Equipment[];
+  rating?: number;
 }

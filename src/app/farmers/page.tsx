@@ -320,15 +320,15 @@ export default function FarmerList() {
         farmer.phone,
         farmer.memo,
         // 농기계 정보 검색
-        ...(farmer.equipments?.map(eq => [
-          eq.type,
-          eq.manufacturer,
+        ...(Array.isArray(farmer.equipments) ? farmer.equipments.map(eq => [
+          getKoreanEquipmentType(eq.type),
+          getKoreanManufacturer(eq.manufacturer),
           eq.model,
-          eq.attachments?.find(a => a.type === 'loader')?.manufacturer,
-          eq.attachments?.find(a => a.type === 'rotary')?.manufacturer,
-          eq.attachments?.find(a => a.type === 'frontWheel')?.manufacturer,
-          eq.attachments?.find(a => a.type === 'rearWheel')?.manufacturer
-        ]).flat() || [])
+          ...(Array.isArray(eq.attachments) ? eq.attachments.map(a => [
+            getKoreanManufacturer(a.manufacturer),
+            a.model
+          ]).flat() : [])
+        ]).flat() : [])
       ].filter(Boolean).map(field => field?.toLowerCase());
 
       if (!searchFields.some(field => field?.includes(searchLower))) {

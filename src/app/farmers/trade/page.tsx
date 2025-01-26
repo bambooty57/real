@@ -108,11 +108,20 @@ export default function TradePage() {
 
   // 부착작업기 정보 가져오는 함수 추가
   const getAttachmentInfo = (equipment: Equipment) => {
-    const attachments = equipment.attachments || [];
-    const loader = attachments.find(a => a.type === 'loader');
-    const rotary = attachments.find(a => a.type === 'rotary');
-    const frontWheel = attachments.find(a => a.type === 'frontWheel');
-    const rearWheel = attachments.find(a => a.type === 'rearWheel');
+    if (!equipment || !Array.isArray(equipment.attachments)) {
+      return {
+        loader: null,
+        rotary: null,
+        frontWheel: null,
+        rearWheel: null
+      };
+    }
+
+    const attachments = equipment.attachments;
+    const loader = attachments.find(a => a && a.type === 'loader');
+    const rotary = attachments.find(a => a && a.type === 'rotary');
+    const frontWheel = attachments.find(a => a && a.type === 'frontWheel');
+    const rearWheel = attachments.find(a => a && a.type === 'rearWheel');
 
     return {
       loader: loader ? {
@@ -120,28 +129,28 @@ export default function TradePage() {
         model: loader.model,
         condition: loader.condition || 0,
         memo: loader.memo || '',
-        images: loader.images?.filter((img): img is string => typeof img === 'string') || []
+        images: Array.isArray(loader.images) ? loader.images.filter((img): img is string => typeof img === 'string') : []
       } : null,
       rotary: rotary ? {
         manufacturer: rotary.manufacturer,
         model: rotary.model,
         condition: rotary.condition || 0,
         memo: rotary.memo || '',
-        images: rotary.images?.filter((img): img is string => typeof img === 'string') || []
+        images: Array.isArray(rotary.images) ? rotary.images.filter((img): img is string => typeof img === 'string') : []
       } : null,
       frontWheel: frontWheel ? {
         manufacturer: frontWheel.manufacturer,
         model: frontWheel.model,
         condition: frontWheel.condition || 0,
         memo: frontWheel.memo || '',
-        images: frontWheel.images?.filter((img): img is string => typeof img === 'string') || []
+        images: Array.isArray(frontWheel.images) ? frontWheel.images.filter((img): img is string => typeof img === 'string') : []
       } : null,
       rearWheel: rearWheel ? {
         manufacturer: rearWheel.manufacturer,
         model: rearWheel.model,
         condition: rearWheel.condition || 0,
         memo: rearWheel.memo || '',
-        images: rearWheel.images?.filter((img): img is string => typeof img === 'string') || []
+        images: Array.isArray(rearWheel.images) ? rearWheel.images.filter((img): img is string => typeof img === 'string') : []
       } : null
     };
   };
@@ -193,8 +202,14 @@ export default function TradePage() {
   const filterEquipments = () => {
     const result: Array<{ farmer: Farmer; equipment: Equipment }> = [];
     
+    if (!Array.isArray(farmers)) return result;
+    
     farmers.forEach(farmer => {
-      farmer.equipments?.forEach(equipment => {
+      if (!farmer || !Array.isArray(farmer.equipments)) return;
+      
+      farmer.equipments.forEach(equipment => {
+        if (!equipment) return;
+        
         // 거래 유형 필터
         if (filters.tradeType === 'sale') {
           if (equipment.tradeType !== 'sale') return;
@@ -480,7 +495,9 @@ export default function TradePage() {
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-lg font-semibold mb-4">검색 결과 ({filteredEquipments.length}건)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredEquipments.map(({ farmer, equipment }, index) => {
+          {Array.isArray(filteredEquipments) && filteredEquipments.map(({ farmer, equipment }, index) => {
+            if (!farmer || !equipment) return null;
+            
             const equipmentType = Object.entries(equipmentTypeMap).find(([code, _]) => code === equipment.type)?.[1] || equipment.type;
             const manufacturer = getKoreanManufacturer(equipment.manufacturer || '');
             
