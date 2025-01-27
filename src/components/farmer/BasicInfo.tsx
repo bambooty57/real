@@ -89,27 +89,26 @@ export default function BasicInfo({ formData, setFormData }: Props) {
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-gray-700">전화번호 *</label>
         <div className="flex gap-2">
-          <div className="flex-1 flex items-center">
-            <span className="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-              010
-            </span>
+          <div className="relative">
             <input
               type="text"
               id="phone"
+              name="phone"
               value={formData.phone ? formData.phone.replace(/^010/, '') : ''}
               onChange={(e) => {
-                let value = e.target.value.replace(/[^0-9]/g, '');
-                if (value.length > 8) value = value.slice(0, 8);
-                if (value.length >= 4) {
-                  value = value.slice(0, 4) + '-' + value.slice(4);
-                }
-                setFormData((prev: FormData) => ({ ...prev, phone: '010-' + value }));
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                setFormData((prev: FormData) => ({
+                  ...prev,
+                  phone: `010${value}`
+                }));
               }}
-              placeholder="0000-0000"
-              maxLength={9}
-              className="block w-full rounded-r-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
+              placeholder="나머지 번호 입력"
             />
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <span className="text-gray-500">010</span>
+            </div>
           </div>
           <button
             type="button"
