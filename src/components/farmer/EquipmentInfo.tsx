@@ -13,31 +13,51 @@ import TractorInfo from './equipment/TractorInfo';
 import TransplanterInfo from './equipment/TransplanterInfo';
 import CombineInfo from './equipment/CombineInfo';
 import ForkliftInfo from './equipment/ForkliftInfo';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
 
 interface EquipmentInfoProps {
   formData: FormData;
   setFormData: (data: FormData | ((prev: FormData) => FormData)) => void;
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
 export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoProps) {
   const handleEquipmentChange = async (index: number, equipment: Equipment) => {
     try {
-      // 이미지 파일 크기 제한 (5MB)
-      const MAX_FILE_SIZE = 5 * 1024 * 1024;
+      // 이미지 파일 크기 제한 (10MB)
       
-      // 이미지 파일 체크
+      // 이미지 파일 체크 및 업로드
       if (equipment.images) {
-        const validImages = equipment.images.map(img => {
+        const uploadPromises = equipment.images.map(async (img) => {
           if (img instanceof File) {
             if (img.size > MAX_FILE_SIZE) {
-              alert('이미지 크기는 5MB를 초과할 수 없습니다.');
+              alert('이미지 크기는 10MB를 초과할 수 없습니다.');
+              return undefined;
+            }
+            
+            try {
+              // Firebase Storage에 업로드
+              const timestamp = Date.now();
+              const cleanFileName = img.name.replace(/[^a-zA-Z0-9.]/g, '_');
+              const storageRef = ref(storage, `farmers/${equipment.id}/equipment/${timestamp}-${cleanFileName}`);
+              
+              const snapshot = await uploadBytes(storageRef, img);
+              const downloadURL = await getDownloadURL(snapshot.ref);
+              
+              return downloadURL;
+            } catch (error) {
+              console.error('Image upload error:', error);
+              alert('이미지 업로드 중 오류가 발생했습니다.');
               return undefined;
             }
           }
           return img;
-        }).filter((img): img is string | File => img !== undefined);
-        
-        equipment.images = validImages;
+        });
+
+        const uploadedImages = await Promise.all(uploadPromises);
+        equipment.images = uploadedImages.filter((img): img is string => img !== undefined);
       }
 
       setFormData((prev: FormData) => ({
@@ -209,7 +229,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
 
               {/* 이미지 업로드 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">이미지 (최대 4장, 각 5MB 이하)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">이미지 (최대 4장, 각 10MB 이하)</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[...Array(4)].map((_, imageIndex) => (
                     <div key={imageIndex} className="relative">
