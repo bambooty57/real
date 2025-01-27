@@ -37,10 +37,13 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
       }
       reader.readAsDataURL(file)
 
-      // Firebase Storage에 업로드
-      const storageRef = ref(storage, `farmers/${farmerId}/${category}/${Date.now()}-${file.name}`)
-      await uploadBytes(storageRef, file)
-      const downloadURL = await getDownloadURL(storageRef)
+      // Firebase Storage에 직접 업로드
+      const timestamp = Date.now()
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
+      const storageRef = ref(storage, `farmers/${farmerId}/${category}/${timestamp}-${cleanFileName}`)
+      
+      const snapshot = await uploadBytes(storageRef, file)
+      const downloadURL = await getDownloadURL(snapshot.ref)
       
       onUploadComplete(downloadURL)
       
