@@ -15,6 +15,7 @@ export default function BasicInfo({ formData, setFormData }: Props) {
   const [isDuplicateChecking, setIsDuplicateChecking] = useState(false);
   const [duplicateMessage, setDuplicateMessage] = useState<string | null>(null);
   const [isNameVerified, setIsNameVerified] = useState(false);
+  const [isManualAddressMode, setIsManualAddressMode] = useState(false);
 
   const checkDuplicate = async () => {
     if (!formData.name || !formData.phone) {
@@ -192,16 +193,46 @@ export default function BasicInfo({ formData, setFormData }: Props) {
       {/* 주소 */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">주소</label>
-        <AddressSearch
-          onComplete={(data: { zonecode: string; roadAddress: string; jibunAddress?: string; }) => {
-            setFormData(prev => ({
-              ...prev,
-              zipCode: data.zonecode,
-              roadAddress: data.roadAddress,
-              jibunAddress: data.jibunAddress || '',
-            }))
-          }}
-        />
+        <div className="flex gap-2">
+          <AddressSearch
+            onComplete={(data: { zonecode: string; roadAddress: string; jibunAddress?: string; }) => {
+              setFormData(prev => ({
+                ...prev,
+                zipCode: data.zonecode,
+                roadAddress: data.roadAddress,
+                jibunAddress: data.jibunAddress || '',
+              }));
+              setIsManualAddressMode(false);
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setIsManualAddressMode(!isManualAddressMode)}
+            className={`inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md ${
+              isManualAddressMode 
+                ? 'text-white bg-blue-500 hover:bg-blue-600' 
+                : 'text-gray-700 bg-white hover:bg-gray-50'
+            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+          >
+            {isManualAddressMode ? '수동입력 중' : '수동입력'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFormData(prev => ({
+                ...prev,
+                zipCode: '',
+                roadAddress: '',
+                jibunAddress: '',
+                addressDetail: ''
+              }));
+              setIsManualAddressMode(false);
+            }}
+            className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            초기화
+          </button>
+        </div>
         
         {/* 우편번호 */}
         <div>
@@ -210,8 +241,11 @@ export default function BasicInfo({ formData, setFormData }: Props) {
             type="text"
             id="zipCode"
             value={formData.zipCode || ''}
-            readOnly
-            className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+            onChange={(e) => isManualAddressMode && setFormData(prev => ({ ...prev, zipCode: e.target.value }))}
+            readOnly={!isManualAddressMode}
+            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+              !isManualAddressMode ? 'bg-gray-50' : 'bg-white'
+            }`}
           />
         </div>
 
@@ -222,8 +256,11 @@ export default function BasicInfo({ formData, setFormData }: Props) {
             type="text"
             id="roadAddress"
             value={formData.roadAddress || ''}
-            readOnly
-            className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+            onChange={(e) => isManualAddressMode && setFormData(prev => ({ ...prev, roadAddress: e.target.value }))}
+            readOnly={!isManualAddressMode}
+            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+              !isManualAddressMode ? 'bg-gray-50' : 'bg-white'
+            }`}
           />
         </div>
 
@@ -234,8 +271,11 @@ export default function BasicInfo({ formData, setFormData }: Props) {
             type="text"
             id="jibunAddress"
             value={formData.jibunAddress || ''}
-            readOnly
-            className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+            onChange={(e) => isManualAddressMode && setFormData(prev => ({ ...prev, jibunAddress: e.target.value }))}
+            readOnly={!isManualAddressMode}
+            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+              !isManualAddressMode ? 'bg-gray-50' : 'bg-white'
+            }`}
           />
         </div>
 
