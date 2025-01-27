@@ -60,11 +60,11 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
             farmerImages: data.farmerImages || [],
             mainCrop: data.mainCrop || {},
             farmingTypes: {
-              waterPaddy: data.farmingTypes ? data.farmingTypes.waterPaddy : false,
-              fieldFarming: data.farmingTypes ? data.farmingTypes.fieldFarming : false,
-              livestock: data.farmingTypes ? data.farmingTypes.livestock : false,
-              orchard: data.farmingTypes ? data.farmingTypes.orchard : false,
-              forageCrop: data.farmingTypes ? data.farmingTypes.forageCrop : false
+              waterPaddy: data.farmingTypes?.waterPaddy || false,
+              fieldFarming: data.farmingTypes?.fieldFarming || false,
+              livestock: data.farmingTypes?.livestock || false,
+              orchard: data.farmingTypes?.orchard || false,
+              forageCrop: data.farmingTypes?.forageCrop || false
             },
             equipments: (data.equipments || []).map((eq: any) => ({
               ...eq,
