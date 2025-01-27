@@ -15,7 +15,17 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { BiRefresh } from 'react-icons/bi';
-import { formatPhoneNumber } from '@/utils/format'
+import { FaPrint } from 'react-icons/fa';
+
+// 전화번호 포맷팅 함수
+const formatPhoneNumber = (phone: string) => {
+  if (!phone) return '';
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 11) {
+    return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  }
+  return phone;
+};
 
 export default function FarmersPage() {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
