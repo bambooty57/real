@@ -8,9 +8,17 @@ interface Props {
   setFormData: (data: FormData | ((prev: FormData) => FormData)) => void;
 }
 
+type FarmingTypes = {
+  waterPaddy: boolean;
+  fieldFarming: boolean;
+  livestock: boolean;
+  orchard: boolean;
+  forageCrop: boolean;
+};
+
 export default function FarmingInfo({ formData, setFormData }: Props) {
   // 기본 영농형태 타입 정의
-  const defaultFarmingTypes = {
+  const defaultFarmingTypes: FarmingTypes = {
     waterPaddy: false,
     fieldFarming: false,
     livestock: false,
@@ -29,7 +37,7 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">영농형태</label>
         <div className="grid grid-cols-2 gap-4">
-          {Object.entries(defaultFarmingTypes).map(([key]) => (
+          {(Object.entries(defaultFarmingTypes) as [keyof FarmingTypes, boolean][]).map(([key]) => (
             <label key={key} className="flex items-center">
               <input
                 type="checkbox"
