@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { doc, getDoc, deleteDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { db, storage } from '@/lib/firebase'
+import { ref, deleteObject } from 'firebase/storage'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Farmer, Equipment } from '@/types/farmer'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
 import { FaPrint } from 'react-icons/fa'
 import React from 'react'
+import { toast } from 'react-hot-toast'
 
 interface AttachmentImages {
   loader?: string[]
@@ -45,6 +47,61 @@ interface FarmerDetailClientProps {
   farmerId: string
 }
 
+const deleteAllImages = async (farmer: Farmer) => {
+  const deletePromises: Promise<void>[] = [];
+
+  // 농민 이미지 삭제
+  if (farmer.farmerImages?.length) {
+    farmer.farmerImages.forEach(imageUrl => {
+      if (typeof imageUrl === 'string') {
+        try {
+          const imageRef = ref(storage, imageUrl);
+          deletePromises.push(deleteObject(imageRef));
+        } catch (error) {
+          console.error('Error creating reference for farmer image:', error);
+        }
+      }
+    });
+  }
+
+  // 장비 이미지 삭제
+  farmer.equipments?.forEach(equipment => {
+    // 장비 본체 이미지
+    equipment.images?.forEach(imageUrl => {
+      if (typeof imageUrl === 'string') {
+        try {
+          const imageRef = ref(storage, imageUrl);
+          deletePromises.push(deleteObject(imageRef));
+        } catch (error) {
+          console.error('Error creating reference for equipment image:', error);
+        }
+      }
+    });
+
+    // 부착작업기 이미지
+    equipment.attachments?.forEach(attachment => {
+      attachment.images?.forEach(imageUrl => {
+        if (typeof imageUrl === 'string') {
+          try {
+            const imageRef = ref(storage, imageUrl);
+            deletePromises.push(deleteObject(imageRef));
+          } catch (error) {
+            console.error('Error creating reference for attachment image:', error);
+          }
+        }
+      });
+    });
+  });
+
+  // 모든 이미지 삭제 실행
+  try {
+    await Promise.allSettled(deletePromises);
+  } catch (error) {
+    console.error('Error deleting images:', error);
+    throw error;
+  }
+};
+
 export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps) {
   const [farmer, setFarmer] = useState<Farmer | null>(null)
   const [loading, setLoading] = useState(true)
@@ -79,11 +136,17 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
     }
 
     try {
-      await deleteDoc(doc(db, 'farmers', farmerId))
-      router.push('/')
+      if (farmer) {
+        // 먼저 모든 이미지 삭제
+        await deleteAllImages(farmer)
+        // 그 다음 Firestore 문서 삭제
+        await deleteDoc(doc(db, 'farmers', farmerId))
+        toast.success('농민 정보가 삭제되었습니다.')
+        router.push('/farmers')
+      }
     } catch (error) {
       console.error('Error deleting farmer:', error)
-      alert('삭제 중 오류가 발생했습니다.')
+      toast.error('삭제 중 오류가 발생했습니다.')
     }
   }
 
