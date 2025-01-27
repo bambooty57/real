@@ -15,6 +15,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { BiRefresh } from 'react-icons/bi';
+import { formatPhoneNumber } from '@/utils/format'
 
 export default function FarmersPage() {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
@@ -709,7 +710,7 @@ export default function FarmersPage() {
                     href={`tel:${farmer.phone}`}
                     className="text-blue-600 hover:text-blue-800 hover:underline"
                   >
-                    {farmer.phone}
+                    {formatPhoneNumber(farmer.phone)}
                   </a>
                 </p>
                 {/* 주소 정보 */}
@@ -756,6 +757,65 @@ export default function FarmersPage() {
                     <span className="font-medium">상호:</span> {farmer.businessName}
                   </p>
                 )}
+
+                {/* 우편수취가능여부 */}
+                <p>
+                  <span className="font-medium">우편수취:</span>
+                  <span className={`ml-2 px-2 py-0.5 text-sm rounded ${
+                    farmer.canReceiveMail ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {farmer.canReceiveMail ? '가능' : '불가능'}
+                  </span>
+                </p>
+
+                {/* 영농형태 */}
+                {farmer.farmingTypes && Object.entries(farmer.farmingTypes).some(([_, value]) => value) && (
+                  <div>
+                    <p className="font-medium">영농형태:</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {Object.entries(farmer.farmingTypes)
+                        .filter(([_, value]) => value)
+                        .map(([key]) => (
+                          <span
+                            key={key}
+                            className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded"
+                          >
+                            {key === 'waterPaddy' ? '수도작' :
+                             key === 'fieldFarming' ? '밭농사' :
+                             key === 'orchard' ? '과수원' :
+                             key === 'livestock' ? '축산업' :
+                             key === 'forageCrop' ? '사료작물' : key}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 주작물 */}
+                {farmer.mainCrop && Object.entries(farmer.mainCrop).some(([key, value]) => value && !key.endsWith('Details')) && (
+                  <div>
+                    <p className="font-medium">주작물:</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {Object.entries(farmer.mainCrop)
+                        .filter(([key, value]) => value && !key.endsWith('Details'))
+                        .map(([key]) => (
+                          <span
+                            key={key}
+                            className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded"
+                          >
+                            {key === 'foodCrops' ? '식량작물' :
+                             key === 'facilityHort' ? '시설원예' :
+                             key === 'fieldVeg' ? '노지채소' :
+                             key === 'fruits' ? '과수' :
+                             key === 'specialCrops' ? '특용작물' :
+                             key === 'flowers' ? '화훼' :
+                             key === 'livestock' ? '축산' : key}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* 보유 농기계 */}
                 {farmer.equipments && farmer.equipments.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-200">
