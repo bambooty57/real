@@ -145,7 +145,7 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                 <label className="block text-sm font-medium text-gray-700">모델명</label>
                 <input
                   type="text"
-                  value={equipment.model}
+                  value={equipment.model || ''}
                   onChange={(e) => {
                     handleEquipmentChange(index, {
                       ...equipment,
