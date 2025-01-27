@@ -82,6 +82,7 @@ export interface Farmer {
   name: string;
   phone: string;
   businessName?: string;
+  postalCode?: string;
   zipCode?: string;
   roadAddress?: string;
   jibunAddress?: string;

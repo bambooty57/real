@@ -126,7 +126,18 @@ export default function NewFarmer({ mode = 'new', farmerId = '', initialData = n
     try {
       // 데이터 유효성 검사
       if (!String(formData.name).trim()) {
-        alert('이름은 필수 입력 항목입니다.')
+        toast.error('이름은 필수 입력 항목입니다.')
+        setIsSubmitting(false)
+        return
+      }
+
+      // 중복확인 여부 체크
+      const basicInfoComponent = document.querySelector('input[name="name"]');
+      const isVerified = basicInfoComponent?.classList.contains('border-green-500');
+      
+      if (!isVerified && mode === 'new') {
+        toast.error('이름 중복확인이 필요합니다.')
+        setIsSubmitting(false)
         return
       }
 

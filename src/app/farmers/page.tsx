@@ -31,6 +31,8 @@ export default function FarmersPage() {
   const [selectedMainCrop, setSelectedMainCrop] = useState('');
   const [selectedMailOption, setSelectedMailOption] = useState('all');
   const [selectedSaleType, setSelectedSaleType] = useState('all');
+  const [selectedEquipmentType, setSelectedEquipmentType] = useState('');
+  const [selectedManufacturer, setSelectedManufacturer] = useState('');
   const farmersPerPage = 15;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedFarmers, setSelectedFarmers] = useState<string[]>([]);
@@ -178,6 +180,20 @@ export default function FarmersPage() {
       }
     }
 
+    // 6. 농기계 종류 필터
+    if (selectedEquipmentType) {
+      if (!farmer.equipments?.some(eq => eq?.type === selectedEquipmentType)) {
+        return false;
+      }
+    }
+
+    // 7. 제조사 필터
+    if (selectedManufacturer) {
+      if (!farmer.equipments?.some(eq => eq?.manufacturer === selectedManufacturer)) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -234,6 +250,18 @@ export default function FarmersPage() {
         ...doc.data()
       })) as Farmer[];
       setFarmers(farmersData);
+      // 모든 필터 상태 초기화
+      setSearchTerm('');
+      setSelectedCity('');
+      setSelectedDistrict('');
+      setSelectedVillage('');
+      setSelectedFarmingType('');
+      setSelectedMainCrop('');
+      setSelectedMailOption('all');
+      setSelectedSaleType('all');
+      setSelectedEquipmentType('');
+      setSelectedManufacturer('');
+      setSelectedFarmers([]);
       toast.success('목록이 새로고침되었습니다.');
     } catch (error) {
       console.error('Error refreshing farmers:', error);
@@ -362,19 +390,6 @@ export default function FarmersPage() {
         </div>
       </div>
 
-      {/* 필터 섹션 위에 전체 선택 체크박스 추가 */}
-      <div className="mb-4 flex items-center">
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={selectedFarmers.length === currentFarmers.length && currentFarmers.length > 0}
-            onChange={(e) => handleSelectAll(e.target.checked)}
-            className="form-checkbox h-5 w-5 text-blue-600"
-          />
-          <span className="text-gray-700">전체 선택</span>
-        </label>
-      </div>
-
       {/* 필터 섹션 */}
       <div className="bg-white p-4 rounded-lg shadow mb-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -501,6 +516,66 @@ export default function FarmersPage() {
               <option value="no">불가능</option>
             </select>
           </div>
+
+          {/* 농기계 종류 필터 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              농기계 종류
+            </label>
+            <select
+              value={selectedEquipmentType}
+              onChange={(e) => setSelectedEquipmentType(e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="">전체</option>
+              <option value="tractor">트랙터</option>
+              <option value="combine">콤바인</option>
+              <option value="rice_transplanter">이앙기</option>
+              <option value="forklift">지게차</option>
+              <option value="excavator">굴삭기</option>
+              <option value="skid_loader">스키로더</option>
+              <option value="dryer">건조기</option>
+              <option value="silo">싸일론</option>
+              <option value="drone">드론</option>
+            </select>
+          </div>
+
+          {/* 제조사 필터 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              제조사
+            </label>
+            <select
+              value={selectedManufacturer}
+              onChange={(e) => setSelectedManufacturer(e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="">전체</option>
+              <option value="DAEDONG">대동</option>
+              <option value="LS">LS</option>
+              <option value="KUKJE">국제</option>
+              <option value="TYM">TYM</option>
+              <option value="BRANSON">브랜슨</option>
+              <option value="DONGYANG">동양</option>
+              <option value="ASIA">아시아</option>
+              <option value="YANMAR">얀마</option>
+              <option value="ISEKI">이세키</option>
+              <option value="KUBOTA">구보다</option>
+              <option value="JOHN_DEERE">존디어</option>
+              <option value="NEW_HOLLAND">뉴홀랜드</option>
+              <option value="MASSEY_FERGUSON">매시퍼거슨</option>
+              <option value="HYUNDAI">현대건설기계</option>
+              <option value="SAMSUNG">삼성건설기계</option>
+              <option value="VOLVO">볼보건설기계</option>
+              <option value="DAEWOO">대우건설기계</option>
+              <option value="DOOSAN">두산인프라코어</option>
+              <option value="BOBCAT">밥캣</option>
+              <option value="CATERPILLAR">캐터필러</option>
+              <option value="KOMATSU">코마츠</option>
+              <option value="HITACHI">히타치</option>
+              <option value="JCB">JCB</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -541,6 +616,9 @@ export default function FarmersPage() {
                               e.target.src = '/placeholder-image.jpg';
                             }}
                           />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                            <span>농민 사진 {index + 1}/{farmer.farmerImages.length}</span>
+                          </div>
                         </div>
                       </SwiperSlide>
                     )
@@ -569,6 +647,12 @@ export default function FarmersPage() {
                               e.target.src = '/placeholder-image.jpg';
                             }}
                           />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                            <span>
+                              {equipment.manufacturer} {equipment.model} {getKoreanEquipmentType(equipment.type)}
+                              {' '}({imgIndex + 1}/{equipment.images?.filter(Boolean).length})
+                            </span>
+                          </div>
                         </div>
                       </SwiperSlide>
                     ))}
@@ -587,6 +671,17 @@ export default function FarmersPage() {
                                 e.target.src = '/placeholder-image.jpg';
                               }}
                             />
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                              <span>
+                                {getKoreanEquipmentType(equipment.type)}의 
+                                {attachment.type === 'loader' ? ' 로더' :
+                                 attachment.type === 'rotary' ? ' 로터리' :
+                                 attachment.type === 'frontWheel' ? ' 전륜' :
+                                 attachment.type === 'rearWheel' ? ' 후륜' : 
+                                 ` ${attachment.type}`}
+                                {' '}({imgIndex + 1}/{attachment.images?.filter(Boolean).length})
+                              </span>
+                            </div>
                           </div>
                         </SwiperSlide>
                       ))
@@ -598,48 +693,107 @@ export default function FarmersPage() {
 
             {/* 농민 정보 */}
             <div className="p-4">
-              <div className="font-bold text-lg mb-2">{farmer.name}</div>
-              <div className="text-gray-600 mb-1">{farmer.phone}</div>
-              {farmer.businessName && (
-                <div className="text-gray-600 mb-1">{farmer.businessName}</div>
-              )}
-              <div className="text-gray-500 text-sm mb-2">
-                {farmer.roadAddress || farmer.jibunAddress}
-              </div>
-              
-              {/* 영농형태 */}
-              <div className="mb-2">
-                <span className="font-medium">영농형태: </span>
-                <span className="text-sm">
-                  {Object.entries(farmer.farmingTypes || {})
-                    .filter(([_, value]) => value)
-                    .map(([key]) => getFarmingTypeDisplay(key))
-                    .join(', ')}
-                </span>
-              </div>
-
-              {/* 우편수취여부 */}
-              <div className="mb-4">
-                <span className="font-medium">우편수취: </span>
-                <span className={`text-sm ${farmer.canReceiveMail ? 'text-green-600' : 'text-red-600'}`}>
-                  {farmer.canReceiveMail ? 'O' : 'X'}
-                </span>
-              </div>
-
-              {/* 버튼 영역 */}
-              <div className="flex justify-between mt-4">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold">{farmer.name}</h3>
                 <Link
                   href={`/farmers/${farmer.id}`}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  className="text-blue-600 hover:text-blue-800"
                 >
                   상세보기
                 </Link>
-                <button
-                  onClick={() => handleDelete(farmer.id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                >
-                  삭제
-                </button>
+              </div>
+              <div className="space-y-2">
+                <p className="flex items-center">
+                  <span className="font-medium mr-2">전화:</span>
+                  <a 
+                    href={`tel:${farmer.phone}`}
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {farmer.phone}
+                  </a>
+                </p>
+                {/* 주소 정보 */}
+                <div className="space-y-1">
+                  {farmer.postalCode && (
+                    <p>
+                      <span className="font-medium">우편번호:</span> {farmer.postalCode}
+                    </p>
+                  )}
+                  {farmer.roadAddress && (
+                    <p className="flex items-center">
+                      <span className="font-medium mr-2">도로명:</span>
+                      <a 
+                        href={`https://map.kakao.com/link/search/${farmer.roadAddress}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        {farmer.roadAddress}
+                      </a>
+                    </p>
+                  )}
+                  {farmer.jibunAddress && (
+                    <p className="flex items-center">
+                      <span className="font-medium mr-2">지번:</span>
+                      <a 
+                        href={`https://map.kakao.com/link/search/${farmer.jibunAddress}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        {farmer.jibunAddress}
+                      </a>
+                    </p>
+                  )}
+                  {farmer.addressDetail && (
+                    <p>
+                      <span className="font-medium">상세주소:</span> {farmer.addressDetail}
+                    </p>
+                  )}
+                </div>
+                {farmer.businessName && (
+                  <p>
+                    <span className="font-medium">상호:</span> {farmer.businessName}
+                  </p>
+                )}
+                {/* 보유 농기계 */}
+                {farmer.equipments && farmer.equipments.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="font-medium mb-2">보유 농기계</p>
+                    <div className="space-y-1">
+                      {farmer.equipments.map((equipment, index) => (
+                        <div key={index} className="text-sm">
+                          <span className="text-gray-600">
+                            {equipment.type === 'tractor' ? '트랙터' :
+                             equipment.type === 'combine' ? '콤바인' :
+                             equipment.type === 'rice_transplanter' ? '이앙기' :
+                             equipment.type === 'forklift' ? '지게차' :
+                             equipment.type === 'excavator' ? '굴삭기' :
+                             equipment.type === 'skid_loader' ? '스키로더' :
+                             equipment.type === 'dryer' ? '건조기' :
+                             equipment.type === 'silo' ? '싸일론' :
+                             equipment.type === 'drone' ? '드론' :
+                             equipment.type}
+                          </span>
+                          {equipment.manufacturer && (
+                            <span className="text-gray-500">
+                              {' - '}
+                              {equipment.manufacturer}
+                              {equipment.model && ` ${equipment.model}`}
+                            </span>
+                          )}
+                          {equipment.tradeType && (
+                            <span className={`ml-2 px-1.5 py-0.5 text-xs rounded ${
+                              equipment.tradeType === 'sale' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                            }`}>
+                              {equipment.tradeType === 'sale' ? '판매' : '구매'}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

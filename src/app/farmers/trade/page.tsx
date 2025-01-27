@@ -7,6 +7,7 @@ import Link from 'next/link'
 import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import { Equipment as BaseEquipment } from '@/types/farmer'
+import { MANUFACTURERS } from '@/constants/manufacturers'
 
 interface Equipment extends BaseEquipment {
   tradeStatus?: string;
@@ -459,28 +460,11 @@ export default function TradePage() {
                 className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
               >
                 <option value="">전체</option>
-                <option value="daedong">대동</option>
-                <option value="kukje">국제</option>
-                <option value="ls">LS</option>
-                <option value="dongyang">동양</option>
-                <option value="asia">아세아</option>
-                <option value="yanmar">얀마</option>
-                <option value="iseki">이세키</option>
-                <option value="john_deere">존디어</option>
-                <option value="kubota">구보다</option>
-                <option value="fendt">펜트</option>
-                <option value="case">케이스</option>
-                <option value="new_holland">뉴홀랜드</option>
-                <option value="mf">MF</option>
-                <option value="kumsung">금성</option>
-                <option value="fiat">피아트</option>
-                <option value="hyundai">현대</option>
-                <option value="doosan">두산</option>
-                <option value="volvo">볼보</option>
-                <option value="samsung">삼성</option>
-                <option value="daewoo">대우</option>
-                <option value="hitachi">히타치</option>
-                <option value="claas">클라스</option>
+                {MANUFACTURERS.MAIN.map(({ value, label }) => (
+                  <option key={value} value={value.toLowerCase()}>
+                    {label}
+                  </option>
+                ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">

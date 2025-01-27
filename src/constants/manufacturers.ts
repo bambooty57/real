@@ -25,6 +25,16 @@ export const MANUFACTURERS = {
     { value: 'CASE_IH', label: '케이스IH' },
     { value: 'MAHINDRA', label: '마힌드라' },
     { value: 'KIOTI', label: '키오티' },
+    { value: 'HYUNDAI', label: '현대건설기계' },
+    { value: 'SAMSUNG', label: '삼성건설기계' },
+    { value: 'VOLVO', label: '볼보건설기계' },
+    { value: 'DAEWOO', label: '대우건설기계' },
+    { value: 'DOOSAN', label: '두산인프라코어' },
+    { value: 'BOBCAT', label: '밥캣' },
+    { value: 'CATERPILLAR', label: '캐터필러' },
+    { value: 'KOMATSU', label: '코마츠' },
+    { value: 'HITACHI', label: '히타치' },
+    { value: 'JCB', label: 'JCB' },
     { value: 'OTHER', label: '기타' }
   ],
   EQUIPMENT: [

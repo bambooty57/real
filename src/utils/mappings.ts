@@ -28,14 +28,15 @@ export const getKoreanManufacturer = (manufacturer: string): string => {
     'ls': '엘에스',
     'dongyang': '동양',
     'asia': '아시아',
-    'hyundai': '현대',
-    'samsung': '삼성',
-    'doosan': '두산',
+    'hyundai': '현대건설기계',
+    'samsung': '삼성건설기계',
+    'doosan': '두산인프라코어',
     'tong_yang': '동양',
     'kumsung': '금성',
     'hansung': '한성',
     'tymnet': '티와이엠',
     'branson': '브랜슨',
+    'daewoo': '대우건설기계',
 
     // 일본 제조사
     'yanmar': '얀마',
@@ -44,6 +45,8 @@ export const getKoreanManufacturer = (manufacturer: string): string => {
     'mitsubishi': '미쯔비시',
     'hinomoto': '히노모토',
     'shibaura': '시바우라',
+    'hitachi': '히타치',
+    'komatsu': '코마츠',
 
     // 미국 제조사
     'john_deere': '존디어',
@@ -53,6 +56,7 @@ export const getKoreanManufacturer = (manufacturer: string): string => {
     'agco': '아그코',
     'caterpillar': '캐터필러',
     'mccormick': '맥코믹',
+    'bobcat': '밥캣',
 
     // 유럽 제조사
     'fendt': '펜트',
@@ -64,21 +68,15 @@ export const getKoreanManufacturer = (manufacturer: string): string => {
     'zetor': '제토',
     'lamborghini': '람보르기니',
     'antonio_carraro': '안토니오 카라로',
+    'volvo': '볼보건설기계',
+    'jcb': 'JCB',
+    'liebherr': '리브헤르',
 
     // 중국 제조사
     'foton': '포톤',
     'jinma': '진마',
     'dfam': '동펑',
-    'lovol': '로볼',
-
-    // 건설장비 제조사
-    'volvo': '볼보',
-    'hitachi': '히타치',
-    'komatsu': '코마츠',
-    'bobcat': '밥캣',
-    'jcb': 'JCB',
-    'liebherr': '리브헤르',
-    'terex': '테렉스'
+    'lovol': '로볼'
   };
   return manufacturerMap[manufacturer] || manufacturer;
 };

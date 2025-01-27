@@ -100,10 +100,11 @@ export default function BasicInfo({ formData, setFormData }: Props) {
               onChange={(e) => {
                 let value = e.target.value.replace(/[^0-9]/g, '');
                 if (value.length > 8) value = value.slice(0, 8);
-                if (value.length >= 4) {
+                if (value.length > 4) {
                   value = value.slice(0, 4) + '-' + value.slice(4);
                 }
-                setFormData((prev: FormData) => ({ ...prev, phone: '010' + value }));
+                const formattedValue = '010-' + value;
+                setFormData((prev: FormData) => ({ ...prev, phone: formattedValue }));
               }}
               placeholder="0000-0000"
               maxLength={9}

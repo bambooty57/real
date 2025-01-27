@@ -23,14 +23,13 @@ interface AttachmentImages {
 }
 
 // 별점 표시 함수
-const getRatingStars = (rating: string) => {
-  const numRating = parseInt(rating);
+const getRatingStars = (rating: number) => {
   return (
     <div className="flex items-center">
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`h-4 w-4 ${star <= numRating ? 'text-yellow-400' : 'text-gray-300'}`}
+          className={`h-4 w-4 ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -106,7 +105,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
 
   return (
     <div className="max-w-4xl mx-auto">
-      <style jsx global>{`
+      <style>{`
         @media print {
           /* 기본 인쇄 스타일 */
           body {
@@ -437,7 +436,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                 <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <dt className="text-gray-600">기종</dt>
-                    <dd className="font-medium">{equipment.type}</dd>
+                    <dd className="font-medium">{getKoreanEquipmentType(equipment.type)}</dd>
                   </div>
                   <div>
                     <dt className="text-gray-600">제조사</dt>
@@ -453,19 +452,57 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                   </div>
                   <div>
                     <dt className="text-gray-600">사용시간</dt>
-                    <dd className="font-medium">{equipment.usageHours}</dd>
+                    <dd className="font-medium">{equipment.usageHours}시간</dd>
                   </div>
                   <div>
                     <dt className="text-gray-600">상태등급</dt>
                     <dd className="font-medium">
-                      {'★'.repeat(Number(equipment.condition || 0))}
-                      {'☆'.repeat(5 - Number(equipment.condition || 0))}
+                      {getRatingStars(Number(equipment.rating))}
                     </dd>
                   </div>
                   {equipment.memo && (
                     <div className="col-span-2">
                       <dt className="text-gray-600">메모</dt>
                       <dd className="font-medium whitespace-pre-wrap">{equipment.memo}</dd>
+                    </div>
+                  )}
+                  {/* 부착작업기 정보 */}
+                  {equipment.attachments && equipment.attachments.length > 0 && (
+                    <div className="col-span-2 mt-4">
+                      <dt className="text-gray-600 mb-2">부착작업기</dt>
+                      <dd className="space-y-4">
+                        {equipment.attachments.map((attachment, attIndex) => (
+                          <div key={attIndex} className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-medium mb-2">
+                              {attachment.type === 'loader' ? '로더' :
+                               attachment.type === 'rotary' ? '로터리' :
+                               attachment.type === 'frontWheel' ? '전륜' :
+                               attachment.type === 'rearWheel' ? '후륜' :
+                               attachment.type}
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="text-gray-600">제조사:</span>{' '}
+                                {attachment.manufacturer}
+                              </div>
+                              <div>
+                                <span className="text-gray-600">모델명:</span>{' '}
+                                {attachment.model}
+                              </div>
+                              <div>
+                                <span className="text-gray-600">상태:</span>{' '}
+                                {getRatingStars(Number(attachment.condition || 0))}
+                              </div>
+                              {attachment.memo && (
+                                <div className="col-span-2">
+                                  <span className="text-gray-600">메모:</span>{' '}
+                                  <span className="whitespace-pre-wrap">{attachment.memo}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </dd>
                     </div>
                   )}
                 </dl>
@@ -478,39 +515,57 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
       {/* 2페이지: 이미지 섹션 */}
       <div className="farmer-images-section bg-white shadow rounded-lg p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">농기계 및 농민 이미지</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {/* 농민 이미지 */}
-          {farmer.farmerImages?.map((image, index) => (
-            <div key={`farmer-${index}`} className="relative print-image">
-              <img
-                src={image}
-                alt={`농민 이미지 ${index + 1}`}
-                className="object-cover rounded-lg w-full h-full"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                농민 이미지 {index + 1}
-              </div>
+        
+        {/* 농민 이미지 */}
+        {farmer.farmerImages?.map((image, index) => (
+          <div key={`farmer-${index}`} className="relative print-image">
+            <img
+              src={image}
+              alt={`농민 이미지 ${index + 1}`}
+              className="object-cover rounded-lg w-full h-full"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+              농민 이미지 {index + 1}
             </div>
-          ))}
+          </div>
+        ))}
 
-          {/* 농기계 이미지 */}
-          {farmer.equipments?.map((equipment, eqIndex) => (
-            <React.Fragment key={`eq-${eqIndex}`}>
-              {equipment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
-                <div key={`eq-${eqIndex}-${imgIndex}`} className="relative print-image">
-                  <img
-                    src={image}
-                    alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
-                    className="object-cover rounded-lg w-full h-full"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                    {getKoreanEquipmentType(equipment.type)} {imgIndex + 1}
-                  </div>
+        {/* 농기계 이미지 */}
+        {farmer.equipments?.map((equipment, eqIndex) => (
+          <React.Fragment key={`eq-${eqIndex}`}>
+            {/* 본체 이미지 */}
+            {equipment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
+              <div key={`eq-${eqIndex}-${imgIndex}`} className="relative print-image">
+                <img
+                  src={image}
+                  alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
+                  className="object-cover rounded-lg w-full h-full"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                  {getKoreanEquipmentType(equipment.type)} {imgIndex + 1}
                 </div>
-              ))}
-            </React.Fragment>
-          ))}
-        </div>
+              </div>
+            ))}
+
+            {/* 부착작업기 이미지 */}
+            {equipment.attachments?.map((attachment, attIndex) => (
+              <React.Fragment key={`att-${eqIndex}-${attIndex}`}>
+                {attachment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
+                  <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="relative print-image">
+                    <img
+                      src={image}
+                      alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
+                      className="object-cover rounded-lg w-full h-full"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                      {getKoreanEquipmentType(equipment.type)}의 {attachment.type} {imgIndex + 1}
+                    </div>
+                  </div>
+                ))}
+              </React.Fragment>
+            ))}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   )
