@@ -92,7 +92,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                   <label className="block text-sm font-medium text-gray-700">모델명 *</label>
                   <input
                     type="text"
-                    value={attachment.model}
+                    value={attachment.model || ''}
                     onChange={(e) => {
                       onEquipmentChange({
                         ...equipment,
@@ -143,7 +143,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                 <div>
                   <label className="block text-sm font-medium text-gray-700">메모</label>
                   <textarea
-                    value={attachment.memo}
+                    value={attachment.memo || ''}
                     onChange={(e) => {
                       onEquipmentChange({
                         ...equipment,
