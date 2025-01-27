@@ -8,6 +8,8 @@ interface ForkliftInfoProps {
   onEquipmentChange: (equipment: Equipment) => void;
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
 export default function ForkliftInfo({ equipment, onEquipmentChange }: ForkliftInfoProps) {
   return (
     <div className="space-y-4 border-b pb-4">
@@ -119,6 +121,41 @@ export default function ForkliftInfo({ equipment, onEquipmentChange }: ForkliftI
           />
           <span className="ml-2 text-sm text-gray-700">사이드 시프트 있음</span>
         </label>
+      </div>
+
+      {/* 이미지 업로드 */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">이미지 (최대 4장, 각 10MB 이하)</label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    // 파일 크기 체크
+                    if (file.size > MAX_FILE_SIZE) {
+                      alert('이미지 크기는 10MB를 초과할 수 없습니다.');
+                      return;
+                    }
+                    
+                    onEquipmentChange({
+                      ...equipment,
+                      images: [
+                        ...(equipment.images || []).slice(0, index),
+                        file,
+                        ...(equipment.images || []).slice(index + 1)
+                      ]
+                    });
+                  }
+                }}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
