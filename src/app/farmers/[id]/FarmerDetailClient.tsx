@@ -115,7 +115,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             print-color-adjust: exact !important;
           }
           
-          /* 1페이지: 기본정보 2열 배치 */
+          /* 1페이지: 기본정보 */
           .print-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -123,9 +123,10 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             page-break-after: always;
           }
           
-          /* 2페이지: 보유농기계 2열 배치 */
+          /* 2페이지: 보유농기계 */
           .equipment-info-section {
             page-break-before: always;
+            page-break-after: always;
           }
           
           .equipment-info-section .grid {
@@ -133,7 +134,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             gap: 20px;
           }
           
-          /* 3페이지: 이미지 4열 배치 */
+          /* 3페이지: 이미지 */
           .images-section {
             page-break-before: always;
           }
@@ -194,12 +195,6 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             삭제
           </button>
         </div>
-      </div>
-
-      {/* 인쇄용 헤더 */}
-      <div className="hidden print:block text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">농민 상세 정보</h1>
-        <p className="text-gray-600">{new Date().toLocaleDateString('ko-KR')} 출력</p>
       </div>
 
       {/* 2열 레이아웃 컨테이너 */}
@@ -558,13 +553,13 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                         <div>
                           <dt className="text-gray-600">거래유형</dt>
                           <dd className="font-medium">
-                            {equipment.tradeType === 'sale' ? '판매' : '구매'}
+                            {equipment.tradeType ? (equipment.tradeType === 'sale' ? '판매' : '구매') : '없음'}
                           </dd>
                         </div>
                         <div>
                           <dt className="text-gray-600">거래방식</dt>
                           <dd className="font-medium">
-                            {equipment.saleType === 'new' ? '신규' : '중고'}
+                            {equipment.saleType ? (equipment.saleType === 'new' ? '신규' : '중고') : '없음'}
                           </dd>
                         </div>
                         {equipment.desiredPrice && (
@@ -586,7 +581,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                             }`}>
                               {equipment.saleStatus === 'available' ? '거래가능' :
                                equipment.saleStatus === 'reserved' ? '예약중' :
-                               equipment.saleStatus === 'completed' ? '거래완료' : '확인중'}
+                               equipment.saleStatus === 'completed' ? '거래완료' : '없음'}
                             </span>
                           </dd>
                         </div>
@@ -648,17 +643,10 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
 
       {/* 이미지 섹션 - 새 페이지에 표시 */}
       <div className="images-section bg-white shadow rounded-lg p-6 mb-6">
-        {/* 인쇄용 헤더 */}
-        <div className="hidden print:block mb-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2">농기계 및 농민 이미지</h1>
-            <p className="text-gray-600">{new Date().toLocaleDateString('ko-KR')} 출력</p>
-          </div>
-        </div>
-
-        <h2 className="text-xl font-semibold mb-4">농기계 및 농민 이미지</h2>
+        <h2 className="text-xl font-semibold mb-4 print-hide">농기계 및 농민 이미지</h2>
+        
         {/* 농민 이미지 */}
-        <div className="grid grid-cols-4 print:grid-cols-1 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           {farmer.farmerImages?.map((image, index) => (
             <div key={`farmer-${index}`} className="relative print-image aspect-square">
               <img

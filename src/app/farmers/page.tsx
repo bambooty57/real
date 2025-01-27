@@ -714,9 +714,9 @@ export default function FarmersPage() {
                 </p>
                 {/* 주소 정보 */}
                 <div className="space-y-1">
-                  {farmer.postalCode && (
+                  {farmer.zipCode && (
                     <p>
-                      <span className="font-medium">우편번호:</span> {farmer.postalCode}
+                      <span className="font-medium">우편번호:</span> {farmer.zipCode}
                     </p>
                   )}
                   {farmer.roadAddress && (

@@ -222,7 +222,7 @@ export default function TradePage() {
 
         // 거래 상태 필터
         if (filters.status !== 'all') {
-          const status = equipment.tradeStatus || 'available';
+          const status = equipment.saleStatus || 'available';
           if (status !== filters.status) {
             return;
           }
@@ -526,7 +526,7 @@ export default function TradePage() {
                     <span className="font-medium">사용시간:</span> {equipment.usageHours}시간
                   </p>
                   <div>
-                    <span className="font-medium">상태:</span> {getRatingStars(equipment.rating)}
+                    <span className="font-medium">상태:</span> {getRatingStars(equipment.condition)}
                   </div>
                   {equipment.tradeType === 'sale' && (
                     <>

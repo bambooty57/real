@@ -101,7 +101,7 @@ export default function BasicInfo({ formData, setFormData }: Props) {
                 if (value.length >= 4) {
                   value = value.slice(0, 4) + '-' + value.slice(4);
                 }
-                setFormData((prev: FormData) => ({ ...prev, phone: '010-' + value }));
+                setFormData((prev: FormData) => ({ ...prev, phone: '010' + value }));
               }}
               placeholder="0000-0000"
               maxLength={9}
