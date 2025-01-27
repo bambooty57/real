@@ -536,14 +536,14 @@ export default function TradePage() {
                       <p>
                         <span className="font-medium">진행상태:</span>
                         <span className={`ml-2 px-2 py-1 rounded text-sm ${
-                          equipment.tradeStatus === 'available' ? 'bg-green-100 text-green-800' :
-                          equipment.tradeStatus === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
-                          equipment.tradeStatus === 'completed' ? 'bg-gray-100 text-gray-800' :
+                          equipment.saleStatus === 'available' ? 'bg-green-100 text-green-800' :
+                          equipment.saleStatus === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
+                          equipment.saleStatus === 'completed' ? 'bg-gray-100 text-gray-800' :
                           'bg-green-100 text-green-800'
                         }`}>
-                          {equipment.tradeStatus === 'available' ? '거래가능' :
-                           equipment.tradeStatus === 'reserved' ? '예약중' :
-                           equipment.tradeStatus === 'completed' ? '거래완료' :
+                          {equipment.saleStatus === 'available' ? '거래가능' :
+                           equipment.saleStatus === 'reserved' ? '예약중' :
+                           equipment.saleStatus === 'completed' ? '거래완료' :
                            '거래가능'}
                         </span>
                       </p>
@@ -557,14 +557,14 @@ export default function TradePage() {
                       <p>
                         <span className="font-medium">진행상태:</span>
                         <span className={`ml-2 px-2 py-1 rounded text-sm ${
-                          equipment.tradeStatus === 'available' ? 'bg-green-100 text-green-800' :
-                          equipment.tradeStatus === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
-                          equipment.tradeStatus === 'completed' ? 'bg-gray-100 text-gray-800' :
+                          equipment.saleStatus === 'available' ? 'bg-green-100 text-green-800' :
+                          equipment.saleStatus === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
+                          equipment.saleStatus === 'completed' ? 'bg-gray-100 text-gray-800' :
                           'bg-green-100 text-green-800'
                         }`}>
-                          {equipment.tradeStatus === 'available' ? '거래가능' :
-                           equipment.tradeStatus === 'reserved' ? '예약중' :
-                           equipment.tradeStatus === 'completed' ? '거래완료' :
+                          {equipment.saleStatus === 'available' ? '거래가능' :
+                           equipment.saleStatus === 'reserved' ? '예약중' :
+                           equipment.saleStatus === 'completed' ? '거래완료' :
                            '거래가능'}
                         </span>
                       </p>
