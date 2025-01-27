@@ -221,8 +221,8 @@ export default function TradePage() {
         }
 
         // 거래 상태 필터
-        if (filters.status !== 'all') {
-          if (!equipment.tradeStatus || equipment.tradeStatus !== filters.status) return;
+        if (filters.status !== 'all' && equipment.tradeStatus !== filters.status) {
+          return;
         }
 
         // 농기계 종류 필터

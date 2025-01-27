@@ -112,13 +112,18 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             padding: 20px;
           }
           
-          /* 1페이지에 표시될 내용 */
-          .farmer-info-section {
+          /* 1페이지: 기본 정보 */
+          .basic-info-section {
             page-break-after: always;
           }
           
-          /* 2페이지부터 표시될 이미지 섹션 */
-          .farmer-images-section {
+          /* 2페이지: 보유 농기계 */
+          .equipment-info-section {
+            page-break-after: always;
+          }
+          
+          /* 3페이지: 이미지 */
+          .images-section {
             page-break-before: always;
           }
           
@@ -163,12 +168,12 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
         </div>
       </div>
 
-      {/* 1페이지: 농민 정보 섹션 */}
-      <div className="farmer-info-section">
+      {/* 1페이지: 기본 정보 섹션 */}
+      <div className="basic-info-section">
         {/* 인쇄용 헤더 */}
         <div className="hidden print:block mb-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2">농민 상세 정보</h1>
+            <h1 className="text-3xl font-bold mb-2">농민 기본 정보</h1>
             <p className="text-gray-600">{new Date().toLocaleDateString('ko-KR')} 출력</p>
           </div>
         </div>
@@ -301,7 +306,8 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
               radish: '무',
               garlic: '마늘',
               onion: '양파',
-              carrot: '당근'
+              carrot: '당근',
+              sweetPotato: '고구마'
             }).some(([value]) => farmer.mainCrop?.fieldVegDetails?.includes(value)) && (
               <div>
                 <h3 className="text-sm font-medium text-gray-600 mb-2">노지채소</h3>
@@ -311,7 +317,8 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                     radish: '무',
                     garlic: '마늘',
                     onion: '양파',
-                    carrot: '당근'
+                    carrot: '당근',
+                    sweetPotato: '고구마'
                   }).map(([value, label]) => (
                     farmer.mainCrop?.fieldVegDetails?.includes(value) && (
                       <div key={value} className="text-sm text-gray-600">{label}</div>
@@ -426,8 +433,17 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
         </div>
       </div>
 
+      {/* 2페이지: 보유 농기계 섹션 */}
       {farmer.equipments.length > 0 && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="equipment-info-section bg-white shadow rounded-lg p-6">
+          {/* 인쇄용 헤더 */}
+          <div className="hidden print:block mb-8">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-2">보유 농기계 정보</h1>
+              <p className="text-gray-600">{new Date().toLocaleDateString('ko-KR')} 출력</p>
+            </div>
+          </div>
+
           <h2 className="text-xl font-semibold mb-4">보유 농기계</h2>
           <div className="space-y-6">
             {farmer.equipments.map((equipment, index) => (
@@ -457,7 +473,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                   <div>
                     <dt className="text-gray-600">상태등급</dt>
                     <dd className="font-medium">
-                      {getRatingStars(Number(equipment.rating))}
+                      {getRatingStars(Number(equipment.condition || 0))}
                     </dd>
                   </div>
                   {equipment.memo && (
@@ -512,60 +528,71 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
         </div>
       )}
 
-      {/* 2페이지: 이미지 섹션 */}
-      <div className="farmer-images-section bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">농기계 및 농민 이미지</h2>
-        
-        {/* 농민 이미지 */}
-        {farmer.farmerImages?.map((image, index) => (
-          <div key={`farmer-${index}`} className="relative print-image">
-            <img
-              src={image}
-              alt={`농민 이미지 ${index + 1}`}
-              className="object-cover rounded-lg w-full h-full"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-              농민 이미지 {index + 1}
-            </div>
+      {/* 3페이지: 이미지 섹션 */}
+      <div className="images-section bg-white shadow rounded-lg p-6 mb-6">
+        {/* 인쇄용 헤더 */}
+        <div className="hidden print:block mb-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-2">농기계 및 농민 이미지</h1>
+            <p className="text-gray-600">{new Date().toLocaleDateString('ko-KR')} 출력</p>
           </div>
-        ))}
+        </div>
+
+        <h2 className="text-xl font-semibold mb-4">농기계 및 농민 이미지</h2>
+        {/* 농민 이미지 */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          {farmer.farmerImages?.map((image, index) => (
+            <div key={`farmer-${index}`} className="relative print-image aspect-square">
+              <img
+                src={image}
+                alt={`농민 이미지 ${index + 1}`}
+                className="object-cover rounded-lg w-full h-full"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                농민 이미지 {index + 1}
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* 농기계 이미지 */}
-        {farmer.equipments?.map((equipment, eqIndex) => (
-          <React.Fragment key={`eq-${eqIndex}`}>
-            {/* 본체 이미지 */}
-            {equipment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
-              <div key={`eq-${eqIndex}-${imgIndex}`} className="relative print-image">
-                <img
-                  src={image}
-                  alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
-                  className="object-cover rounded-lg w-full h-full"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                  {getKoreanEquipmentType(equipment.type)} {imgIndex + 1}
-                </div>
-              </div>
-            ))}
-
-            {/* 부착작업기 이미지 */}
-            {equipment.attachments?.map((attachment, attIndex) => (
-              <React.Fragment key={`att-${eqIndex}-${attIndex}`}>
-                {attachment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
-                  <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="relative print-image">
-                    <img
-                      src={image}
-                      alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
-                      className="object-cover rounded-lg w-full h-full"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                      {getKoreanEquipmentType(equipment.type)}의 {attachment.type} {imgIndex + 1}
-                    </div>
+        <div className="grid grid-cols-4 gap-4">
+          {farmer.equipments?.map((equipment, eqIndex) => (
+            <React.Fragment key={`eq-${eqIndex}`}>
+              {/* 본체 이미지 */}
+              {equipment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
+                <div key={`eq-${eqIndex}-${imgIndex}`} className="relative print-image aspect-square">
+                  <img
+                    src={image}
+                    alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
+                    className="object-cover rounded-lg w-full h-full"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                    {getKoreanEquipmentType(equipment.type)} {imgIndex + 1}
                   </div>
-                ))}
-              </React.Fragment>
-            ))}
-          </React.Fragment>
-        ))}
+                </div>
+              ))}
+
+              {/* 부착작업기 이미지 */}
+              {equipment.attachments?.map((attachment, attIndex) => (
+                <React.Fragment key={`att-${eqIndex}-${attIndex}`}>
+                  {attachment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
+                    <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="relative print-image aspect-square">
+                      <img
+                        src={image}
+                        alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
+                        className="object-cover rounded-lg w-full h-full"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                        {getKoreanEquipmentType(equipment.type)}의 {attachment.type} {imgIndex + 1}
+                      </div>
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     </div>
   )

@@ -126,7 +126,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                           });
                         }}
                         className={`p-1 ${
-    attachment.condition ?? 0 >= star
+                          (attachment.condition || 0) >= star
                             ? 'text-yellow-400'
                             : 'text-gray-300'
                         }`}
