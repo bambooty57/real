@@ -9,6 +9,18 @@ interface Props {
 }
 
 export default function FarmingInfo({ formData, setFormData }: Props) {
+  // 기본 영농형태 타입 정의
+  const defaultFarmingTypes = {
+    waterPaddy: false,
+    fieldFarming: false,
+    livestock: false,
+    orchard: false,
+    forageCrop: false
+  };
+
+  // 현재 영농형태 상태 (없으면 기본값 사용)
+  const currentFarmingTypes = formData.farmingTypes || defaultFarmingTypes;
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">영농 정보</h2>
@@ -17,21 +29,15 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">영농형태</label>
         <div className="grid grid-cols-2 gap-4">
-          {Object.entries(formData.farmingTypes || {}).map(([key, value]) => (
+          {Object.entries(defaultFarmingTypes).map(([key]) => (
             <label key={key} className="flex items-center">
               <input
                 type="checkbox"
-                checked={value}
+                checked={currentFarmingTypes[key] || false}
                 onChange={(e) => setFormData((prev: FormData) => ({
                   ...prev,
                   farmingTypes: {
-                    ...(prev.farmingTypes || {
-                      waterPaddy: false,
-                      fieldFarming: false,
-                      livestock: false,
-                      orchard: false,
-                      forageCrop: false
-                    }),
+                    ...currentFarmingTypes,
                     [key]: e.target.checked
                   }
                 }))}
