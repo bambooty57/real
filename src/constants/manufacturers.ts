@@ -65,6 +65,7 @@ export const MANUFACTURERS = {
     { value: 'chelli', label: '첼리' },
     { value: 'jungang', label: '중앙' },
     { value: 'folder', label: '폴더' },
+    { value: 'sungwoo', label: '성우' },
     { value: 'other', label: '기타' }
   ],
   WHEEL: [
