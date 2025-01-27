@@ -213,7 +213,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                               handleAttachmentChange(value, {
                                 images: [
                                   ...(attachment.images || []).slice(0, index),
-                                  ...(attachment.images || []).slice(index + 1).filter(Boolean)
+                                  ...(attachment.images || []).slice(index + 1).filter((img): img is string | File => img !== null)
                                 ]
                               });
                             }}

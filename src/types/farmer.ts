@@ -105,7 +105,7 @@ export interface Attachment {
   model: string;
   condition?: number;
   memo?: string;
-  images?: (string | File | null)[];
+  images?: (string | File)[];
 }
 
 export interface FormData extends Omit<Farmer, 'id'> {
