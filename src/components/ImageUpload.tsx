@@ -11,6 +11,8 @@ interface ImageUploadProps {
   onUploadComplete: (url: string) => void
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
 export default function ImageUpload({ farmerId, category, onUploadComplete }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
@@ -18,6 +20,12 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // 파일 크기 체크
+    if (file.size > MAX_FILE_SIZE) {
+      alert('파일 크기는 10MB를 초과할 수 없습니다.')
+      return
+    }
 
     try {
       setUploading(true)
@@ -57,6 +65,7 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
             className="hidden"
           />
         </label>
+        <span className="text-sm text-gray-500">최대 10MB</span>
       </div>
 
       {preview && (
