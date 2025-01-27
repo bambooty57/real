@@ -23,7 +23,13 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
     memo: '',
     farmerImages: [],
     mainCrop: {},
-    farmingTypes: {},
+    farmingTypes: {
+      waterPaddy: false,
+      fieldFarming: false,
+      livestock: false,
+      orchard: false,
+      forageCrop: false
+    },
     equipments: [],
     rating: 0
   })
@@ -50,9 +56,16 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
             canReceiveMail: data.canReceiveMail || false,
             ageGroup: data.ageGroup || '',
             memo: data.memo || '',
+            farmingMemo: data.farmingMemo || '',
             farmerImages: data.farmerImages || [],
             mainCrop: data.mainCrop || {},
-            farmingTypes: data.farmingTypes || {},
+            farmingTypes: {
+              waterPaddy: data.farmingTypes?.waterPaddy || false,
+              fieldFarming: data.farmingTypes?.fieldFarming || false,
+              livestock: data.farmingTypes?.livestock || false,
+              orchard: data.farmingTypes?.orchard || false,
+              forageCrop: data.farmingTypes?.forageCrop || false
+            },
             equipments: (data.equipments || []).map((eq: any) => ({
               ...eq,
               type: eq.type || '',
@@ -80,9 +93,7 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
       }
     }
 
-    if (farmerId) {
-      fetchFarmerData()
-    }
+    fetchFarmerData()
   }, [farmerId])
 
   if (loading) {
