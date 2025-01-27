@@ -115,7 +115,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             print-color-adjust: exact !important;
           }
           
-          /* 2열 레이아웃 (1-2페이지) */
+          /* 1페이지: 기본정보 2열 배치 */
           .print-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -123,22 +123,30 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             page-break-after: always;
           }
           
+          /* 2페이지: 보유농기계 2열 배치 */
+          .equipment-info-section {
+            page-break-before: always;
+          }
+          
+          .equipment-info-section .grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 20px;
+          }
+          
+          /* 3페이지: 이미지 4열 배치 */
+          .images-section {
+            page-break-before: always;
+          }
+          
+          .images-section .grid {
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 10px;
+          }
+          
           /* 각 섹션 스타일 */
           .basic-info-section,
           .equipment-info-section {
             break-inside: avoid;
-          }
-          
-          /* 이미지 섹션은 새 페이지에서 시작하고 1열로 표시 */
-          .images-section {
-            page-break-before: always;
-            display: block !important;
-          }
-          
-          /* 이미지 그리드를 1열로 변경 */
-          .images-section .grid {
-            grid-template-columns: 1fr !important;
-            gap: 20px;
           }
           
           /* 인쇄 시 숨길 요소들 */
@@ -223,6 +231,12 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                   </a>
                 </dd>
               </div>
+              {farmer.zipCode && (
+                <div>
+                  <dt className="text-gray-600">우편번호</dt>
+                  <dd className="font-medium">{farmer.zipCode}</dd>
+                </div>
+              )}
               {farmer.postalCode && (
                 <div>
                   <dt className="text-gray-600">우편번호</dt>
@@ -307,6 +321,16 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                 })}
               </div>
             </div>
+
+            {/* 영농정보메모 */}
+            {farmer.farmingMemo && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-600 mb-2">영농정보메모</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700 whitespace-pre-wrap">{farmer.farmingMemo}</p>
+                </div>
+              </div>
+            )}
 
             {/* 주요 작물 */}
             <div className="space-y-4">
@@ -526,6 +550,49 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                         {getRatingStars(Number(equipment.condition || 0))}
                       </dd>
                     </div>
+
+                    {/* 거래 정보 */}
+                    <div className="col-span-2 mt-4 bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium mb-3">거래 정보</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <dt className="text-gray-600">거래유형</dt>
+                          <dd className="font-medium">
+                            {equipment.tradeType === 'sale' ? '판매' : '구매'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-gray-600">거래방식</dt>
+                          <dd className="font-medium">
+                            {equipment.saleType === 'new' ? '신규' : '중고'}
+                          </dd>
+                        </div>
+                        {equipment.desiredPrice && (
+                          <div>
+                            <dt className="text-gray-600">희망가격</dt>
+                            <dd className="font-medium">
+                              {Number(equipment.desiredPrice).toLocaleString()}만원
+                            </dd>
+                          </div>
+                        )}
+                        <div>
+                          <dt className="text-gray-600">거래상태</dt>
+                          <dd className="font-medium">
+                            <span className={`inline-block px-2 py-1 rounded text-sm ${
+                              equipment.saleStatus === 'available' ? 'bg-green-100 text-green-800' :
+                              equipment.saleStatus === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
+                              equipment.saleStatus === 'completed' ? 'bg-gray-100 text-gray-800' :
+                              'bg-blue-100 text-blue-800'
+                            }`}>
+                              {equipment.saleStatus === 'available' ? '거래가능' :
+                               equipment.saleStatus === 'reserved' ? '예약중' :
+                               equipment.saleStatus === 'completed' ? '거래완료' : '확인중'}
+                            </span>
+                          </dd>
+                        </div>
+                      </div>
+                    </div>
+
                     {equipment.memo && (
                       <div className="col-span-2">
                         <dt className="text-gray-600">메모</dt>

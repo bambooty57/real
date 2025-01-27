@@ -221,8 +221,11 @@ export default function TradePage() {
         }
 
         // 거래 상태 필터
-        if (filters.status !== 'all' && equipment.tradeStatus !== filters.status) {
-          return;
+        if (filters.status !== 'all') {
+          const status = equipment.tradeStatus || 'available';
+          if (status !== filters.status) {
+            return;
+          }
         }
 
         // 농기계 종류 필터
@@ -411,9 +414,9 @@ export default function TradePage() {
                 className="w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none"
               >
                 <option value="all">전체</option>
-                <option value="가능">가능</option>
-                <option value="계약중">계약중</option>
-                <option value="완료">완료</option>
+                <option value="available">거래가능</option>
+                <option value="reserved">예약중</option>
+                <option value="completed">거래완료</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -531,7 +534,18 @@ export default function TradePage() {
                         <span className="font-medium">판매가:</span> {Number(equipment.desiredPrice || 0).toLocaleString()}만원
                       </p>
                       <p>
-                        <span className="font-medium">진행상태:</span> {equipment.tradeStatus || '상담 전'}
+                        <span className="font-medium">진행상태:</span>
+                        <span className={`ml-2 px-2 py-1 rounded text-sm ${
+                          equipment.tradeStatus === 'available' ? 'bg-green-100 text-green-800' :
+                          equipment.tradeStatus === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
+                          equipment.tradeStatus === 'completed' ? 'bg-gray-100 text-gray-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {equipment.tradeStatus === 'available' ? '거래가능' :
+                           equipment.tradeStatus === 'reserved' ? '예약중' :
+                           equipment.tradeStatus === 'completed' ? '거래완료' :
+                           '거래가능'}
+                        </span>
                       </p>
                     </>
                   )}
@@ -541,7 +555,18 @@ export default function TradePage() {
                         <span className="font-medium">구매희망가:</span> {Number(equipment.desiredPrice || 0).toLocaleString()}만원
                       </p>
                       <p>
-                        <span className="font-medium">진행상태:</span> {equipment.tradeStatus || '상담 전'}
+                        <span className="font-medium">진행상태:</span>
+                        <span className={`ml-2 px-2 py-1 rounded text-sm ${
+                          equipment.tradeStatus === 'available' ? 'bg-green-100 text-green-800' :
+                          equipment.tradeStatus === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
+                          equipment.tradeStatus === 'completed' ? 'bg-gray-100 text-gray-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {equipment.tradeStatus === 'available' ? '거래가능' :
+                           equipment.tradeStatus === 'reserved' ? '예약중' :
+                           equipment.tradeStatus === 'completed' ? '거래완료' :
+                           '거래가능'}
+                        </span>
                       </p>
                     </>
                   )}

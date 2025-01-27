@@ -365,11 +365,9 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">선택하세요</option>
-                  {TRADE_STATUS.map(({ value, label }) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  <option value="available">거래가능</option>
+                  <option value="reserved">예약중</option>
+                  <option value="completed">거래완료</option>
                 </select>
               </div>
             </div>

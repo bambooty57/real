@@ -90,6 +90,7 @@ export interface Farmer {
   canReceiveMail: boolean;
   ageGroup?: string;
   memo?: string;
+  farmingMemo?: string;  // 영농정보메모
   farmerImages: string[];
   mainCrop: MainCrop;
   farmingTypes: FarmingTypes;

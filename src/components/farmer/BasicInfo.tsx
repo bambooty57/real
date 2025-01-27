@@ -96,18 +96,20 @@ export default function BasicInfo({ formData, setFormData }: Props) {
               name="phone"
               value={formData.phone ? formData.phone.replace(/^010/, '') : ''}
               onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                setFormData((prev: FormData) => ({
-                  ...prev,
-                  phone: `010${value}`
-                }));
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                if (value.length > 8) value = value.slice(0, 8);
+                if (value.length >= 4) {
+                  value = value.slice(0, 4) + '-' + value.slice(4);
+                }
+                setFormData((prev: FormData) => ({ ...prev, phone: '010-' + value }));
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              placeholder="0000-0000"
+              maxLength={9}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-12"
               required
-              placeholder="나머지 번호 입력"
             />
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <span className="text-gray-500">010</span>
+              <span className="text-gray-500">010-</span>
             </div>
           </div>
           <button
@@ -166,6 +168,25 @@ export default function BasicInfo({ formData, setFormData }: Props) {
           onChange={(e) => setFormData((prev: FormData) => ({ ...prev, businessName: e.target.value }))}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         />
+      </div>
+
+      {/* 연령대 */}
+      <div>
+        <label htmlFor="ageGroup" className="block text-sm font-medium text-gray-700">연령대</label>
+        <select
+          id="ageGroup"
+          value={formData.ageGroup || ''}
+          onChange={(e) => setFormData((prev: FormData) => ({ ...prev, ageGroup: e.target.value }))}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        >
+          <option value="">선택하세요</option>
+          <option value="20대">20대</option>
+          <option value="30대">30대</option>
+          <option value="40대">40대</option>
+          <option value="50대">50대</option>
+          <option value="60대">60대</option>
+          <option value="70대 이상">70대 이상</option>
+        </select>
       </div>
 
       {/* 주소 */}
@@ -242,25 +263,6 @@ export default function BasicInfo({ formData, setFormData }: Props) {
           />
           <span className="ml-2 text-sm text-gray-700">우편수취 가능</span>
         </label>
-      </div>
-
-      {/* 연령대 */}
-      <div>
-        <label htmlFor="ageGroup" className="block text-sm font-medium text-gray-700">연령대</label>
-        <select
-          id="ageGroup"
-          value={formData.ageGroup || ''}
-          onChange={(e) => setFormData((prev: FormData) => ({ ...prev, ageGroup: e.target.value }))}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        >
-          <option value="">선택하세요</option>
-          <option value="20대">20대</option>
-          <option value="30대">30대</option>
-          <option value="40대">40대</option>
-          <option value="50대">50대</option>
-          <option value="60대">60대</option>
-          <option value="70대 이상">70대 이상</option>
-        </select>
       </div>
     </div>
   );

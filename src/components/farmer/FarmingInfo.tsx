@@ -49,6 +49,22 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
         </div>
       </div>
 
+      {/* 영농정보메모 */}
+      <div>
+        <label htmlFor="farmingMemo" className="block text-sm font-medium text-gray-700 mb-2">영농정보메모</label>
+        <textarea
+          id="farmingMemo"
+          value={formData.farmingMemo || ''}
+          onChange={(e) => setFormData((prev: FormData) => ({
+            ...prev,
+            farmingMemo: e.target.value
+          }))}
+          rows={4}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          placeholder="영농 관련 특이사항이나 메모를 입력하세요."
+        />
+      </div>
+
       {/* 주작물 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">주작물</label>
