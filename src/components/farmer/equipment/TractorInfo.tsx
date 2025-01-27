@@ -12,6 +12,48 @@ interface TractorInfoProps {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
 export default function TractorInfo({ equipment, onEquipmentChange }: TractorInfoProps) {
+  const handleAttachmentChange = (value: string, changes: Partial<Attachment>) => {
+    onEquipmentChange({
+      ...equipment,
+      attachments: (equipment.attachments || []).map(a =>
+        a.type === value
+          ? { ...a, ...changes }
+          : a
+      )
+    });
+  };
+
+  const handleImageUpload = async (value: string, file: File, index: number) => {
+    try {
+      if (file.size > MAX_FILE_SIZE) {
+        alert('이미지 크기는 10MB를 초과할 수 없습니다.');
+        return;
+      }
+
+      const attachment = equipment.attachments?.find(a => a.type === value);
+      if (attachment) {
+        onEquipmentChange({
+          ...equipment,
+          attachments: (equipment.attachments || []).map(a =>
+            a.type === value
+              ? {
+                  ...a,
+                  images: [
+                    ...(a.images || []).slice(0, index),
+                    file,
+                    ...(a.images || []).slice(index + 1)
+                  ]
+                }
+              : a
+          )
+        });
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      alert('이미지 업로드 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h4 className="font-medium">부착작업기 정보</h4>
@@ -62,16 +104,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                   <label className="block text-sm font-medium text-gray-700">제조사 *</label>
                   <select
                     value={attachment.manufacturer}
-                    onChange={(e) => {
-                      onEquipmentChange({
-                        ...equipment,
-                        attachments: (equipment.attachments || []).map(a =>
-                          a.type === value
-                            ? { ...a, manufacturer: e.target.value }
-                            : a
-                        )
-                      });
-                    }}
+                    onChange={(e) => handleAttachmentChange(value, { manufacturer: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   >
@@ -93,16 +126,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                   <input
                     type="text"
                     value={attachment.model || ''}
-                    onChange={(e) => {
-                      onEquipmentChange({
-                        ...equipment,
-                        attachments: (equipment.attachments || []).map(a =>
-                          a.type === value
-                            ? { ...a, model: e.target.value }
-                            : a
-                        )
-                      });
-                    }}
+                    onChange={(e) => handleAttachmentChange(value, { model: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                     placeholder="모델명을 입력하세요"
@@ -118,14 +142,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                         key={star}
                         type="button"
                         onClick={() => {
-                          onEquipmentChange({
-                            ...equipment,
-                            attachments: (equipment.attachments || []).map(a =>
-                              a.type === value
-                                ? { ...a, condition: star }
-                                : a
-                            )
-                          });
+                          handleAttachmentChange(value, { condition: star });
                         }}
                         className={`p-1 ${
                           (attachment.condition || 0) >= star
@@ -144,16 +161,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                   <label className="block text-sm font-medium text-gray-700">메모</label>
                   <textarea
                     value={attachment.memo || ''}
-                    onChange={(e) => {
-                      onEquipmentChange({
-                        ...equipment,
-                        attachments: (equipment.attachments || []).map(a =>
-                          a.type === value
-                            ? { ...a, memo: e.target.value }
-                            : a
-                        )
-                      });
-                    }}
+                    onChange={(e) => handleAttachmentChange(value, { memo: e.target.value })}
                     rows={3}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     placeholder="메모를 입력하세요"
@@ -172,27 +180,7 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              // 파일 크기 체크
-                              if (file.size > MAX_FILE_SIZE) {
-                                alert('이미지 크기는 10MB를 초과할 수 없습니다.');
-                                return;
-                              }
-                              
-                              onEquipmentChange({
-                                ...equipment,
-                                attachments: (equipment.attachments || []).map(a =>
-                                  a.type === value
-                                    ? {
-                                        ...a,
-                                        images: [
-                                          ...(a.images || []).slice(0, index),
-                                          file,
-                                          ...(a.images || []).slice(index + 1)
-                                        ]
-                                      }
-                                    : a
-                                )
-                              });
+                              handleImageUpload(value, file, index);
                             }
                           }}
                           className="hidden"
@@ -222,19 +210,11 @@ export default function TractorInfo({ equipment, onEquipmentChange }: TractorInf
                           <button
                             type="button"
                             onClick={() => {
-                              onEquipmentChange({
-                                ...equipment,
-                                attachments: (equipment.attachments || []).map(a =>
-                                  a.type === value
-                                    ? {
-                                        ...a,
-                                        images: [
-                                          ...(a.images || []).slice(0, index),
-                                          ...(a.images || []).slice(index + 1).filter(Boolean)
-                                        ]
-                                      }
-                                    : a
-                                )
+                              handleAttachmentChange(value, {
+                                images: [
+                                  ...(attachment.images || []).slice(0, index),
+                                  ...(attachment.images || []).slice(index + 1).filter(Boolean)
+                                ]
                               });
                             }}
                             className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
