@@ -12,6 +12,7 @@ import { formatPhoneNumber } from '@/utils/format'
 import { FaPrint } from 'react-icons/fa'
 import React from 'react'
 import { toast } from 'react-hot-toast'
+import EditFarmerClient from './edit/EditFarmerClient'
 
 interface AttachmentImages {
   loader?: string[]
@@ -107,6 +108,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
   const [farmer, setFarmer] = useState<Farmer | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -156,8 +158,12 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
   }
 
   const handleEdit = () => {
-    window.open(`/farmers/${farmerId}/edit`, '_blank');
-  };
+    setIsEditModalOpen(true)
+  }
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+  }
 
   if (loading) {
     return <div>데이터를 불러오는 중...</div>
@@ -173,6 +179,30 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
 
   return (
     <div className="max-w-4xl mx-auto">
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+          <div className="min-h-screen px-4 text-center">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
+            <div className="inline-block w-full max-w-4xl p-6 my-8 text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">농민 정보 수정</h2>
+                <button
+                  onClick={handleCloseEditModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <EditFarmerClient farmerId={farmerId} onClose={handleCloseEditModal} />
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`
         @media print {
           /* 기본 인쇄 스타일 */
@@ -749,25 +779,4 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
 
               {/* 부착작업기 이미지 */}
               {equipment.attachments?.map((attachment, attIndex) => (
-                <React.Fragment key={`att-${eqIndex}-${attIndex}`}>
-                  {attachment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
-                    <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="relative print-image aspect-square">
-                      <img
-                        src={image}
-                        alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
-                        className="object-cover rounded-lg w-full h-full"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                        {getKoreanEquipmentType(equipment.type)}의 {attachment.type} {imgIndex + 1}
-                      </div>
-                    </div>
-                  ))}
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-} 
+                <React.Fragment key={`att-${eqIndex}-${attIndex}`

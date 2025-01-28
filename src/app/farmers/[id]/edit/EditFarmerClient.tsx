@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import NewFarmer from '../../new/NewFarmer'
+import { toast } from 'react-hot-toast'
 
 interface EditFarmerClientProps {
   farmerId: string
+  onClose: () => void
 }
 
-export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
+export default function EditFarmerClient({ farmerId, onClose }: EditFarmerClientProps) {
   const [initialData, setInitialData] = useState<any>({
     name: '',
     businessName: '',
@@ -96,6 +98,17 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
     fetchFarmerData()
   }, [farmerId])
 
+  const handleSubmit = async (data: FormData) => {
+    try {
+      // ... existing submit logic ...
+      toast.success('농민 정보가 수정되었습니다.')
+      onClose() // 성공 시 모달 닫기
+    } catch (error) {
+      console.error('Error updating farmer:', error)
+      toast.error('수정 중 오류가 발생했습니다.')
+    }
+  }
+
   if (loading) {
     return <div className="p-4">데이터를 불러오는 중...</div>
   }
@@ -104,5 +117,15 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
     return <div className="p-4 text-red-500">{error}</div>
   }
 
-  return <NewFarmer mode="edit" farmerId={farmerId} initialData={initialData} />
+  return (
+    <div className="bg-white">
+      <NewFarmer 
+        mode="edit"
+        farmerId={farmerId}
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        onCancel={onClose}
+      />
+    </div>
+  )
 } 
