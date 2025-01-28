@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Farmer } from '@/types/farmer';
+import { Farmer, FarmingTypes, MainCropType } from '@/types/farmer';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import { getKoreanEquipmentType } from '@/utils/mappings';
@@ -24,6 +24,32 @@ const formatPhoneNumber = (phone: string) => {
     return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
   }
   return phone;
+};
+
+// 농사 유형 표시 함수
+const getFarmingTypeDisplay = (type: keyof FarmingTypes) => {
+  const displayMap: Record<keyof FarmingTypes, string> = {
+    'waterPaddy': '수도작',
+    'fieldFarming': '밭농사',
+    'livestock': '축산업',
+    'orchard': '과수원',
+    'forageCrop': '사료작물'
+  };
+  return displayMap[type] || type;
+};
+
+// 주작목 표시 함수
+const getMainCropDisplay = (type: MainCropType) => {
+  const displayMap: Record<MainCropType, string> = {
+    'foodCrops': '식량작물',
+    'facilityHort': '시설원예',
+    'fieldVeg': '노지채소',
+    'fruits': '과수',
+    'specialCrops': '특용작물',
+    'flowers': '화훼',
+    'livestock': '축산'
+  };
+  return displayMap[type] || type;
 };
 
 export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail }: FarmerCardProps) {
@@ -192,10 +218,58 @@ export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail 
             )}
           </div>
 
-          {farmer.businessName && (
-            <p>
-              <span className="font-medium">상호:</span> {farmer.businessName}
-            </p>
+          {/* 보유 농기계 */}
+          {farmer.equipments && farmer.equipments.length > 0 && (
+            <div>
+              <span className="font-medium">보유 농기계:</span>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {farmer.equipments.map((eq, index) => (
+                  <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                    {getKoreanEquipmentType(eq.type)} ({eq.manufacturer})
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 영농형태 */}
+          {farmer.farmingTypes && Object.entries(farmer.farmingTypes).some(([_, value]) => value) && (
+            <div>
+              <span className="font-medium">영농형태:</span>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {Object.entries(farmer.farmingTypes)
+                  .filter(([_, value]) => value)
+                  .map(([type], index) => (
+                    <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                      {getFarmingTypeDisplay(type as keyof FarmingTypes)}
+                    </span>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* 주작물 */}
+          {farmer.mainCrop && (
+            <div>
+              <span className="font-medium">주작물:</span>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {Object.entries(farmer.mainCrop)
+                  .filter(([key, value]) => value && !key.endsWith('Details'))
+                  .map(([type], index) => (
+                    <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                      {getMainCropDisplay(type as MainCropType)}
+                    </span>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* 메모 */}
+          {farmer.memo && (
+            <div>
+              <span className="font-medium">메모:</span>
+              <p className="mt-1 text-sm text-gray-600 line-clamp-2">{farmer.memo}</p>
+            </div>
           )}
 
           <p>
