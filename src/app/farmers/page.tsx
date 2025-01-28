@@ -20,6 +20,7 @@ import { Dialog } from '@headlessui/react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { useSearchFilter } from '@/contexts/SearchFilterContext'
+import { FaFileExcel } from 'react-icons/fa';
 
 // 전화번호 포맷팅 함수
 const formatPhoneNumber = (phone: string) => {
