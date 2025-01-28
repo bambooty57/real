@@ -174,20 +174,23 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           {Object.entries(MAIN_CROPS).map(([mainType, { label, subTypes }]) => {
                             const cropType = mainType as keyof typeof farmer.mainCrop;
                             const detailsKey = `${cropType}Details` as keyof typeof farmer.mainCrop;
-                            const details = farmer.mainCrop[detailsKey] as string[] | undefined;
+                            const details = farmer.mainCrop?.[detailsKey] as string[] | undefined;
                             
-                            if (!farmer.mainCrop[cropType]) return null;
+                            if (!farmer.mainCrop?.[cropType]) return null;
                             
                             return (
                               <div key={mainType}>
                                 <h5 className="text-sm font-medium text-gray-600 mb-2">{label}</h5>
                                 {details && details.length > 0 && (
                                   <div className="flex flex-wrap gap-2">
-                                    {details.map(detail => (
-                                      <span key={detail} className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                                        {subTypes.find(st => st.value === detail)?.label || detail}
-                                      </span>
-                                    ))}
+                                    {details.map(detail => {
+                                      const subType = subTypes.find(st => st.value === detail);
+                                      return (
+                                        <span key={detail} className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                                          {subType?.label || detail}
+                                        </span>
+                                      );
+                                    })}
                                   </div>
                                 )}
                               </div>
