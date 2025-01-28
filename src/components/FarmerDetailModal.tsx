@@ -39,7 +39,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
       <div className="fixed inset-0 bg-black/30 print:hidden" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl">
-          <div className="p-6">
+          <div className="p-6 print-content">
             {/* 헤더 */}
             <div className="flex justify-between items-center mb-6 print:hidden">
               <Dialog.Title className="text-2xl font-bold">{farmer.name} 상세 정보</Dialog.Title>
@@ -64,6 +64,11 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                   닫기
                 </button>
               </div>
+            </div>
+
+            {/* 인쇄 시 제목 표시 */}
+            <div className="hidden print:block mb-6">
+              <h1 className="text-2xl font-bold">{farmer.name} 상세 정보</h1>
             </div>
 
             {/* 1페이지: 기본 정보 */}
