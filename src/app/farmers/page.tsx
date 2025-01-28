@@ -16,6 +16,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { BiRefresh } from 'react-icons/bi';
 import { FaPrint } from 'react-icons/fa';
+import FarmerDetailModal from '@/components/FarmerDetailModal';
 
 // 전화번호 포맷팅 함수
 const formatPhoneNumber = (phone: string) => {
@@ -47,6 +48,8 @@ export default function FarmersPage() {
   const farmersPerPage = 15;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedFarmers, setSelectedFarmers] = useState<string[]>([]);
+  const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchFarmers = async () => {
@@ -706,12 +709,15 @@ export default function FarmersPage() {
             <div className="p-4">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold">{farmer.name}</h3>
-                <Link
-                  href={`/farmers/${farmer.id}`}
+                <button
+                  onClick={() => {
+                    setSelectedFarmer(farmer);
+                    setIsModalOpen(true);
+                  }}
                   className="text-blue-600 hover:text-blue-800"
                 >
                   상세보기
-                </Link>
+                </button>
               </div>
               <div className="space-y-2">
                 <p className="flex items-center">
@@ -962,6 +968,18 @@ export default function FarmersPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 모달 */}
+      {selectedFarmer && (
+        <FarmerDetailModal
+          farmer={selectedFarmer}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedFarmer(null);
+          }}
+        />
       )}
     </div>
   );
