@@ -5,6 +5,10 @@ const nextConfig = {
       bodySizeLimit: '10mb'
     }
   },
+  transpilePackages: ['@firebase/auth', 'firebase', 'firebase-admin'],
+  compiler: {
+    removeConsole: false
+  },
   images: {
     domains: ['firebasestorage.googleapis.com', 't1.daumcdn.net', 'dapi.kakao.com']
   },
