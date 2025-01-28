@@ -12,7 +12,7 @@
     margin: 0.5cm;
   }
 
-  /* 모달 외 내용 숨기기 */
+  /* 인쇄 시 숨길 요소 */
   body > *:not(.print-content) {
     display: none !important;
   }
@@ -20,15 +20,10 @@
   /* 모달 내용 표시 */
   .print-content {
     display: block !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-    background: white;
+    position: relative !important;
+    width: 100% !important;
+    background: white !important;
     font-size: 8pt !important;
-    transform: scale(0.9);
-    transform-origin: top left;
   }
 
   /* 이미지 크기 조절 */
@@ -54,9 +49,14 @@
     margin-bottom: 0.5rem !important;
   }
 
-  /* 페이지 나누기 제거 */
-  .print\:page-break {
-    page-break-before: auto;
+  /* 그림자 제거 */
+  .shadow {
+    box-shadow: none !important;
+  }
+
+  /* 배경색 제거 */
+  .bg-white {
+    background: none !important;
   }
 
   /* 인쇄 시 숨길 요소 */
