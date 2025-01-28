@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Farmer, Equipment } from '@/types/farmer'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
+import { formatPhoneNumber } from '@/utils/format'
 import { FaPrint } from 'react-icons/fa'
 import React from 'react'
 import { toast } from 'react-hot-toast'
@@ -285,7 +286,7 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                     href={`tel:${farmer.phone}`}
                     className="text-blue-600 hover:text-blue-800 hover:underline"
                   >
-                    {farmer.phone}
+                    {formatPhoneNumber(farmer.phone)}
                   </a>
                 </dd>
               </div>

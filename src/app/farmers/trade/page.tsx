@@ -8,9 +8,27 @@ import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import { Equipment as BaseEquipment } from '@/types/farmer'
 import { MANUFACTURERS } from '@/constants/manufacturers'
+import FarmerDetailModal from '@/components/FarmerDetailModal'
 
 interface Equipment extends BaseEquipment {
   tradeStatus?: string;
+}
+
+interface MainCrop {
+  foodCrops: boolean;
+  facilityHort: boolean;
+  fieldVeg: boolean;
+  fruits: boolean;
+  specialCrops: boolean;
+  flowers: boolean;
+  livestock: boolean;
+  foodCropsDetails?: string[];
+  facilityHortDetails?: string[];
+  fieldVegDetails?: string[];
+  fruitsDetails?: string[];
+  specialCropsDetails?: string[];
+  flowersDetails?: string[];
+  livestockDetails?: string[];
 }
 
 interface Farmer {
@@ -19,6 +37,16 @@ interface Farmer {
   phone: string;
   address: string;
   equipments: Equipment[];
+  canReceiveMail: boolean;
+  farmerImages: string[];
+  mainCrop: MainCrop;
+  farmingTypes: {
+    waterPaddy: boolean;
+    fieldFarming: boolean;
+    orchard: boolean;
+    livestock: boolean;
+    forageCrop: boolean;
+  };
 }
 
 interface AttachmentInfo {
@@ -49,6 +77,8 @@ export default function TradePage() {
     manufacturer: '',
     saleType: 'all' // 'all', 'new', 'used'
   })
+  const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // 농기계 종류 매핑
   const equipmentTypeMap = {
@@ -176,8 +206,28 @@ export default function TradePage() {
             id: doc.id,
             name: data.name || '',
             phone: data.phone || '',
-            address: data.jibunAddress || '', // jibunAddress 필드로 수정
-            equipments: data.equipments || []
+            address: data.jibunAddress || '',
+            equipments: data.equipments || [],
+            canReceiveMail: data.canReceiveMail ?? false,
+            farmerImages: data.farmerImages ?? [],
+            mainCrop: {
+              foodCrops: false,
+              facilityHort: false,
+              fieldVeg: false,
+              fruits: false,
+              specialCrops: false,
+              flowers: false,
+              livestock: false,
+              ...data.mainCrop
+            },
+            farmingTypes: {
+              waterPaddy: false,
+              fieldFarming: false,
+              orchard: false,
+              livestock: false,
+              forageCrop: false,
+              ...data.farmingTypes
+            }
           } as Farmer;
           
           console.log('Processed farmer:', farmer); // 가공된 데이터 로깅
@@ -350,7 +400,7 @@ export default function TradePage() {
   if (loading) return <div className="p-8">로딩중...</div>
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">농기계 거래 관리</h1>
         <button
@@ -601,18 +651,37 @@ export default function TradePage() {
                   )}
                 </div>
                 <div className="mt-4">
-                  <Link
-                    href={`/farmers/${farmer.id}`}
+                  <button
+                    onClick={() => {
+                      setSelectedFarmer(farmer);
+                      setIsModalOpen(true);
+                    }}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
                     상세보기 →
-                  </Link>
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* 상세 정보 모달 */}
+      <FarmerDetailModal
+        farmer={selectedFarmer ? {
+          ...selectedFarmer,
+          canReceiveMail: selectedFarmer?.canReceiveMail ?? false,
+          farmerImages: selectedFarmer?.farmerImages ?? [],
+          mainCrop: selectedFarmer?.mainCrop ?? {},
+          farmingTypes: selectedFarmer?.farmingTypes ?? {}
+        } : null}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedFarmer(null);
+        }}
+      />
     </div>
   )
 }

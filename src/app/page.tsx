@@ -324,6 +324,7 @@ export default function Dashboard() {
         // 장비가 없는 경우 빈 값으로 설정
         if (equipments.length === 0) {
           equipmentData[`${koreanType}1 제조사`] = '';
+          equipmentData[`${koreanType}1 모델명`] = '';
           equipmentData[`${koreanType}1 거래유형`] = '';
           equipmentData[`${koreanType}1 판매구분`] = '';
         } else {
@@ -331,6 +332,7 @@ export default function Dashboard() {
           equipments.forEach((equipment, index) => {
             const num = index + 1;
             equipmentData[`${koreanType}${num} 제조사`] = equipment.manufacturer || '';
+            equipmentData[`${koreanType}${num} 모델명`] = equipment.model || '';
             equipmentData[`${koreanType}${num} 거래유형`] = equipment.tradeType === 'sale' ? '판매' : 
                                                          equipment.tradeType === 'purchase' ? '구매' : '';
             equipmentData[`${koreanType}${num} 판매구분`] = equipment.saleType === 'new' ? '신규' : 
@@ -364,7 +366,7 @@ export default function Dashboard() {
       { wch: 15 },  // 우편수취가능여부
       { wch: 15 },  // 영농형태
       { wch: 20 },  // 주작물
-      ...Array(54).fill({ wch: 15 }),  // 농기계 정보 (6개 종류 x 3대 x 3개 열)
+      ...Array(72).fill({ wch: 15 }),  // 농기계 정보 (6개 종류 x 3대 x 4개 열)
       { wch: 50 },  // 농민정보메모
     ];
     ws['!cols'] = colWidths;

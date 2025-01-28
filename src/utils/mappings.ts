@@ -4,10 +4,10 @@ import { FarmingTypes, MainCrop } from '@/types/farmer'
 const equipmentTypeMap: { [key: string]: string } = {
   'tractor': '트랙터',
   'combine': '콤바인',
-  'rice_transplanter': '이앙기',
+  'transplanter': '이앙기',
   'forklift': '지게차',
   'excavator': '굴삭기',
-  'skid_loader': '스키로더',
+  'skidLoader': '스키로더',
   'dryer': '건조기',
   'silo': '싸일론',
   'claas': '클라스',
@@ -76,9 +76,35 @@ export const getKoreanManufacturer = (manufacturer: string): string => {
     'foton': '포톤',
     'jinma': '진마',
     'dfam': '동펑',
-    'lovol': '로볼'
+    'lovol': '로볼',
+
+    // 로더 제조사
+    'hanil': '한일',
+    'taesung': '태성',
+    'ansung': '안성',
+    'heemang': '희망',
+    'jangsu': '장수',
+    'bonsa': '본사',
+
+    // 로터리 제조사
+    'woongjin': '웅진',
+    'samwon': '삼원',
+    'weeken': '위켄',
+    'youngjin': '영진',
+    'agros': '아그로스',
+    'chelli': '첼리',
+    'jungang': '중앙',
+    'folder': '폴더',
+    'sungwoo': '성우',
+
+    // 휠 제조사
+    'heungah': '흥아',
+    'bkt': 'BKT',
+    'michelin': '미셀린',
+    'india': '인도',
+    'china': '중국'
   };
-  return manufacturerMap[manufacturer] || manufacturer;
+  return manufacturerMap[manufacturer.toLowerCase()] || manufacturer;
 };
 
 // 작업기 한글명 매핑
@@ -109,16 +135,41 @@ const farmingTypeDisplayNames: { [key: string]: string } = {
 // 작물 한글명 매핑
 const cropDisplayNames: { [key: string]: string } = {
   rice: '벼',
-  sweetPotato: '고구마',
-  persimmon: '감',
   barley: '보리',
-  other: '기타',
-  sorghum: '수수',
-  pear: '배',
+  wheat: '밀',
+  corn: '옥수수',
+  potato: '감자',
   soybean: '콩',
-  goat: '염소',
-  hanwoo: '한우',
-  plum: '자두'
+  sweetPotato: '고구마',
+  tomato: '토마토',
+  strawberry: '딸기',
+  cucumber: '오이',
+  pepper: '고추',
+  watermelon: '수박',
+  melon: '멜론',
+  cabbage: '배추',
+  radish: '무',
+  garlic: '마늘',
+  onion: '양파',
+  carrot: '당근',
+  apple: '사과',
+  pear: '배',
+  grape: '포도',
+  peach: '복숭아',
+  citrus: '감귤',
+  sesame: '참깨',
+  perilla: '들깨',
+  ginseng: '인삼',
+  medicinalHerbs: '약용작물',
+  rose: '장미',
+  chrysanthemum: '국화',
+  lily: '백합',
+  orchid: '난',
+  cattle: '한우',
+  pig: '돼지',
+  chicken: '닭',
+  duck: '오리',
+  goat: '염소'
 };
 
 export const getFarmingTypeDisplay = (key: string): string => {
@@ -132,16 +183,43 @@ export const getFarmingTypeDisplay = (key: string): string => {
   return farmingTypeMap[key] || key;
 };
 
+const mainCropMap: { [key: string]: string } = {
+  foodCrops: '식량작물',
+  facilityHort: '시설원예',
+  fieldVeg: '노지채소',
+  fruits: '과수',
+  specialCrops: '특용작물',
+  flowers: '화훼',
+  livestock: '축산'
+};
+
 export const getMainCropDisplay = (key: string): string => {
-  const mainCropMap: { [key: string]: string } = {
-    foodCrops: '식량작물',
-    facilityHort: '시설원예',
-    fieldVeg: '노지채소',
-    fruits: '과수',
-    specialCrops: '특용작물',
-    flowers: '화훼'
-  };
   return mainCropMap[key] || key;
+};
+
+export const getMainCropText = (mainCrop: any) => {
+  if (!mainCrop) return '';
+
+  // 상세 항목이 있는 경우 상세 항목을 표시
+  const details = [
+    ...mainCrop.foodCropsDetails || [],
+    ...mainCrop.facilityHortDetails || [],
+    ...mainCrop.fieldVegDetails || [],
+    ...mainCrop.fruitsDetails || [],
+    ...mainCrop.specialCropsDetails || [],
+    ...mainCrop.flowersDetails || [],
+    ...mainCrop.livestockDetails || []
+  ];
+
+  if (details.length > 0) {
+    return details.map(item => cropDisplayNames[item] || item).join(', ');
+  }
+
+  // 상세 항목이 없는 경우 선택된 카테고리 표시
+  return Object.entries(mainCrop)
+    .filter(([key, value]) => value && !key.endsWith('Details'))
+    .map(([key]) => mainCropMap[key] || key)
+    .join(', ');
 };
 
 export const getKoreanEquipmentType = (type: string): string => {

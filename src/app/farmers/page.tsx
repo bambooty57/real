@@ -6,7 +6,7 @@ import { ref, deleteObject, listAll } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import Link from 'next/link';
 import { Farmer } from '@/types/farmer';
-import { getFarmingTypeDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
+import { getFarmingTypeDisplay, getKoreanEquipmentType, getKoreanManufacturer, getMainCropText } from '@/utils/mappings';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -15,8 +15,11 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { BiRefresh } from 'react-icons/bi';
-import { FaPrint } from 'react-icons/fa';
+import { FaPrint, FaFileExcel } from 'react-icons/fa';
 import FarmerDetailModal from '@/components/FarmerDetailModal';
+import { Dialog } from '@headlessui/react';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 // 전화번호 포맷팅 함수
 const formatPhoneNumber = (phone: string) => {
@@ -347,6 +350,115 @@ export default function FarmersPage() {
     }
   };
 
+  const handleExportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('농민 목록');
+
+    // 헤더 설정
+    const baseColumns = [
+      { header: 'ID', key: 'id', width: 20 },
+      { header: '이름', key: 'name', width: 10 },
+      { header: '상호', key: 'businessName', width: 15 },
+      { header: '연령대', key: 'ageGroup', width: 10 },
+      { header: '전화번호', key: 'phone', width: 15 },
+      { header: '우편번호', key: 'zipCode', width: 10 },
+      { header: '지번주소', key: 'jibunAddress', width: 30 },
+      { header: '도로명주소', key: 'roadAddress', width: 30 },
+      { header: '상세주소', key: 'addressDetail', width: 20 },
+      { header: '우편수취가능여부', key: 'canReceiveMail', width: 15 },
+      { header: '영농형태', key: 'farmingTypes', width: 15 },
+      { header: '주작물', key: 'mainCrop', width: 20 }
+    ];
+
+    // 농기계 종류별 컬럼 추가
+    const equipmentTypes = ['tractor', 'transplanter', 'combine', 'forklift', 'excavator', 'skidLoader'];
+    const equipmentColumns: { header: string; key: string; width: number }[] = [];
+    
+    equipmentTypes.forEach(type => {
+      const koreanType = getKoreanEquipmentType(type);
+      for (let i = 1; i <= 3; i++) {
+        equipmentColumns.push(
+          { header: `${koreanType}${i} 제조사`, key: `${type}${i}Manufacturer`, width: 15 },
+          { header: `${koreanType}${i} 모델명`, key: `${type}${i}Model`, width: 15 },
+          { header: `${koreanType}${i} 거래유형`, key: `${type}${i}TradeType`, width: 15 },
+          { header: `${koreanType}${i} 판매구분`, key: `${type}${i}SaleType`, width: 15 }
+        );
+      }
+    });
+
+    worksheet.columns = [
+      ...baseColumns,
+      ...equipmentColumns,
+      { header: '농민정보메모', key: 'memo', width: 50 }
+    ];
+
+    // 선택된 농민들의 데이터 추가
+    const farmersToExport = selectedFarmers.length > 0 
+      ? farmers.filter(farmer => selectedFarmers.includes(farmer.id))
+      : filteredFarmers;
+
+    farmersToExport.forEach(farmer => {
+      // 기본 데이터 준비
+      const baseData = {
+        id: farmer.id,
+        name: farmer.name || '',
+        businessName: farmer.businessName || '',
+        ageGroup: farmer.ageGroup || '',
+        phone: farmer.phone || '',
+        zipCode: farmer.zipCode || '',
+        jibunAddress: farmer.jibunAddress || '',
+        roadAddress: farmer.roadAddress || '',
+        addressDetail: farmer.addressDetail || '',
+        canReceiveMail: farmer.canReceiveMail ? '가능' : '불가능',
+        farmingTypes: Object.entries(farmer.farmingTypes || {})
+          .filter(([_, value]) => value)
+          .map(([key]) => getFarmingTypeDisplay(key)),
+        mainCrop: getMainCropText(farmer.mainCrop) || '',
+        memo: farmer.memo || ''
+      };
+
+      // 농기계 데이터 준비
+      const equipmentData: { [key: string]: string } = {};
+      
+      equipmentTypes.forEach(type => {
+        const equipments = farmer.equipments?.filter(eq => eq.type === type) || [];
+        
+        // 각 종류별로 최대 3대까지 정보 추가
+        for (let i = 1; i <= 3; i++) {
+          const equipment = equipments[i - 1];
+          const prefix = `${type}${i}`;
+          
+          if (equipment) {
+            equipmentData[`${prefix}Manufacturer`] = equipment.manufacturer || '';
+            equipmentData[`${prefix}Model`] = equipment.model || '';
+            equipmentData[`${prefix}TradeType`] = equipment.tradeType === 'sale' ? '판매' : 
+                                                 equipment.tradeType === 'purchase' ? '구매' : '';
+            equipmentData[`${prefix}SaleType`] = equipment.saleType === 'new' ? '신규' : 
+                                                equipment.saleType === 'used' ? '중고' : '';
+          } else {
+            equipmentData[`${prefix}Manufacturer`] = '';
+            equipmentData[`${prefix}Model`] = '';
+            equipmentData[`${prefix}TradeType`] = '';
+            equipmentData[`${prefix}SaleType`] = '';
+          }
+        }
+      });
+
+      // 행 추가
+      worksheet.addRow({
+        ...baseData,
+        ...equipmentData
+      });
+    });
+
+    // 엑셀 파일 생성 및 다운로드
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    saveAs(blob, '농민_목록.xlsx');
+  };
+
   if (loading) {
     return <div>로딩 중...</div>;
   }
@@ -379,6 +491,14 @@ export default function FarmersPage() {
             />
             <span className="text-gray-700">전체 선택 ({selectedFarmers.length}/{filteredFarmers.length})</span>
           </label>
+          <button
+            onClick={handleExportExcel}
+            className="inline-flex items-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            <FaFileExcel className="mr-2" />
+            엑셀 내보내기
+            {selectedFarmers.length > 0 && ` (${selectedFarmers.length})`}
+          </button>
           {selectedFarmers.length > 0 && (
             <button
               onClick={handleDeleteSelected}
