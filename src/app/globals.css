@@ -9,40 +9,59 @@
   /* 기본 설정 */
   @page {
     size: A4;
-    margin: 1.5cm;
+    margin: 0.5cm;
   }
 
-  /* 모든 내용 숨기기 */
-  body > * {
+  /* 모달 외 내용 숨기기 */
+  body > *:not(.print-content) {
     display: none !important;
   }
 
-  /* 모달 내용만 표시 */
+  /* 모달 내용 표시 */
   .print-content {
     display: block !important;
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: auto;
-    overflow: visible;
     background: white;
+    font-size: 8pt !important;
+    transform: scale(0.9);
+    transform-origin: top left;
   }
 
-  /* 페이지 나누기 */
+  /* 이미지 크기 조절 */
+  .farmer-image {
+    width: 100px !important;
+    height: 75px !important;
+  }
+
+  /* 여백 조절 */
+  .p-6 {
+    padding: 0.5rem !important;
+  }
+
+  .gap-4 {
+    gap: 0.5rem !important;
+  }
+
+  .mb-4 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .mb-6 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* 페이지 나누기 제거 */
   .print\:page-break {
-    page-break-before: always;
+    page-break-before: auto;
   }
 
   /* 인쇄 시 숨길 요소 */
   .print\:hidden {
     display: none !important;
-  }
-
-  /* 이미지 설정 */
-  img {
-    max-width: 100%;
-    height: auto;
   }
 }
 
