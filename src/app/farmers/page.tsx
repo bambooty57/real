@@ -15,7 +15,6 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { BiRefresh } from 'react-icons/bi';
-import { FaPrint, FaFileExcel } from 'react-icons/fa';
 import FarmerDetailModal from '@/components/FarmerDetailModal';
 import { Dialog } from '@headlessui/react';
 import ExcelJS from 'exceljs';

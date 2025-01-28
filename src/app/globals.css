@@ -2,39 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 기타 스타일 */
+
 /* 인쇄 스타일 */
 @media print {
-  body {
-    background: white;
+  /* 기본 설정 */
+  @page {
+    size: A4;
+    margin: 1cm;
   }
 
+  /* 불필요한 요소 숨기기 */
   .print\:hidden {
     display: none !important;
   }
 
-  .print\:block {
-    display: block !important;
+  /* 페이지 나누기 */
+  .print\:page-break {
+    page-break-before: always;
   }
 
-  /* 페이지 여백 설정 */
-  @page {
-    margin: 2cm;
+  /* 내용 영역 */
+  .print\:content {
+    padding: 0;
+    margin: 0;
   }
 
-  /* 그림자 제거 */
-  .shadow {
-    box-shadow: none !important;
+  /* 이미지 그리드 */
+  .print\:image-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
   }
 
-  /* 배경색 유지 */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  /* 기본 정보 테이블 */
+  .print\:info-table {
+    width: 100%;
+    border-collapse: collapse;
   }
 
-  /* 페이지 나누기 방지 */
-  .page-break-inside-avoid {
-    page-break-inside: avoid;
+  .print\:info-table td,
+  .print\:info-table th {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+
+  /* 장비 현황 테이블 */
+  .print\:equipment-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .print\:equipment-table td,
+  .print\:equipment-table th {
+    border: 1px solid #ddd;
+    padding: 8px;
   }
 }
 
