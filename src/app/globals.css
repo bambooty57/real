@@ -9,12 +9,13 @@
   /* 기본 설정 */
   @page {
     size: A4;
-    margin: 1cm;
+    margin: 1.5cm;
   }
 
-  /* 불필요한 요소 숨기기 */
-  .print\:hidden {
-    display: none !important;
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
   }
 
   /* 페이지 나누기 */
@@ -22,42 +23,15 @@
     page-break-before: always;
   }
 
-  /* 내용 영역 */
-  .print\:content {
-    padding: 0;
-    margin: 0;
+  /* 인쇄 시 숨길 요소 */
+  .print\:hidden {
+    display: none !important;
   }
 
-  /* 이미지 그리드 */
-  .print\:image-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
-
-  /* 기본 정보 테이블 */
-  .print\:info-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .print\:info-table td,
-  .print\:info-table th {
-    border: 1px solid #ddd;
-    padding: 8px;
-  }
-
-  /* 장비 현황 테이블 */
-  .print\:equipment-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-  }
-
-  .print\:equipment-table td,
-  .print\:equipment-table th {
-    border: 1px solid #ddd;
-    padding: 8px;
+  /* 이미지 설정 */
+  img {
+    max-width: 100%;
+    height: auto;
   }
 }
 
