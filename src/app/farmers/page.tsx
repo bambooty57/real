@@ -1004,7 +1004,7 @@ export default function FarmersPage() {
                         .filter(([_, value]) => value)
                         .map(([key]) => {
                           // 축산업인 경우 세부 항목 표시
-                          if (key === 'livestock' && farmer.mainCrop?.livestockDetails?.length > 0) {
+                          if (key === 'livestock' && Array.isArray(farmer.mainCrop?.livestockDetails) && farmer.mainCrop.livestockDetails.length > 0) {
                             const livestockLabels = {
                               cattle: '한우',
                               pig: '돼지',
