@@ -55,6 +55,7 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
