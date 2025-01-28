@@ -241,7 +241,10 @@ export default function NewFarmer({
           const docRef = doc(db, 'farmers', farmerId)
           await updateDoc(docRef, saveData)
           toast.success('수정이 완료되었습니다.')
-          router.push('/farmers')
+          // 현재 URL의 쿼리 파라미터 유지
+          const currentUrl = new URL(window.location.href)
+          const searchParams = currentUrl.searchParams
+          router.push(`/farmers${searchParams.toString() ? `?${searchParams.toString()}` : ''}`)
         } else {
           // 새로운 등록 모드
           const docRef = collection(db, 'farmers')
@@ -330,7 +333,10 @@ export default function NewFarmer({
               if (onCancel) {
                 onCancel()
               } else {
-                router.push('/farmers')
+                // 현재 URL의 쿼리 파라미터 유지
+                const currentUrl = new URL(window.location.href)
+                const searchParams = currentUrl.searchParams
+                router.push(`/farmers${searchParams.toString() ? `?${searchParams.toString()}` : ''}`)
               }
             }}
             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
