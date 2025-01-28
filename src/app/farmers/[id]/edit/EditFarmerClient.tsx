@@ -10,9 +10,11 @@ import FarmerForm from '@/components/FarmerForm'
 
 interface EditFarmerClientProps {
   farmerId: string
+  onClose: () => void
+  onUpdate: () => void
 }
 
-export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
+export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFarmerClientProps) {
   const [initialData, setInitialData] = useState<FormData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -52,6 +54,8 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
         updatedAt: serverTimestamp()
       })
       toast.success('농민 정보가 수정되었습니다.')
+      onUpdate()
+      onClose()
       router.push('/farmers')
     } catch (error) {
       console.error('Error updating farmer:', error)
@@ -60,6 +64,7 @@ export default function EditFarmerClient({ farmerId }: EditFarmerClientProps) {
   }
 
   const handleCancel = () => {
+    onClose()
     router.push('/farmers')
   }
 
