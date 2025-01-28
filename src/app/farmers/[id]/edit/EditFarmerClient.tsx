@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase'
 import { toast } from 'react-hot-toast'
 import { FormData } from '@/types/farmer'
 import { useRouter } from 'next/navigation'
-import FarmerForm from '@/components/FarmerForm'
+import NewFarmer from '@/app/farmers/new/NewFarmer'
 
 interface EditFarmerClientProps {
   farmerId: string
@@ -63,11 +63,6 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
     }
   }
 
-  const handleCancel = () => {
-    onClose()
-    router.push('/farmers')
-  }
-
   if (loading) {
     return <div className="p-4">데이터를 불러오는 중...</div>
   }
@@ -82,11 +77,12 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
 
   return (
     <div className="bg-white p-4">
-      <FarmerForm 
+      <NewFarmer 
         mode="edit"
+        farmerId={farmerId}
         initialData={initialData}
         onSubmit={handleSubmit}
-        onCancel={handleCancel}
+        onCancel={onClose}
       />
     </div>
   )
