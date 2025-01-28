@@ -9,60 +9,52 @@
   /* 기본 설정 */
   @page {
     size: A4;
-    margin: 0.5cm;
+    margin: 1cm;
   }
 
-  /* 인쇄 시 숨길 요소 */
-  body > *:not(.print-content) {
-    display: none !important;
-  }
-
-  /* 모달 내용 표시 */
-  .print-content {
-    display: block !important;
-    position: relative !important;
-    width: 100% !important;
-    background: white !important;
-    font-size: 8pt !important;
-  }
-
-  /* 이미지 크기 조절 */
-  .farmer-image {
-    width: 100px !important;
-    height: 75px !important;
-  }
-
-  /* 여백 조절 */
-  .p-6 {
-    padding: 0.5rem !important;
-  }
-
-  .gap-4 {
-    gap: 0.5rem !important;
-  }
-
-  .mb-4 {
-    margin-bottom: 0.5rem !important;
-  }
-
-  .mb-6 {
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* 그림자 제거 */
-  .shadow {
-    box-shadow: none !important;
-  }
-
-  /* 배경색 제거 */
-  .bg-white {
-    background: none !important;
+  /* 전체 페이지 설정 */
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
   }
 
   /* 인쇄 시 숨길 요소 */
   .print\:hidden {
     display: none !important;
   }
+
+  /* 인쇄 내용 스타일 */
+  .print-content {
+    display: block !important;
+    width: 100% !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* 텍스트 크기 조정 */
+  h1 { font-size: 18pt !important; }
+  h2 { font-size: 14pt !important; }
+  h3 { font-size: 12pt !important; }
+  p, dt, dd { font-size: 10pt !important; }
+
+  /* 이미지 크기 조절 */
+  .farmer-image {
+    width: 150px !important;
+    height: 112.5px !important;
+  }
+
+  /* 여백 조절 */
+  .p-6 { padding: 1rem !important; }
+  .gap-4 { gap: 0.5rem !important; }
+  .mb-4 { margin-bottom: 0.5rem !important; }
+  .mb-6 { margin-bottom: 1rem !important; }
+
+  /* 배경색 및 그림자 제거 */
+  .shadow { box-shadow: none !important; }
+  .bg-white { background: none !important; }
+  .bg-gray-50 { background: none !important; }
 }
 
 @layer base {
