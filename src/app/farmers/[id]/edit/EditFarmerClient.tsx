@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase'
 import NewFarmer from '../../new/NewFarmer'
 import { toast } from 'react-hot-toast'
 import { FormData } from '@/types/farmer'
+import { useRouter } from 'next/navigation'
 
 interface EditFarmerClientProps {
   farmerId: string
@@ -54,6 +55,7 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     async function fetchFarmerData() {
@@ -81,21 +83,26 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
     fetchFarmerData()
   }, [farmerId])
 
-  const handleSubmit = async (data: FormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     try {
       const docRef = doc(db, 'farmers', farmerId)
       await updateDoc(docRef, {
-        ...data,
+        ...initialData,
         updatedAt: serverTimestamp()
       })
       toast.success('농민 정보가 수정되었습니다.')
       if (onUpdate) {
         onUpdate()
       }
-      onClose()
+      router.push('/farmers')
     } catch (error) {
       console.error('Error updating farmer:', error)
-      toast.error('수정 중 오류가 발생했습니다.')
+      toast.error('농민 정보 수정 중 오류가 발생했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
