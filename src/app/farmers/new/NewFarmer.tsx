@@ -240,14 +240,14 @@ export default function NewFarmer({
           // 수정 모드
           const docRef = doc(db, 'farmers', farmerId)
           await updateDoc(docRef, saveData)
-          alert('수정이 완료되었습니다.')
-          router.push(`/farmers/${farmerId}`)
+          toast.success('수정이 완료되었습니다.')
+          router.push('/farmers')
         } else {
           // 새로운 등록 모드
           const docRef = collection(db, 'farmers')
           const newFarmerRef = await addDoc(docRef, saveData)
           toast.success('농가 정보가 성공적으로 등록되었습니다.')
-          router.push(`/farmers/${newFarmerRef.id}`)
+          router.push('/farmers')
         }
       }
     } catch (error) {
@@ -324,16 +324,20 @@ export default function NewFarmer({
         <EquipmentInfo formData={formData} setFormData={setFormData} />
 
         <div className="flex justify-end space-x-4 mt-8">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              disabled={isSubmitting}
-            >
-              취소
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (onCancel) {
+                onCancel()
+              } else {
+                router.push('/farmers')
+              }
+            }}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            disabled={isSubmitting}
+          >
+            취소
+          </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
