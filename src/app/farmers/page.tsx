@@ -54,6 +54,51 @@ export default function FarmersPage() {
   const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // URL 쿼리 파라미터 관리 함수
+  const updateQueryParams = (params: Record<string, string>) => {
+    if (typeof window === 'undefined') return;
+    const searchParams = new URLSearchParams(window.location.search);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) {
+        searchParams.set(key, value);
+      } else {
+        searchParams.delete(key);
+      }
+    });
+    const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  };
+
+  // 초기 필터 상태 설정
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const searchParams = new URLSearchParams(window.location.search);
+    
+    const initialFilters = {
+      search: searchParams.get('search') || '',
+      city: searchParams.get('city') || '',
+      district: searchParams.get('district') || '',
+      village: searchParams.get('village') || '',
+      farmingType: searchParams.get('farmingType') || '',
+      mainCrop: searchParams.get('mainCrop') || '',
+      mailOption: searchParams.get('mailOption') || 'all',
+      saleType: searchParams.get('saleType') || 'all',
+      equipmentType: searchParams.get('equipmentType') || '',
+      manufacturer: searchParams.get('manufacturer') || ''
+    };
+
+    setSearchTerm(initialFilters.search);
+    setSelectedCity(initialFilters.city);
+    setSelectedDistrict(initialFilters.district);
+    setSelectedVillage(initialFilters.village);
+    setSelectedFarmingType(initialFilters.farmingType);
+    setSelectedMainCrop(initialFilters.mainCrop);
+    setSelectedMailOption(initialFilters.mailOption);
+    setSelectedSaleType(initialFilters.saleType);
+    setSelectedEquipmentType(initialFilters.equipmentType);
+    setSelectedManufacturer(initialFilters.manufacturer);
+  }, []);
+
   useEffect(() => {
     const fetchFarmers = async () => {
       try {
@@ -141,16 +186,62 @@ export default function FarmersPage() {
     setSelectedCity(city);
     setSelectedDistrict('');
     setSelectedVillage('');
+    updateQueryParams({ city, district: '', village: '' });
   };
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const district = e.target.value;
     setSelectedDistrict(district);
     setSelectedVillage('');
+    updateQueryParams({ district, village: '' });
   };
 
   const handleVillageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedVillage(e.target.value);
+    const village = e.target.value;
+    setSelectedVillage(village);
+    updateQueryParams({ village });
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const search = e.target.value;
+    setSearchTerm(search);
+    updateQueryParams({ search });
+  };
+
+  const handleFarmingTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const farmingType = e.target.value;
+    setSelectedFarmingType(farmingType);
+    updateQueryParams({ farmingType });
+  };
+
+  const handleMainCropChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const mainCrop = e.target.value;
+    setSelectedMainCrop(mainCrop);
+    updateQueryParams({ mainCrop });
+  };
+
+  const handleMailOptionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const mailOption = e.target.value;
+    setSelectedMailOption(mailOption);
+    updateQueryParams({ mailOption });
+  };
+
+  const handleSaleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const saleType = e.target.value;
+    setSelectedSaleType(saleType);
+    updateQueryParams({ saleType });
+  };
+
+  const handleEquipmentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const equipmentType = e.target.value;
+    setSelectedEquipmentType(equipmentType);
+    updateQueryParams({ equipmentType });
+  };
+
+  const handleManufacturerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const manufacturer = e.target.value;
+    setSelectedManufacturer(manufacturer);
+    updateQueryParams({ manufacturer });
   };
 
   // 필터링 로직 단순화
@@ -535,7 +626,7 @@ export default function FarmersPage() {
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               placeholder="이름, 전화번호, 상호로 검색"
               className="w-full p-2 border rounded"
             />
@@ -607,7 +698,7 @@ export default function FarmersPage() {
             </label>
             <select
               value={selectedFarmingType}
-              onChange={(e) => setSelectedFarmingType(e.target.value)}
+              onChange={handleFarmingTypeChange}
               className="w-full p-2 border rounded"
             >
               <option value="">전체</option>
@@ -626,7 +717,7 @@ export default function FarmersPage() {
             </label>
             <select
               value={selectedSaleType}
-              onChange={(e) => setSelectedSaleType(e.target.value)}
+              onChange={handleSaleTypeChange}
               className="w-full p-2 border rounded"
             >
               <option value="all">전체</option>
@@ -642,7 +733,7 @@ export default function FarmersPage() {
             </label>
             <select
               value={selectedMailOption}
-              onChange={(e) => setSelectedMailOption(e.target.value)}
+              onChange={handleMailOptionChange}
               className="w-full p-2 border rounded"
             >
               <option value="all">전체</option>
@@ -658,7 +749,7 @@ export default function FarmersPage() {
             </label>
             <select
               value={selectedEquipmentType}
-              onChange={(e) => setSelectedEquipmentType(e.target.value)}
+              onChange={handleEquipmentTypeChange}
               className="w-full p-2 border rounded"
             >
               <option value="">전체</option>
@@ -681,7 +772,7 @@ export default function FarmersPage() {
             </label>
             <select
               value={selectedManufacturer}
-              onChange={(e) => setSelectedManufacturer(e.target.value)}
+              onChange={handleManufacturerChange}
               className="w-full p-2 border rounded"
             >
               <option value="">전체</option>
@@ -911,18 +1002,40 @@ export default function FarmersPage() {
                     <div className="flex flex-wrap gap-1 mt-1">
                       {Object.entries(farmer.farmingTypes)
                         .filter(([_, value]) => value)
-                        .map(([key]) => (
-                          <span
-                            key={key}
-                            className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded"
-                          >
-                            {key === 'waterPaddy' ? '수도작' :
-                             key === 'fieldFarming' ? '밭농사' :
-                             key === 'orchard' ? '과수원' :
-                             key === 'livestock' ? '축산업' :
-                             key === 'forageCrop' ? '사료작물' : key}
-                          </span>
-                        ))}
+                        .map(([key]) => {
+                          // 축산업인 경우 세부 항목 표시
+                          if (key === 'livestock' && farmer.mainCrop?.livestockDetails?.length > 0) {
+                            const livestockLabels = {
+                              cattle: '한우',
+                              pig: '돼지',
+                              chicken: '닭',
+                              duck: '오리',
+                              goat: '염소'
+                            };
+                            const details = farmer.mainCrop.livestockDetails
+                              .map(type => livestockLabels[type as keyof typeof livestockLabels])
+                              .join(', ');
+                            return (
+                              <span
+                                key={key}
+                                className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded"
+                              >
+                                축산업 ({details})
+                              </span>
+                            );
+                          }
+                          return (
+                            <span
+                              key={key}
+                              className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded"
+                            >
+                              {key === 'waterPaddy' ? '수도작' :
+                               key === 'fieldFarming' ? '밭농사' :
+                               key === 'orchard' ? '과수원' :
+                               key === 'forageCrop' ? '사료작물' : key}
+                            </span>
+                          );
+                        })}
                     </div>
                   </div>
                 )}
@@ -934,20 +1047,105 @@ export default function FarmersPage() {
                     <div className="flex flex-wrap gap-1 mt-1">
                       {Object.entries(farmer.mainCrop)
                         .filter(([key, value]) => value && !key.endsWith('Details'))
-                        .map(([key]) => (
-                          <span
-                            key={key}
-                            className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded"
-                          >
-                            {key === 'foodCrops' ? '식량작물' :
-                             key === 'facilityHort' ? '시설원예' :
-                             key === 'fieldVeg' ? '노지채소' :
-                             key === 'fruits' ? '과수' :
-                             key === 'specialCrops' ? '특용작물' :
-                             key === 'flowers' ? '화훼' :
-                             key === 'livestock' ? '축산' : key}
-                          </span>
-                        ))}
+                        .map(([key]) => {
+                          // 각 주작물 유형별 세부 정보 표시
+                          const detailsKey = `${key}Details` as keyof typeof farmer.mainCrop;
+                          const details = farmer.mainCrop[detailsKey];
+                          
+                          // 각 주작물 유형별 라벨 정의
+                          const labels: { [key: string]: { [key: string]: string } } = {
+                            foodCrops: {
+                              rice: '벼',
+                              barley: '보리',
+                              wheat: '밀',
+                              corn: '옥수수',
+                              potato: '감자',
+                              soybean: '콩',
+                              sweetPotato: '고구마'
+                            },
+                            facilityHort: {
+                              tomato: '토마토',
+                              strawberry: '딸기',
+                              cucumber: '오이',
+                              pepper: '고추',
+                              watermelon: '수박',
+                              melon: '멜론'
+                            },
+                            fieldVeg: {
+                              cabbage: '배추',
+                              radish: '무',
+                              garlic: '마늘',
+                              onion: '양파',
+                              carrot: '당근'
+                            },
+                            fruits: {
+                              apple: '사과',
+                              pear: '배',
+                              grape: '포도',
+                              peach: '복숭아',
+                              citrus: '감귤'
+                            },
+                            specialCrops: {
+                              sesame: '참깨',
+                              perilla: '들깨',
+                              ginseng: '인삼',
+                              medicinalHerbs: '약용작물'
+                            },
+                            flowers: {
+                              rose: '장미',
+                              chrysanthemum: '국화',
+                              lily: '백합',
+                              orchid: '난'
+                            },
+                            livestock: {
+                              cattle: '한우',
+                              pig: '돼지',
+                              chicken: '닭',
+                              duck: '오리',
+                              goat: '염소'
+                            }
+                          };
+
+                          // 세부 정보가 있는 경우 표시
+                          if (Array.isArray(details) && details.length > 0 && labels[key]) {
+                            const detailLabels = details
+                              .map(item => labels[key][item as keyof typeof labels[typeof key]])
+                              .filter(Boolean)
+                              .join(', ');
+
+                            return (
+                              <span
+                                key={key}
+                                className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded"
+                              >
+                                {key === 'foodCrops' ? '식량작물' :
+                                 key === 'facilityHort' ? '시설원예' :
+                                 key === 'fieldVeg' ? '노지채소' :
+                                 key === 'fruits' ? '과수' :
+                                 key === 'specialCrops' ? '특용작물' :
+                                 key === 'flowers' ? '화훼' :
+                                 key === 'livestock' ? '축산' : key}
+                                {detailLabels && ` (${detailLabels})`}
+                              </span>
+                            );
+                          }
+
+                          // 세부 정보가 없는 경우 기본 표시
+                          return (
+                            <span
+                              key={key}
+                              className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded"
+                            >
+                              {key === 'foodCrops' ? '식량작물' :
+                               key === 'facilityHort' ? '시설원예' :
+                               key === 'fieldVeg' ? '노지채소' :
+                               key === 'fruits' ? '과수' :
+                               key === 'specialCrops' ? '특용작물' :
+                               key === 'flowers' ? '화훼' :
+                               key === 'livestock' ? '축산' : key}
+                            </span>
+                          );
+                        })}
                     </div>
                   </div>
                 )}

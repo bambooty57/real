@@ -49,41 +49,41 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
             width: 100% !important;
           }
 
-          /* 스크롤바 숨기기 */
-          .modal-content::-webkit-scrollbar {
-            display: none !important;
+          /* Dialog 패널 스타일 */
+          .dialog-panel {
+            position: relative !important;
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            transform: none !important;
+          }
+
+          /* 이미지 갤러리 최적화 */
+          .farmer-image-gallery {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 10px !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          /* 이미지 컨테이너 */
+          .farmer-image {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            aspect-ratio: 4/3 !important;
+            margin-bottom: 10px !important;
           }
 
           /* 배경 제거 */
           .modal-overlay {
             background: none !important;
             position: static !important;
-          }
-
-          /* 이미지 갤러리 최적화 */
-          .farmer-image-gallery {
-            display: grid !important;
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 20px !important;
-            position: static !important;
-            margin-top: 20px !important;
-            page-break-inside: avoid !important;
-          }
-
-          /* 이미지 스타일 */
-          .farmer-image {
-            width: 100% !important;
-            height: auto !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            margin-bottom: 20px !important;
-          }
-
-          /* 기본 정보 스타일 */
-          .farmer-info {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            margin-bottom: 20px !important;
           }
 
           /* 숨길 요소들 */
@@ -95,29 +95,14 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
 
           /* 페이지 여백 설정 */
           @page {
-            margin: 2cm;
+            margin: 1cm;
+            size: A4;
           }
 
           /* 기타 요소 스타일 */
           body {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-          }
-
-          /* 섹션 구분 */
-          .section {
-            page-break-inside: avoid !important;
-            margin-bottom: 30px !important;
-          }
-
-          /* Dialog 패널 스타일 */
-          .dialog-panel {
-            max-height: none !important;
-            overflow: visible !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            transform: none !important;
           }
         }
       `}</style>
@@ -533,10 +518,10 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
             {/* 이미지 갤러리 */}
             <div className="mt-6">
               <h3 className="text-lg font-semibold mb-4">이미지 갤러리</h3>
-              <div className="farmer-image-gallery">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 farmer-image-gallery">
                 {/* 농민 이미지 */}
                 {farmer.farmerImages?.map((image, index) => (
-                  <div key={`farmer-${index}`} className="farmer-image">
+                  <div key={`farmer-${index}`} className="farmer-image aspect-[4/3]">
                     <Image
                       src={image.toString()}
                       alt={`농민 이미지 ${index + 1}`}
@@ -552,7 +537,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                 {farmer.equipments?.map((equipment, eqIndex) => (
                   <React.Fragment key={`eq-${eqIndex}`}>
                     {equipment.images?.map((image, imgIndex) => (
-                      <div key={`eq-${eqIndex}-${imgIndex}`} className="farmer-image">
+                      <div key={`eq-${eqIndex}-${imgIndex}`} className="farmer-image aspect-[4/3]">
                         <Image
                           src={image.toString()}
                           alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
@@ -569,7 +554,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                     {/* 부착장비 이미지 */}
                     {equipment.attachments?.map((attachment, attIndex) =>
                       attachment.images?.map((image, imgIndex) => (
-                        <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="farmer-image">
+                        <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="farmer-image aspect-[4/3]">
                           <Image
                             src={image.toString()}
                             alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
