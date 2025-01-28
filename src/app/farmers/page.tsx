@@ -728,7 +728,7 @@ export default function FarmersPage() {
             </div>
 
             {/* 이미지 갤러리 */}
-            <div className="relative h-48 rounded-t-lg overflow-hidden farmer-image-gallery">
+            <div className="relative aspect-[4/3] rounded-t-lg overflow-hidden farmer-image-gallery">
               <Swiper
                 modules={[Navigation, Pagination]}
                 navigation
