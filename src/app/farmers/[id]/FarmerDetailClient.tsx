@@ -779,4 +779,25 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
 
               {/* 부착작업기 이미지 */}
               {equipment.attachments?.map((attachment, attIndex) => (
-                <React.Fragment key={`att-${eqIndex}-${attIndex}`
+                <React.Fragment key={`att-${eqIndex}-${attIndex}`}>
+                  {attachment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
+                    <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="relative print-image aspect-square">
+                      <img
+                        src={image}
+                        alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
+                        className="object-cover rounded-lg w-full h-full"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                        {getKoreanEquipmentType(equipment.type)}의 {attachment.type} {imgIndex + 1}
+                      </div>
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
