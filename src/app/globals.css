@@ -8,7 +8,7 @@
 @media print {
   /* 기본 설정 */
   @page {
-    size: A4;
+    size: A4 landscape;
     margin: 1cm;
   }
 
@@ -20,33 +20,53 @@
     background: white;
   }
 
-  /* 인쇄 시 숨길 요소 */
-  .print\:hidden {
+  /* 모달 외 모든 내용 숨기기 */
+  body > *:not(.print-content) {
     display: none !important;
   }
 
-  /* 인쇄 내용 스타일 */
+  /* 모달 내용만 표시 */
   .print-content {
     display: block !important;
     width: 100% !important;
     background: white !important;
     color: black !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    padding: 1cm !important;
+  }
+
+  /* 기본 정보 2열 그리드 */
+  .print-basic-info {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* 이미지 갤러리 4열 그리드 */
+  .print-image-gallery {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* 이미지 크기 조정 */
+  .farmer-image {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 4/3 !important;
   }
 
   /* 텍스트 크기 조정 */
-  h1 { font-size: 18pt !important; }
-  h2 { font-size: 14pt !important; }
-  h3 { font-size: 12pt !important; }
+  h1 { font-size: 24pt !important; }
+  h2 { font-size: 18pt !important; }
+  h3 { font-size: 14pt !important; }
   p, dt, dd { font-size: 10pt !important; }
 
-  /* 이미지 크기 조절 */
-  .farmer-image {
-    width: 150px !important;
-    height: 112.5px !important;
-  }
-
   /* 여백 조절 */
-  .p-6 { padding: 1rem !important; }
+  .p-6 { padding: 0.5rem !important; }
   .gap-4 { gap: 0.5rem !important; }
   .mb-4 { margin-bottom: 0.5rem !important; }
   .mb-6 { margin-bottom: 1rem !important; }
@@ -55,6 +75,16 @@
   .shadow { box-shadow: none !important; }
   .bg-white { background: none !important; }
   .bg-gray-50 { background: none !important; }
+
+  /* 인쇄 시 숨길 요소 */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* 농민 목록 페이지 숨기기 */
+  .farmers-list-page {
+    display: none !important;
+  }
 }
 
 @layer base {

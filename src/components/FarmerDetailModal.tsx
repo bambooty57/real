@@ -76,57 +76,51 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               {/* 내용 */}
               <div className="space-y-6">
                 {/* 기본 정보 */}
-                <div className="bg-white shadow rounded-lg p-6">
-                  <h2 className="text-xl font-semibold mb-4">기본 정보</h2>
-                  <dl className="grid grid-cols-1 gap-4">
+                <div className="bg-white shadow rounded-lg p-6 print-basic-info">
+                  <div>
+                    <dt className="text-gray-600">이름</dt>
+                    <dd className="font-medium">{farmer.name}</dd>
+                  </div>
+                  {farmer.businessName && (
                     <div>
-                      <dt className="text-gray-600">이름</dt>
-                      <dd className="font-medium">{farmer.name}</dd>
+                      <dt className="text-gray-600">상호명</dt>
+                      <dd className="font-medium">{farmer.businessName}</dd>
                     </div>
-                    {farmer.businessName && (
-                      <div>
-                        <dt className="text-gray-600">상호명</dt>
-                        <dd className="font-medium">{farmer.businessName}</dd>
-                      </div>
-                    )}
+                  )}
+                  <div>
+                    <dt className="text-gray-600">전화번호</dt>
+                    <dd className="font-medium">
+                      <a href={`tel:${farmer.phone}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                        {formatPhoneNumber(farmer.phone)}
+                      </a>
+                    </dd>
+                  </div>
+                  {farmer.roadAddress && (
                     <div>
-                      <dt className="text-gray-600">전화번호</dt>
-                      <dd className="font-medium">
-                        <a 
-                          href={`tel:${farmer.phone}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
-                        >
-                          {formatPhoneNumber(farmer.phone)}
-                        </a>
-                      </dd>
+                      <dt className="text-gray-600">주소</dt>
+                      <dd className="font-medium">{farmer.roadAddress} {farmer.addressDetail}</dd>
                     </div>
-                    {farmer.roadAddress && (
-                      <div>
-                        <dt className="text-gray-600">주소</dt>
-                        <dd className="font-medium">{farmer.roadAddress} {farmer.addressDetail}</dd>
-                      </div>
-                    )}
+                  )}
+                  <div>
+                    <dt className="text-gray-600">우편수취</dt>
+                    <dd className="font-medium">
+                      <span className={`inline-block px-2 py-1 rounded text-sm ${
+                        farmer.canReceiveMail ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {farmer.canReceiveMail ? '가능' : '불가능'}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-600">연령대</dt>
+                    <dd className="font-medium">{farmer.ageGroup}</dd>
+                  </div>
+                  {farmer.memo && (
                     <div>
-                      <dt className="text-gray-600">우편수취</dt>
-                      <dd className="font-medium">
-                        <span className={`inline-block px-2 py-1 rounded text-sm ${
-                          farmer.canReceiveMail ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {farmer.canReceiveMail ? '가능' : '불가능'}
-                        </span>
-                      </dd>
+                      <dt className="text-gray-600">메모</dt>
+                      <dd className="font-medium whitespace-pre-wrap">{farmer.memo}</dd>
                     </div>
-                    <div>
-                      <dt className="text-gray-600">연령대</dt>
-                      <dd className="font-medium">{farmer.ageGroup}</dd>
-                    </div>
-                    {farmer.memo && (
-                      <div>
-                        <dt className="text-gray-600">메모</dt>
-                        <dd className="font-medium whitespace-pre-wrap">{farmer.memo}</dd>
-                      </div>
-                    )}
-                  </dl>
+                  )}
                 </div>
 
                 {/* 보유 장비 */}
@@ -234,10 +228,10 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                 {/* 이미지 갤러리 */}
                 <div className="bg-white shadow rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-4">이미지 갤러리</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 farmer-image-gallery">
+                  <div className="print-image-gallery">
                     {/* 농민 이미지 */}
                     {farmer.farmerImages?.map((image, index) => (
-                      <div key={`farmer-${index}`} className="farmer-image aspect-[4/3]">
+                      <div key={`farmer-${index}`} className="farmer-image">
                         <Image
                           src={image.toString()}
                           alt={`농민 이미지 ${index + 1}`}
@@ -253,7 +247,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                     {farmer.equipments?.map((equipment, eqIndex) => (
                       <React.Fragment key={`eq-${eqIndex}`}>
                         {equipment.images?.map((image, imgIndex) => (
-                          <div key={`eq-${eqIndex}-${imgIndex}`} className="farmer-image aspect-[4/3]">
+                          <div key={`eq-${eqIndex}-${imgIndex}`} className="farmer-image">
                             <Image
                               src={image.toString()}
                               alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
@@ -270,7 +264,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                         {/* 부착장비 이미지 */}
                         {equipment.attachments?.map((attachment, attIndex) =>
                           attachment.images?.map((image, imgIndex) => (
-                            <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="farmer-image aspect-[4/3]">
+                            <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="farmer-image">
                               <Image
                                 src={image.toString()}
                                 alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
