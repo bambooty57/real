@@ -44,6 +44,7 @@ export default function FarmersPage() {
   const [availableCities, setAvailableCities] = useState<Set<string>>(new Set())
   const [districtsByCity, setDistrictsByCity] = useState<Map<string, Set<string>>>(new Map())
   const [villagesByDistrict, setVillagesByDistrict] = useState<Map<string, Set<string>>>(new Map())
+  const farmersPerPage = 15  // 페이지당 표시할 농민 수
 
   // URL 쿼리 파라미터 관리 함수
   const updateQueryParams = (params: Record<string, string>) => {
