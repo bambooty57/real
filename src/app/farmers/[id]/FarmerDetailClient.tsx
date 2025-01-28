@@ -220,44 +220,36 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             print-color-adjust: exact !important;
           }
           
+          /* 인쇄 시 숨길 요소들 */
+          .print-hide {
+            display: none !important;
+          }
+
           /* 1페이지: 기본정보 */
-          .print-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+          .basic-info-section {
             page-break-after: always;
+            break-inside: avoid;
           }
           
           /* 2페이지: 보유농기계 */
           .equipment-info-section {
             page-break-before: always;
             page-break-after: always;
-          }
-          
-          .equipment-info-section .grid {
-            grid-template-columns: 1fr 1fr !important;
-            gap: 20px;
+            break-inside: avoid;
           }
           
           /* 3페이지: 이미지 */
           .images-section {
             page-break-before: always;
-          }
-          
-          .images-section .grid {
-            grid-template-columns: repeat(4, 1fr) !important;
-            gap: 10px;
-          }
-          
-          /* 각 섹션 스타일 */
-          .basic-info-section,
-          .equipment-info-section {
             break-inside: avoid;
           }
-          
-          /* 인쇄 시 숨길 요소들 */
-          .print-hide {
-            display: none !important;
+
+          /* 이미지 그리드 레이아웃 */
+          .images-section .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 10px;
+            page-break-inside: avoid;
           }
           
           /* 이미지 크기 조절 */
@@ -265,6 +257,8 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             width: 100%;
             max-width: 100%;
             height: auto;
+            aspect-ratio: 4/3;
+            object-fit: cover;
             margin: 10px 0;
             page-break-inside: avoid;
           }
@@ -274,10 +268,21 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
+
+          /* 섹션 제목 스타일 */
+          h2 {
+            margin-top: 0;
+            padding-top: 0;
+          }
+
+          /* 그리드 레이아웃 조정 */
+          .print-grid {
+            display: block !important;
+          }
         }
       `}</style>
 
-      <div className="max-w-4xl mx-auto relative">
+      <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6 print-hide">
           <h1 className="text-2xl font-bold">{farmer.name} 상세 정보</h1>
           <div className="space-x-2">
@@ -303,35 +308,140 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
           </div>
         </div>
 
-        {/* 2열 레이아웃 컨테이너 */}
-        <div className="print-grid">
-          {/* 1열: 기본 정보 섹션 */}
-          <div className="basic-info-section">
-            <div className="bg-white shadow rounded-lg p-6 mb-6">
-              <h2 className="text-xl font-semibold mb-4">기본 정보</h2>
-              <dl className="grid grid-cols-1 gap-4">
+        {/* 1페이지: 기본 정보 */}
+        <div className="basic-info-section">
+          <div className="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">기본 정보</h2>
+            <dl className="grid grid-cols-1 gap-4">
+              <div>
+                <dt className="text-gray-600">이름</dt>
+                <dd className="font-medium">{farmer.name}</dd>
+              </div>
+              {farmer.businessName && (
                 <div>
-                  <dt className="text-gray-600">이름</dt>
-                  <dd className="font-medium">{farmer.name}</dd>
+                  <dt className="text-gray-600">상호명</dt>
+                  <dd className="font-medium">{farmer.businessName}</dd>
                 </div>
-                {farmer.businessName && (
-                  <div>
-                    <dt className="text-gray-600">상호명</dt>
-                    <dd className="font-medium">{farmer.businessName}</dd>
-                  </div>
-                )}
-                {/* 주소 정보 */}
+              )}
+              {/* 주소 정보 */}
+              <div>
+                <dt className="text-gray-600">전화번호</dt>
+                <dd className="font-medium">
+                  <a 
+                    href={`tel:${farmer.phone}`}
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {formatPhoneNumber(farmer.phone)}
+                  </a>
+                </dd>
+              </div>
+              {farmer.zipCode && (
                 <div>
-                  <dt className="text-gray-600">전화번호</dt>
+                  <dt className="text-gray-600">우편번호</dt>
+                  <dd className="font-medium">{farmer.zipCode}</dd>
+                </div>
+              )}
+              {farmer.postalCode && (
+                <div>
+                  <dt className="text-gray-600">우편번호</dt>
+                  <dd className="font-medium">{farmer.postalCode}</dd>
+                </div>
+              )}
+              {farmer.roadAddress && (
+                <div>
+                  <dt className="text-gray-600">도로명주소</dt>
                   <dd className="font-medium">
                     <a 
-                      href={`tel:${farmer.phone}`}
+                      href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.roadAddress)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 hover:underline"
                     >
-                      {formatPhoneNumber(farmer.phone)}
+                      {farmer.roadAddress}
                     </a>
                   </dd>
                 </div>
+              )}
+              {farmer.jibunAddress && (
+                <div>
+                  <dt className="text-gray-600">지번주소</dt>
+                  <dd className="font-medium">
+                    <a 
+                      href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.jibunAddress)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {farmer.jibunAddress}
+                    </a>
+                  </dd>
+                </div>
+              )}
+              {farmer.addressDetail && (
+                <div>
+                  <dt className="text-gray-600">상세주소</dt>
+                  <dd className="font-medium">{farmer.addressDetail}</dd>
+                </div>
+              )}
+              <div>
+                <dt className="text-gray-600">우편수취</dt>
+                <dd className="font-medium">{farmer.canReceiveMail ? '가능' : '불가능'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-600">연령대</dt>
+                <dd className="font-medium">{farmer.ageGroup}</dd>
+              </div>
+              {/* 메모 */}
+              {farmer.memo && (
+                <div>
+                  <dt className="text-gray-600">메모</dt>
+                  <dd className="font-medium whitespace-pre-wrap">{farmer.memo}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">농업 형태 및 주요 작물</h2>
+            {/* 농업 형태 */}
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-600 mb-2">농업 형태</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {Object.entries(farmer.farmingTypes).map(([key, value]) => {
+                  if (!value) return null;
+                  const labels = {
+                    waterPaddy: '수도작',
+                    fieldFarming: '밭농사',
+                    orchard: '과수원',
+                    livestock: '축산업',
+                    forageCrop: '조사료'
+                  };
+                  return (
+                    <div key={key} className="flex items-center">
+                      <span className="text-blue-600">✓</span>
+                      <span className="ml-2">{labels[key as keyof typeof labels]}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 영농정보메모 */}
+            {farmer.farmingMemo && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-600 mb-2">영농정보메모</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700 whitespace-pre-wrap">{farmer.farmingMemo}</p>
+                </div>
+              </div>
+            )}
+
+            {/* 주요 작물 */}
+            <div className="space-y-4">
+              {/* 식량작물 */}
+              {Object.entries({
+                rice: '벼',
+                barley: '보리',
                 {farmer.zipCode && (
                   <div>
                     <dt className="text-gray-600">우편번호</dt>
