@@ -84,14 +84,13 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
     fetchFarmerData()
   }, [farmerId])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: FormData) => {
     setIsSubmitting(true);
 
     try {
       const docRef = doc(db, 'farmers', farmerId)
       await updateDoc(docRef, {
-        ...initialData,
+        ...data,
         updatedAt: serverTimestamp()
       })
       toast.success('농민 정보가 수정되었습니다.')
