@@ -5,6 +5,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import NewFarmer from '../../new/NewFarmer'
 import { toast } from 'react-hot-toast'
+import { FormData } from '@/types/farmer'
 
 interface EditFarmerClientProps {
   farmerId: string
@@ -12,7 +13,7 @@ interface EditFarmerClientProps {
 }
 
 export default function EditFarmerClient({ farmerId, onClose }: EditFarmerClientProps) {
-  const [initialData, setInitialData] = useState<any>({
+  const [initialData, setInitialData] = useState<FormData>({
     name: '',
     businessName: '',
     zipCode: '',
@@ -24,12 +25,27 @@ export default function EditFarmerClient({ farmerId, onClose }: EditFarmerClient
     ageGroup: '',
     memo: '',
     farmerImages: [],
-    mainCrop: {},
+    mainCrop: {
+      foodCrops: false,
+      facilityHort: false,
+      fieldVeg: false,
+      fruits: false,
+      specialCrops: false,
+      flowers: false,
+      livestock: false,
+      foodCropsDetails: [],
+      facilityHortDetails: [],
+      fieldVegDetails: [],
+      fruitsDetails: [],
+      specialCropsDetails: [],
+      flowersDetails: [],
+      livestockDetails: []
+    },
     farmingTypes: {
       waterPaddy: false,
       fieldFarming: false,
-      livestock: false,
       orchard: false,
+      livestock: false,
       forageCrop: false
     },
     equipments: [],
@@ -45,44 +61,10 @@ export default function EditFarmerClient({ farmerId, onClose }: EditFarmerClient
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
-          const data = docSnap.data()
+          const data = docSnap.data() as FormData
           setInitialData({
-            id: docSnap.id,
-            name: data.name || '',
-            phone: data.phone || '',
-            businessName: data.businessName || '',
-            zipCode: data.zipCode || '',
-            roadAddress: data.roadAddress || '',
-            jibunAddress: data.jibunAddress || '',
-            addressDetail: data.addressDetail || '',
-            canReceiveMail: data.canReceiveMail || false,
-            ageGroup: data.ageGroup || '',
-            memo: data.memo || '',
-            farmingMemo: data.farmingMemo || '',
-            farmerImages: data.farmerImages || [],
-            mainCrop: data.mainCrop || {},
-            farmingTypes: data.farmingTypes || {
-              waterPaddy: false,
-              fieldFarming: false,
-              livestock: false,
-              orchard: false,
-              forageCrop: false
-            },
-            equipments: (data.equipments || []).map((eq: any) => ({
-              ...eq,
-              type: eq.type || '',
-              manufacturer: eq.manufacturer || '',
-              model: eq.model || '',
-              year: eq.year || '',
-              usageHours: eq.usageHours || '',
-              condition: eq.condition || 0,
-              images: eq.images || [],
-              saleType: eq.saleType || '',
-              tradeType: eq.tradeType || '',
-              desiredPrice: eq.desiredPrice || '',
-              saleStatus: eq.saleStatus || ''
-            })),
-            rating: data.rating || 0
+            ...data,
+            id: docSnap.id
           })
         } else {
           setError('농민 정보를 찾을 수 없습니다.')
@@ -100,9 +82,9 @@ export default function EditFarmerClient({ farmerId, onClose }: EditFarmerClient
 
   const handleSubmit = async (data: FormData) => {
     try {
-      // ... existing submit logic ...
+      // 수정 로직은 NewFarmer 컴포넌트 내부에서 처리됨
       toast.success('농민 정보가 수정되었습니다.')
-      onClose() // 성공 시 모달 닫기
+      onClose()
     } catch (error) {
       console.error('Error updating farmer:', error)
       toast.error('수정 중 오류가 발생했습니다.')
