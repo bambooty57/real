@@ -10,9 +10,10 @@ import { FormData } from '@/types/farmer'
 interface EditFarmerClientProps {
   farmerId: string
   onClose: () => void
+  onUpdate?: () => void
 }
 
-export default function EditFarmerClient({ farmerId, onClose }: EditFarmerClientProps) {
+export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFarmerClientProps) {
   const [initialData, setInitialData] = useState<FormData>({
     name: '',
     businessName: '',
@@ -88,6 +89,9 @@ export default function EditFarmerClient({ farmerId, onClose }: EditFarmerClient
         updatedAt: serverTimestamp()
       })
       toast.success('농민 정보가 수정되었습니다.')
+      if (onUpdate) {
+        onUpdate()
+      }
       onClose()
     } catch (error) {
       console.error('Error updating farmer:', error)

@@ -111,11 +111,14 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
   const router = useRouter()
 
   const handleEdit = () => {
-    setIsEditModalOpen(true)
+    window.open(`/farmers/${farmerId}/edit`, '_blank')
   }
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false)
+  }
+
+  const handleUpdateData = () => {
     fetchFarmerData()
   }
 
@@ -204,7 +207,11 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
                 </button>
               </div>
               <div className="mt-2">
-                <EditFarmerClient farmerId={farmerId} onClose={handleCloseEditModal} />
+                <EditFarmerClient 
+                  farmerId={farmerId} 
+                  onClose={handleCloseEditModal}
+                  onUpdate={handleUpdateData}
+                />
               </div>
             </div>
           </div>
