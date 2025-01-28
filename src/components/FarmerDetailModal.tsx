@@ -36,69 +36,88 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <style>{`
+      <style jsx global>{`
         @media print {
-          /* 기본 인쇄 스타일 */
+          /* 모달 스타일 재정의 */
+          .modal-content {
+            position: static !important;
+            transform: none !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            max-height: none !important;
+            overflow: visible !important;
+            width: 100% !important;
+          }
+
+          /* 스크롤바 숨기기 */
+          .modal-content::-webkit-scrollbar {
+            display: none !important;
+          }
+
+          /* 배경 제거 */
+          .modal-overlay {
+            background: none !important;
+            position: static !important;
+          }
+
+          /* 이미지 갤러리 최적화 */
+          .farmer-image-gallery {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 20px !important;
+            position: static !important;
+            margin-top: 20px !important;
+            page-break-inside: avoid !important;
+          }
+
+          /* 이미지 스타일 */
+          .farmer-image {
+            width: 100% !important;
+            height: auto !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 20px !important;
+          }
+
+          /* 기본 정보 스타일 */
+          .farmer-info {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 20px !important;
+          }
+
+          /* 숨길 요소들 */
+          .close-button,
+          .print-button,
+          .edit-button {
+            display: none !important;
+          }
+
+          /* 페이지 여백 설정 */
+          @page {
+            margin: 2cm;
+          }
+
+          /* 기타 요소 스타일 */
           body {
-            padding: 20px;
-            margin: 0;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          
-          /* 1페이지: 기본정보 */
-          .print-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            page-break-after: always;
-          }
-          
-          /* 2페이지: 보유농기계 */
-          .equipment-info-section {
-            page-break-before: always;
-            page-break-after: always;
-          }
-          
-          .equipment-info-section .grid {
-            grid-template-columns: 1fr 1fr !important;
-            gap: 20px;
-          }
-          
-          /* 3페이지: 이미지 */
-          .images-section {
-            page-break-before: always;
-          }
-          
-          .images-section .grid {
-            grid-template-columns: repeat(4, 1fr) !important;
-            gap: 10px;
-          }
-          
-          /* 각 섹션 스타일 */
-          .basic-info-section,
-          .equipment-info-section {
-            break-inside: avoid;
-          }
-          
-          /* 인쇄 시 숨길 요소들 */
-          .print-hide {
-            display: none !important;
-          }
-          
-          /* 이미지 크기 조절 */
-          .print-image {
-            width: 100%;
-            max-width: 100%;
-            height: auto;
-            margin: 10px 0;
-            page-break-inside: avoid;
+
+          /* 섹션 구분 */
+          .section {
+            page-break-inside: avoid !important;
+            margin-bottom: 30px !important;
           }
 
-          /* 인쇄 시 배경색 표시 */
-          * {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+          /* Dialog 패널 스타일 */
+          .dialog-panel {
+            max-height: none !important;
+            overflow: visible !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            transform: none !important;
           }
         }
       `}</style>
@@ -511,63 +530,67 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               </div>
             </div>
 
-            {/* 이미지 섹션 */}
-            <div className="bg-white shadow rounded-lg p-6 mt-6">
-              <h2 className="text-xl font-semibold mb-4">농기계 및 농민 이미지</h2>
-              
-              {/* 농민 이미지 */}
-              {farmer.farmerImages && farmer.farmerImages.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-medium mb-2">농민 이미지</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    {farmer.farmerImages.map((image, index) => (
-                      <div key={`farmer-${index}`} className="relative aspect-[4/3]">
-                        <img
-                          src={image}
-                          alt={`농민 이미지 ${index + 1}`}
-                          className="object-cover rounded-lg w-full h-full"
-                        />
-                      </div>
-                    ))}
+            {/* 이미지 갤러리 */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold mb-4">이미지 갤러리</h3>
+              <div className="farmer-image-gallery">
+                {/* 농민 이미지 */}
+                {farmer.farmerImages?.map((image, index) => (
+                  <div key={`farmer-${index}`} className="farmer-image">
+                    <Image
+                      src={image.toString()}
+                      alt={`농민 이미지 ${index + 1}`}
+                      width={400}
+                      height={300}
+                      className="rounded-lg object-cover w-full h-full"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">농민 이미지 {index + 1}</p>
                   </div>
-                </div>
-              )}
+                ))}
 
-              {/* 농기계 이미지 */}
-              {farmer.equipments?.map((equipment, eqIndex) => (
-                <div key={`eq-${eqIndex}`} className="mt-4">
-                  <h3 className="text-lg font-medium mb-2">
-                    {getKoreanEquipmentType(equipment.type)} 이미지
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {/* 본체 이미지 */}
-                    {equipment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
-                      <div key={`eq-${eqIndex}-${imgIndex}`} className="relative aspect-[4/3]">
-                        <img
-                          src={image}
+                {/* 농기계 이미지 */}
+                {farmer.equipments?.map((equipment, eqIndex) => (
+                  <React.Fragment key={`eq-${eqIndex}`}>
+                    {equipment.images?.map((image, imgIndex) => (
+                      <div key={`eq-${eqIndex}-${imgIndex}`} className="farmer-image">
+                        <Image
+                          src={image.toString()}
                           alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
-                          className="object-cover rounded-lg w-full h-full"
+                          width={400}
+                          height={300}
+                          className="rounded-lg object-cover w-full h-full"
                         />
+                        <p className="text-sm text-gray-600 mt-1">
+                          {equipment.manufacturer} {equipment.model} {getKoreanEquipmentType(equipment.type)}
+                        </p>
                       </div>
                     ))}
 
-                    {/* 부착작업기 이미지 */}
-                    {equipment.attachments?.map((attachment, attIndex) => (
-                      <React.Fragment key={`att-${eqIndex}-${attIndex}`}>
-                        {attachment.images?.filter((image): image is string => typeof image === 'string').map((image, imgIndex) => (
-                          <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="relative aspect-[4/3]">
-                            <img
-                              src={image}
-                              alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
-                              className="object-cover rounded-lg w-full h-full"
-                            />
-                          </div>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                    {/* 부착장비 이미지 */}
+                    {equipment.attachments?.map((attachment, attIndex) =>
+                      attachment.images?.map((image, imgIndex) => (
+                        <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="farmer-image">
+                          <Image
+                            src={image.toString()}
+                            alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
+                            width={400}
+                            height={300}
+                            className="rounded-lg object-cover w-full h-full"
+                          />
+                          <p className="text-sm text-gray-600 mt-1">
+                            {getKoreanEquipmentType(equipment.type)}의 
+                            {attachment.type === 'loader' ? ' 로더' :
+                             attachment.type === 'rotary' ? ' 로터리' :
+                             attachment.type === 'frontWheel' ? ' 전륜' :
+                             attachment.type === 'rearWheel' ? ' 후륜' : 
+                             ` ${attachment.type}`}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
         </Dialog.Panel>
