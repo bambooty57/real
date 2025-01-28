@@ -155,6 +155,10 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
     window.print()
   }
 
+  const handleEdit = () => {
+    window.open(`/farmers/${farmerId}/edit`, '_blank');
+  };
+
   if (loading) {
     return <div>데이터를 불러오는 중...</div>
   }
@@ -246,12 +250,12 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
             <FaPrint className="mr-2" />
             인쇄
           </button>
-          <Link
-            href={`/farmers/${farmerId}/edit`}
-            className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          <button
+            onClick={handleEdit}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
           >
             수정
-          </Link>
+          </button>
           <button
             onClick={handleDelete}
             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
