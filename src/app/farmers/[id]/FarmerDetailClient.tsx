@@ -111,25 +111,35 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    async function fetchFarmerData() {
-      try {
-        const docRef = doc(db, 'farmers', farmerId)
-        const docSnap = await getDoc(docRef)
-        
-        if (docSnap.exists()) {
-          setFarmer({ id: docSnap.id, ...docSnap.data() } as Farmer)
-        } else {
-          setError('농민 정보를 찾을 수 없습니다.')
-        }
-      } catch (err) {
-        setError('데이터를 불러오는 중 오류가 발생했습니다.')
-        console.error('Error fetching farmer data:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const handleEdit = () => {
+    setIsEditModalOpen(true)
+  }
 
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    // 수정 후 데이터 새로고침
+    fetchFarmerData()
+  }
+
+  const fetchFarmerData = async () => {
+    try {
+      const docRef = doc(db, 'farmers', farmerId)
+      const docSnap = await getDoc(docRef)
+      
+      if (docSnap.exists()) {
+        setFarmer({ id: docSnap.id, ...docSnap.data() } as Farmer)
+      } else {
+        setError('농민 정보를 찾을 수 없습니다.')
+      }
+    } catch (err) {
+      setError('데이터를 불러오는 중 오류가 발생했습니다.')
+      console.error('Error fetching farmer data:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchFarmerData()
   }, [farmerId])
 
@@ -157,14 +167,6 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
     window.print()
   }
 
-  const handleEdit = () => {
-    setIsEditModalOpen(true)
-  }
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false)
-  }
-
   if (loading) {
     return <div>데이터를 불러오는 중...</div>
   }
@@ -178,27 +180,34 @@ export default function FarmerDetailClient({ farmerId }: FarmerDetailClientProps
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto relative">
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[100] overflow-y-auto">
           <div className="min-h-screen px-4 text-center">
+            {/* 배경 오버레이 */}
             <div className="fixed inset-0 transition-opacity" aria-hidden="true">
               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
+
+            {/* 모달 센터링을 위한 인라인 요소 */}
             <span className="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
-            <div className="inline-block w-full max-w-4xl p-6 my-8 text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">농민 정보 수정</h2>
+
+            {/* 실제 모달 */}
+            <div className="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg relative">
+              <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   onClick={handleCloseEditModal}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500 focus:outline-none"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="sr-only">닫기</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <EditFarmerClient farmerId={farmerId} onClose={handleCloseEditModal} />
+              <div className="mt-2">
+                <EditFarmerClient farmerId={farmerId} onClose={handleCloseEditModal} />
+              </div>
             </div>
           </div>
         </div>

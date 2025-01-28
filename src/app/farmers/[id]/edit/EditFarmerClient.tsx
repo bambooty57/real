@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import NewFarmer from '../../new/NewFarmer'
 import { toast } from 'react-hot-toast'
@@ -82,7 +82,11 @@ export default function EditFarmerClient({ farmerId, onClose }: EditFarmerClient
 
   const handleSubmit = async (data: FormData) => {
     try {
-      // 수정 로직은 NewFarmer 컴포넌트 내부에서 처리됨
+      const docRef = doc(db, 'farmers', farmerId)
+      await updateDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp()
+      })
       toast.success('농민 정보가 수정되었습니다.')
       onClose()
     } catch (error) {
