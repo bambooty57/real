@@ -36,11 +36,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      {/* 모달 외부 배경 - 인쇄 시 숨김 */}
       <div className="fixed inset-0 bg-black/30 print:hidden" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl">
-          <div className="p-6 print-content">
-            {/* 헤더 */}
+      
+      {/* 모달 컨테이너 - 인쇄 시 전체 화면 */}
+      <div className="fixed inset-0 flex items-center justify-center p-4 print:p-0 print:block print:position-static">
+        <Dialog.Panel className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl print:max-w-none print:max-h-none print:shadow-none print:overflow-visible">
+          {/* 모달 내용 */}
+          <div className="p-6 print:p-0">
+            {/* 헤더 - 인쇄 시 숨김 */}
             <div className="flex justify-between items-center mb-6 print:hidden">
               <Dialog.Title className="text-2xl font-bold">{farmer.name} 상세 정보</Dialog.Title>
               <div className="flex gap-2">
@@ -66,13 +70,14 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               </div>
             </div>
 
-            {/* 인쇄 시 제목 표시 */}
-            <div className="hidden print:block mb-6">
-              <h1 className="text-2xl font-bold">{farmer.name} 상세 정보</h1>
+            {/* 인쇄용 헤더 */}
+            <div className="hidden print:block print:mb-8">
+              <h1 className="text-3xl font-bold text-center">{farmer.name} 상세 정보</h1>
+              <p className="text-center text-gray-500 mt-2">인쇄일: {new Date().toLocaleDateString()}</p>
             </div>
 
-            {/* 내용 */}
-            <div className="space-y-6">
+            {/* 내용 - 인쇄 시 그리드 레이아웃 최적화 */}
+            <div className="space-y-6 print:space-y-8">
               {/* 기본 정보 */}
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">기본 정보</h2>
@@ -101,7 +106,12 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                   {farmer.roadAddress && (
                     <div>
                       <dt className="text-gray-600">주소</dt>
-                      <dd className="font-medium">{farmer.roadAddress} {farmer.addressDetail}</dd>
+                      <dd className="font-medium">
+                        {farmer.zipCode && <div>({farmer.zipCode})</div>}
+                        <div>{farmer.roadAddress}</div>
+                        {farmer.jibunAddress && <div>[지번] {farmer.jibunAddress}</div>}
+                        {farmer.addressDetail && <div>{farmer.addressDetail}</div>}
+                      </dd>
                     </div>
                   )}
                   <div>
@@ -118,10 +128,52 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                     <dt className="text-gray-600">연령대</dt>
                     <dd className="font-medium">{farmer.ageGroup}</dd>
                   </div>
+                </dl>
+              </div>
+
+              {/* 영농 정보 */}
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">영농 정보</h2>
+                <dl className="grid grid-cols-1 gap-4">
+                  {/* 영농형태 */}
+                  {farmer.farmingTypes && Object.entries(farmer.farmingTypes).some(([_, value]) => value) && (
+                    <div>
+                      <dt className="text-gray-600 mb-2">영농형태</dt>
+                      <dd className="flex flex-wrap gap-2">
+                        {Object.entries(farmer.farmingTypes)
+                          .filter(([_, value]) => value)
+                          .map(([type], index) => (
+                            <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                              {getFarmingTypeDisplay(type)}
+                            </span>
+                          ))}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* 주작물 */}
+                  {farmer.mainCrop && (
+                    <div>
+                      <dt className="text-gray-600 mb-2">주작물</dt>
+                      <dd className="flex flex-wrap gap-2">
+                        {Object.entries(farmer.mainCrop)
+                          .filter(([key, value]) => value && !key.endsWith('Details'))
+                          .map(([type], index) => (
+                            <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
+                              {getMainCropDisplay(type)}
+                            </span>
+                          ))}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* 메모 */}
                   {farmer.memo && (
                     <div>
-                      <dt className="text-gray-600">메모</dt>
-                      <dd className="font-medium whitespace-pre-wrap">{farmer.memo}</dd>
+                      <dt className="text-gray-600 mb-2">메모</dt>
+                      <dd className="whitespace-pre-wrap bg-gray-50 p-3 rounded-lg text-gray-700">
+                        {farmer.memo}
+                      </dd>
                     </div>
                   )}
                 </dl>
@@ -133,7 +185,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                 <div className="space-y-6">
                   {farmer.equipments.map((equipment, index) => (
                     <div key={equipment.id} className="border-t pt-4 first:border-t-0 first:pt-0">
-                      <h3 className="font-semibold mb-2">농기계 #{index + 1}</h3>
+                      <h3 className="font-semibold mb-2">
+                        {getKoreanEquipmentType(equipment.type)} #{index + 1}
+                      </h3>
                       <dl className="grid grid-cols-1 gap-4">
                         <div>
                           <dt className="text-gray-600">기종</dt>
@@ -180,7 +234,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                         {equipment.memo && (
                           <div>
                             <dt className="text-gray-600">메모</dt>
-                            <dd className="font-medium whitespace-pre-wrap">{equipment.memo}</dd>
+                            <dd className="font-medium whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">
+                              {equipment.memo}
+                            </dd>
                           </div>
                         )}
 
