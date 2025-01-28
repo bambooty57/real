@@ -20,6 +20,7 @@ import FarmerDetailModal from '@/components/FarmerDetailModal';
 import { Dialog } from '@headlessui/react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { useSearchFilter } from '@/contexts/SearchFilterContext'
 
 // 전화번호 포맷팅 함수
 const formatPhoneNumber = (phone: string) => {
@@ -32,72 +33,53 @@ const formatPhoneNumber = (phone: string) => {
 };
 
 export default function FarmersPage() {
-  const [farmers, setFarmers] = useState<Farmer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selectedVillage, setSelectedVillage] = useState('');
-  const [availableCities, setAvailableCities] = useState<Set<string>>(new Set());
-  const [districtsByCity, setDistrictsByCity] = useState<Map<string, Set<string>>>(new Map());
-  const [villagesByDistrict, setVillagesByDistrict] = useState<Map<string, Set<string>>>(new Map());
-  const [selectedFarmingType, setSelectedFarmingType] = useState('');
-  const [selectedMainCrop, setSelectedMainCrop] = useState('');
-  const [selectedMailOption, setSelectedMailOption] = useState('all');
-  const [selectedSaleType, setSelectedSaleType] = useState('all');
-  const [selectedEquipmentType, setSelectedEquipmentType] = useState('');
-  const [selectedManufacturer, setSelectedManufacturer] = useState('');
-  const farmersPerPage = 15;
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedFarmers, setSelectedFarmers] = useState<string[]>([]);
-  const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { filterState, setFilterState } = useSearchFilter()
+  const [farmers, setFarmers] = useState<Farmer[]>([])
+  const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [selectedFarmers, setSelectedFarmers] = useState<string[]>([])
+  const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [availableCities, setAvailableCities] = useState<Set<string>>(new Set())
+  const [districtsByCity, setDistrictsByCity] = useState<Map<string, Set<string>>>(new Map())
+  const [villagesByDistrict, setVillagesByDistrict] = useState<Map<string, Set<string>>>(new Map())
 
   // URL 쿼리 파라미터 관리 함수
   const updateQueryParams = (params: Record<string, string>) => {
-    if (typeof window === 'undefined') return;
-    const searchParams = new URLSearchParams(window.location.search);
+    if (typeof window === 'undefined') return
+    const searchParams = new URLSearchParams(window.location.search)
     Object.entries(params).forEach(([key, value]) => {
       if (value) {
-        searchParams.set(key, value);
+        searchParams.set(key, value)
       } else {
-        searchParams.delete(key);
+        searchParams.delete(key)
       }
-    });
-    const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
-    window.history.replaceState({}, '', newUrl);
-  };
+    })
+    const newUrl = `${window.location.pathname}?${searchParams.toString()}`
+    window.history.replaceState({}, '', newUrl)
+  }
 
   // 초기 필터 상태 설정
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const searchParams = new URLSearchParams(window.location.search);
+    if (typeof window === 'undefined') return
+    const searchParams = new URLSearchParams(window.location.search)
     
     const initialFilters = {
-      search: searchParams.get('search') || '',
-      city: searchParams.get('city') || '',
-      district: searchParams.get('district') || '',
-      village: searchParams.get('village') || '',
-      farmingType: searchParams.get('farmingType') || '',
-      mainCrop: searchParams.get('mainCrop') || '',
-      mailOption: searchParams.get('mailOption') || 'all',
-      saleType: searchParams.get('saleType') || 'all',
-      equipmentType: searchParams.get('equipmentType') || '',
-      manufacturer: searchParams.get('manufacturer') || ''
-    };
+      searchTerm: searchParams.get('search') || '',
+      selectedCity: searchParams.get('city') || '',
+      selectedDistrict: searchParams.get('district') || '',
+      selectedVillage: searchParams.get('village') || '',
+      selectedFarmingType: searchParams.get('farmingType') || '',
+      selectedMainCrop: searchParams.get('mainCrop') || '',
+      selectedMailOption: searchParams.get('mailOption') || 'all',
+      selectedSaleType: searchParams.get('saleType') || 'all',
+      selectedEquipmentType: searchParams.get('equipmentType') || '',
+      selectedManufacturer: searchParams.get('manufacturer') || ''
+    }
 
-    setSearchTerm(initialFilters.search);
-    setSelectedCity(initialFilters.city);
-    setSelectedDistrict(initialFilters.district);
-    setSelectedVillage(initialFilters.village);
-    setSelectedFarmingType(initialFilters.farmingType);
-    setSelectedMainCrop(initialFilters.mainCrop);
-    setSelectedMailOption(initialFilters.mailOption);
-    setSelectedSaleType(initialFilters.saleType);
-    setSelectedEquipmentType(initialFilters.equipmentType);
-    setSelectedManufacturer(initialFilters.manufacturer);
-  }, []);
+    setFilterState(initialFilters)
+  }, [])
 
   useEffect(() => {
     const fetchFarmers = async () => {
@@ -168,142 +150,172 @@ export default function FarmersPage() {
 
   // 선택된 시/군에 해당하는 읍/면/동 목록 가져오기
   const getAvailableDistricts = () => {
-    if (!selectedCity) return [];
-    const districts = districtsByCity.get(selectedCity) || new Set<string>();
+    if (!filterState.selectedCity) return [];
+    const districts = districtsByCity.get(filterState.selectedCity) || new Set<string>();
     return Array.from(districts).sort();
   };
 
   // 선택된 읍/면/동에 해당하는 리 목록 가져오기
   const getAvailableVillages = () => {
-    if (!selectedDistrict) return [];
-    const villages = villagesByDistrict.get(selectedDistrict) || new Set<string>();
+    if (!filterState.selectedDistrict) return [];
+    const villages = villagesByDistrict.get(filterState.selectedDistrict) || new Set<string>();
     return Array.from(villages).sort();
   };
 
   // 지역 선택 핸들러 수정
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const city = e.target.value;
-    setSelectedCity(city);
-    setSelectedDistrict('');
-    setSelectedVillage('');
-    updateQueryParams({ city, district: '', village: '' });
-  };
+    const city = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedCity: city,
+      selectedDistrict: '',
+      selectedVillage: ''
+    }))
+    updateQueryParams({ city, district: '', village: '' })
+  }
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const district = e.target.value;
-    setSelectedDistrict(district);
-    setSelectedVillage('');
-    updateQueryParams({ district, village: '' });
-  };
+    const district = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedDistrict: district,
+      selectedVillage: ''
+    }))
+    updateQueryParams({ district, village: '' })
+  }
 
   const handleVillageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const village = e.target.value;
-    setSelectedVillage(village);
-    updateQueryParams({ village });
-  };
+    const village = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedVillage: village
+    }))
+    updateQueryParams({ village })
+  }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const search = e.target.value;
-    setSearchTerm(search);
-    updateQueryParams({ search });
-  };
+    const search = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      searchTerm: search
+    }))
+    updateQueryParams({ search })
+  }
 
   const handleFarmingTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const farmingType = e.target.value;
-    setSelectedFarmingType(farmingType);
-    updateQueryParams({ farmingType });
-  };
+    const farmingType = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedFarmingType: farmingType
+    }))
+    updateQueryParams({ farmingType })
+  }
 
   const handleMainCropChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const mainCrop = e.target.value;
-    setSelectedMainCrop(mainCrop);
-    updateQueryParams({ mainCrop });
-  };
+    const mainCrop = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedMainCrop: mainCrop
+    }))
+    updateQueryParams({ mainCrop })
+  }
 
   const handleMailOptionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const mailOption = e.target.value;
-    setSelectedMailOption(mailOption);
-    updateQueryParams({ mailOption });
-  };
+    const mailOption = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedMailOption: mailOption
+    }))
+    updateQueryParams({ mailOption })
+  }
 
   const handleSaleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const saleType = e.target.value;
-    setSelectedSaleType(saleType);
-    updateQueryParams({ saleType });
-  };
+    const saleType = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedSaleType: saleType
+    }))
+    updateQueryParams({ saleType })
+  }
 
   const handleEquipmentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const equipmentType = e.target.value;
-    setSelectedEquipmentType(equipmentType);
-    updateQueryParams({ equipmentType });
-  };
+    const equipmentType = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedEquipmentType: equipmentType
+    }))
+    updateQueryParams({ equipmentType })
+  }
 
   const handleManufacturerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const manufacturer = e.target.value;
-    setSelectedManufacturer(manufacturer);
-    updateQueryParams({ manufacturer });
-  };
+    const manufacturer = e.target.value
+    setFilterState(prev => ({
+      ...prev,
+      selectedManufacturer: manufacturer
+    }))
+    updateQueryParams({ manufacturer })
+  }
 
-  // 필터링 로직 단순화
+  // 필터링 로직 수정
   const filteredFarmers = farmers.filter(farmer => {
     // 1. 검색어 필터
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+    if (filterState.searchTerm) {
+      const searchLower = filterState.searchTerm.toLowerCase()
       const searchTarget = [
         farmer.name,
         farmer.phone,
         farmer.businessName,
         farmer.jibunAddress,
         farmer.roadAddress
-      ].join(' ').toLowerCase();
+      ].join(' ').toLowerCase()
       
-      if (!searchTarget.includes(searchLower)) return false;
+      if (!searchTarget.includes(searchLower)) return false
     }
 
     // 2. 주소 필터
-    if (selectedCity || selectedDistrict || selectedVillage) {
-      const address = farmer.jibunAddress || farmer.roadAddress;
-      if (!address) return false;
+    if (filterState.selectedCity || filterState.selectedDistrict || filterState.selectedVillage) {
+      const address = farmer.jibunAddress || farmer.roadAddress
+      if (!address) return false
 
-      if (selectedCity && !address.includes(selectedCity)) return false;
-      if (selectedDistrict && !address.includes(selectedDistrict)) return false;
-      if (selectedVillage && !address.includes(selectedVillage)) return false;
+      if (filterState.selectedCity && !address.includes(filterState.selectedCity)) return false
+      if (filterState.selectedDistrict && !address.includes(filterState.selectedDistrict)) return false
+      if (filterState.selectedVillage && !address.includes(filterState.selectedVillage)) return false
     }
 
     // 3. 영농형태 필터
-    if (selectedFarmingType && (!farmer.farmingTypes || !farmer.farmingTypes[selectedFarmingType as keyof typeof farmer.farmingTypes])) {
-      return false;
+    if (filterState.selectedFarmingType && (!farmer.farmingTypes || !farmer.farmingTypes[filterState.selectedFarmingType as keyof typeof farmer.farmingTypes])) {
+      return false
     }
 
     // 4. 우편수취여부 필터
-    if (selectedMailOption !== 'all') {
-      if (selectedMailOption === 'yes' && !farmer.canReceiveMail) return false;
-      if (selectedMailOption === 'no' && farmer.canReceiveMail) return false;
+    if (filterState.selectedMailOption !== 'all') {
+      if (filterState.selectedMailOption === 'yes' && !farmer.canReceiveMail) return false
+      if (filterState.selectedMailOption === 'no' && farmer.canReceiveMail) return false
     }
 
     // 5. 판매유형 필터
-    if (selectedSaleType !== 'all') {
-      if (!farmer.equipments?.some(eq => eq?.saleType === selectedSaleType)) {
-        return false;
+    if (filterState.selectedSaleType !== 'all') {
+      if (!farmer.equipments?.some(eq => eq?.saleType === filterState.selectedSaleType)) {
+        return false
       }
     }
 
     // 6. 농기계 종류 필터
-    if (selectedEquipmentType) {
-      if (!farmer.equipments?.some(eq => eq?.type === selectedEquipmentType)) {
-        return false;
+    if (filterState.selectedEquipmentType) {
+      if (!farmer.equipments?.some(eq => eq?.type === filterState.selectedEquipmentType)) {
+        return false
       }
     }
 
     // 7. 제조사 필터
-    if (selectedManufacturer) {
-      if (!farmer.equipments?.some(eq => eq?.manufacturer === selectedManufacturer)) {
-        return false;
+    if (filterState.selectedManufacturer) {
+      if (!farmer.equipments?.some(eq => eq?.manufacturer === filterState.selectedManufacturer)) {
+        return false
       }
     }
 
-    return true;
-  });
+    return true
+  })
 
   // 페이지네이션 로직
   const totalPages = Math.max(1, Math.ceil(filteredFarmers.length / farmersPerPage));
@@ -359,16 +371,18 @@ export default function FarmersPage() {
       })) as Farmer[];
       setFarmers(farmersData);
       // 모든 필터 상태 초기화
-      setSearchTerm('');
-      setSelectedCity('');
-      setSelectedDistrict('');
-      setSelectedVillage('');
-      setSelectedFarmingType('');
-      setSelectedMainCrop('');
-      setSelectedMailOption('all');
-      setSelectedSaleType('all');
-      setSelectedEquipmentType('');
-      setSelectedManufacturer('');
+      setFilterState({
+        searchTerm: '',
+        selectedCity: '',
+        selectedDistrict: '',
+        selectedVillage: '',
+        selectedFarmingType: '',
+        selectedMainCrop: '',
+        selectedMailOption: 'all',
+        selectedSaleType: 'all',
+        selectedEquipmentType: '',
+        selectedManufacturer: ''
+      });
       setSelectedFarmers([]);
       toast.success('목록이 새로고침되었습니다.');
     } catch (error) {
@@ -625,7 +639,7 @@ export default function FarmersPage() {
             </label>
             <input
               type="text"
-              value={searchTerm}
+              value={filterState.searchTerm}
               onChange={handleSearchChange}
               placeholder="이름, 전화번호, 상호로 검색"
               className="w-full p-2 border rounded"
@@ -638,7 +652,7 @@ export default function FarmersPage() {
               시/군
             </label>
             <select
-              value={selectedCity}
+              value={filterState.selectedCity}
               onChange={handleCityChange}
               className="w-full p-2 border rounded"
             >
@@ -657,10 +671,10 @@ export default function FarmersPage() {
               읍/면/동
             </label>
             <select
-              value={selectedDistrict}
+              value={filterState.selectedDistrict}
               onChange={handleDistrictChange}
               className="w-full p-2 border rounded"
-              disabled={!selectedCity}
+              disabled={!filterState.selectedCity}
             >
               <option value="">전체</option>
               {getAvailableDistricts().map(district => (
@@ -677,10 +691,10 @@ export default function FarmersPage() {
               리
             </label>
             <select
-              value={selectedVillage}
+              value={filterState.selectedVillage}
               onChange={handleVillageChange}
               className="w-full p-2 border rounded"
-              disabled={!selectedDistrict}
+              disabled={!filterState.selectedDistrict}
             >
               <option value="">전체</option>
               {getAvailableVillages().map(village => (
@@ -697,7 +711,7 @@ export default function FarmersPage() {
               영농형태
             </label>
             <select
-              value={selectedFarmingType}
+              value={filterState.selectedFarmingType}
               onChange={handleFarmingTypeChange}
               className="w-full p-2 border rounded"
             >
@@ -716,7 +730,7 @@ export default function FarmersPage() {
               판매유형
             </label>
             <select
-              value={selectedSaleType}
+              value={filterState.selectedSaleType}
               onChange={handleSaleTypeChange}
               className="w-full p-2 border rounded"
             >
@@ -732,7 +746,7 @@ export default function FarmersPage() {
               우편수취여부
             </label>
             <select
-              value={selectedMailOption}
+              value={filterState.selectedMailOption}
               onChange={handleMailOptionChange}
               className="w-full p-2 border rounded"
             >
@@ -748,7 +762,7 @@ export default function FarmersPage() {
               농기계 종류
             </label>
             <select
-              value={selectedEquipmentType}
+              value={filterState.selectedEquipmentType}
               onChange={handleEquipmentTypeChange}
               className="w-full p-2 border rounded"
             >
@@ -771,7 +785,7 @@ export default function FarmersPage() {
               제조사
             </label>
             <select
-              value={selectedManufacturer}
+              value={filterState.selectedManufacturer}
               onChange={handleManufacturerChange}
               className="w-full p-2 border rounded"
             >
