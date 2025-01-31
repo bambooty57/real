@@ -130,8 +130,30 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                       <dt className="text-gray-600">주소</dt>
                       <dd className="font-medium">
                         {farmer.zipCode && <div>({farmer.zipCode})</div>}
-                        <div>{farmer.roadAddress}</div>
-                        {farmer.jibunAddress && <div>[지번] {farmer.jibunAddress}</div>}
+                        <div>
+                          <a 
+                            href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.roadAddress)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                          >
+                            {farmer.roadAddress}
+                            <span role="img" aria-label="지도">🗺️</span>
+                          </a>
+                        </div>
+                        {farmer.jibunAddress && (
+                          <div>
+                            <a 
+                              href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.jibunAddress)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                            >
+                              [지번] {farmer.jibunAddress}
+                              <span role="img" aria-label="지도">🗺️</span>
+                            </a>
+                          </div>
+                        )}
                         {farmer.addressDetail && <div>{farmer.addressDetail}</div>}
                       </dd>
                     </div>
@@ -180,11 +202,25 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                       <dd className="flex flex-wrap gap-2">
                         {Object.entries(farmer.mainCrop)
                           .filter(([key, value]) => value && !key.endsWith('Details'))
-                          .map(([type], index) => (
-                            <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
-                              {getMainCropDisplay(type)}
-                            </span>
-                          ))}
+                          .map(([type], index) => {
+                            const detailsKey = `${type}Details`;
+                            const details = farmer.mainCrop?.[detailsKey];
+                            
+                            return (
+                              <div key={index} className="flex flex-wrap gap-2">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
+                                  {getMainCropDisplay(type)}
+                                </span>
+                                {Array.isArray(details) && details.length > 0 && (
+                                  details.map((detail, detailIndex) => (
+                                    <span key={`${index}-${detailIndex}`} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                                      {detail}
+                                    </span>
+                                  ))
+                                )}
+                              </div>
+                            );
+                          })}
                       </dd>
                     </div>
                   )}
