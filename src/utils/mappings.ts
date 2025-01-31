@@ -133,7 +133,7 @@ const farmingTypeDisplayNames: { [key: string]: string } = {
 };
 
 // 작물 한글명 매핑
-const cropDisplayNames: { [key: string]: string } = {
+export const cropDisplayNames: { [key: string]: string } = {
   rice: '벼',
   barley: '보리',
   wheat: '밀',

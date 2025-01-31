@@ -38,20 +38,6 @@ const getFarmingTypeDisplay = (type: keyof FarmingTypes) => {
   return displayMap[type] || type;
 };
 
-// 주작목 표시 함수
-const getMainCropDisplay = (type: MainCropType) => {
-  const displayMap: Record<MainCropType, string> = {
-    'foodCrops': '식량작물',
-    'facilityHort': '시설원예',
-    'fieldVeg': '노지채소',
-    'fruits': '과수',
-    'specialCrops': '특용작물',
-    'flowers': '화훼',
-    'livestock': '축산'
-  };
-  return displayMap[type] || type;
-};
-
 export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail }: FarmerCardProps) {
   return (
     <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow relative">
