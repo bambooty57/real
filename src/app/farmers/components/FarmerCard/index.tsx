@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Farmer, FarmingTypes, MainCropType } from '@/types/farmer';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
-import { getKoreanEquipmentType } from '@/utils/mappings';
+import { getKoreanEquipmentType, getMainCropDisplay, cropDisplayNames } from '@/utils/mappings';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -255,11 +255,25 @@ export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail 
               <div className="mt-1 flex flex-wrap gap-1">
                 {Object.entries(farmer.mainCrop)
                   .filter(([key, value]) => value && !key.endsWith('Details'))
-                  .map(([type], index) => (
-                    <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                      {getMainCropDisplay(type as MainCropType)}
-                    </span>
-                  ))}
+                  .map(([type], index) => {
+                    const detailsKey = `${type}Details`;
+                    const details = farmer.mainCrop?.[detailsKey];
+                    
+                    return (
+                      <div key={index} className="flex flex-wrap gap-1">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                          {getMainCropDisplay(type)}
+                        </span>
+                        {Array.isArray(details) && details.length > 0 && (
+                          details.map((detail, detailIndex) => (
+                            <span key={`${index}-${detailIndex}`} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                              {cropDisplayNames[detail] || detail}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}

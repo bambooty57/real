@@ -8,6 +8,7 @@ import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getK
 import { formatPhoneNumber } from '@/utils/format';
 import React from 'react';
 import { FaPrint } from 'react-icons/fa';
+import { cropDisplayNames } from '@/utils/mappings';
 
 interface FarmerDetailModalProps {
   farmer: Farmer | null;
@@ -93,18 +94,6 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                       <div className="flex items-center gap-2">
                         <span className="text-yellow-400 text-xl">{getRatingStars(farmer.rating || 0)}</span>
                         <span className="text-gray-600">({farmer.rating || 0}/5)</span>
-                      </div>
-                    </dd>
-                  </div>
-                  {/* 장비 평가 */}
-                  <div>
-                    <dt className="text-gray-600">장비 평가</dt>
-                    <dd className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <span className="text-yellow-400 text-xl">
-                          {getRatingStars(farmer.equipments?.[0]?.condition || 0)}
-                        </span>
-                        <span className="text-gray-600">({farmer.equipments?.[0]?.condition || 0}/5)</span>
                       </div>
                     </dd>
                   </div>
@@ -214,7 +203,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                 {Array.isArray(details) && details.length > 0 && (
                                   details.map((detail, detailIndex) => (
                                     <span key={`${index}-${detailIndex}`} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                                      {detail}
+                                      {cropDisplayNames[detail] || detail}
                                     </span>
                                   ))
                                 )}
@@ -246,6 +235,18 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                       <h3 className="font-semibold mb-2">
                         {getKoreanEquipmentType(equipment.type)} #{index + 1}
                       </h3>
+                      {/* 장비 평가 추가 */}
+                      <div className="mb-4">
+                        <dt className="text-gray-600 mb-1">장비 상태</dt>
+                        <dd className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <span className="text-yellow-400 text-xl">
+                              {getRatingStars(equipment.condition || 0)}
+                            </span>
+                            <span className="text-gray-600">({equipment.condition || 0}/5)</span>
+                          </div>
+                        </dd>
+                      </div>
                       <dl className="grid grid-cols-1 gap-4">
                         <div>
                           <dt className="text-gray-600">기종</dt>
