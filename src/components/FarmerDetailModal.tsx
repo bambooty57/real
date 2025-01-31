@@ -86,6 +86,28 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                     <dt className="text-gray-600">이름</dt>
                     <dd className="font-medium">{farmer.name}</dd>
                   </div>
+                  {/* 농민 평가 */}
+                  <div>
+                    <dt className="text-gray-600">농민 평가</dt>
+                    <dd className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className="text-yellow-400 text-xl">{getRatingStars(farmer.rating || 0)}</span>
+                        <span className="text-gray-600">({farmer.rating || 0}/5)</span>
+                      </div>
+                    </dd>
+                  </div>
+                  {/* 장비 평가 */}
+                  <div>
+                    <dt className="text-gray-600">장비 평가</dt>
+                    <dd className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className="text-yellow-400 text-xl">
+                          {getRatingStars(farmer.equipments?.[0]?.condition || 0)}
+                        </span>
+                        <span className="text-gray-600">({farmer.equipments?.[0]?.condition || 0}/5)</span>
+                      </div>
+                    </dd>
+                  </div>
                   {farmer.businessName && (
                     <div>
                       <dt className="text-gray-600">상호명</dt>

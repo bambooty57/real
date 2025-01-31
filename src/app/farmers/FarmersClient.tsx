@@ -219,9 +219,20 @@ export default function FarmersClient() {
                 <p>주요 작물:</p>
                 <ul className="list-disc list-inside pl-4">
                   {Object.entries(farmer.mainCrop || {})
-                    .filter(([_, value]) => value)
-                    .map(([key]) => (
-                      <li key={key}>{getMainCropDisplay(key)}</li>
+                    .filter(([key, value]) => value && !key.endsWith('Details'))
+                    .map(([category]) => (
+                      <li key={category} className="mb-2">
+                        <span className="font-semibold">{getMainCropDisplay(category)}</span>
+                        {(farmer.mainCrop as Record<string, any>)[`${category}Details`]?.length > 0 && (
+                          <ul className="list-circle list-inside pl-4 mt-1">
+                            {(farmer.mainCrop as Record<string, any>)[`${category}Details`].map((item: string) => (
+                              <li key={item} className="text-sm">
+                                {getMainCropDisplay(item)}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
                     ))}
                 </ul>
               </div>

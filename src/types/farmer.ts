@@ -67,6 +67,7 @@ export interface MainCrop extends Record<MainCropType, boolean | undefined> {
   specialCropsDetails?: string[];
   flowersDetails?: string[];
   livestockDetails?: string[];
+  [key: string]: boolean | string[] | undefined;
 }
 
 export interface FarmingTypes {

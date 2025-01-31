@@ -7,28 +7,12 @@ import Link from 'next/link'
 import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import { Equipment as BaseEquipment } from '@/types/farmer'
+import { MainCrop, FarmingTypes } from '@/types/farmer'
 import { MANUFACTURERS } from '@/constants/manufacturers'
 import FarmerDetailModal from '@/components/FarmerDetailModal'
 
 interface Equipment extends BaseEquipment {
   tradeStatus?: string;
-}
-
-interface MainCrop {
-  foodCrops: boolean;
-  facilityHort: boolean;
-  fieldVeg: boolean;
-  fruits: boolean;
-  specialCrops: boolean;
-  flowers: boolean;
-  livestock: boolean;
-  foodCropsDetails?: string[];
-  facilityHortDetails?: string[];
-  fieldVegDetails?: string[];
-  fruitsDetails?: string[];
-  specialCropsDetails?: string[];
-  flowersDetails?: string[];
-  livestockDetails?: string[];
 }
 
 interface Farmer {
@@ -673,8 +657,14 @@ export default function TradePage() {
           ...selectedFarmer,
           canReceiveMail: selectedFarmer?.canReceiveMail ?? false,
           farmerImages: selectedFarmer?.farmerImages ?? [],
-          mainCrop: selectedFarmer?.mainCrop ?? {},
-          farmingTypes: selectedFarmer?.farmingTypes ?? {}
+          mainCrop: selectedFarmer?.mainCrop ?? {} as MainCrop,
+          farmingTypes: selectedFarmer?.farmingTypes ?? {
+            waterPaddy: false,
+            fieldFarming: false,
+            orchard: false,
+            livestock: false,
+            forageCrop: false
+          }
         } : null}
         isOpen={isModalOpen}
         onClose={() => {
