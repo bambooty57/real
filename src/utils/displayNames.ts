@@ -117,5 +117,18 @@ export const cropDisplayNames: { [key: string]: string } = {
   grape: '포도',
   persimmon: '감',
   citrus: '귤',
-  ginseng: '인삼'
+  ginseng: '인삼',
+  cattle: '한우',
+  pig: '돼지',
+  chicken: '닭',
+  duck: '오리',
+  goat: '염소',
+  sheep: '양',
+  sesame: '참깨',
+  perilla: '들깨',
+  medicinalHerbs: '약용작물',
+  rose: '장미',
+  chrysanthemum: '국화',
+  lily: '백합',
+  orchid: '난'
 }; 
