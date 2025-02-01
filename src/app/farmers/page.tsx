@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, doc, deleteDoc, batch } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { ref, deleteObject, listAll } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import Link from 'next/link';
@@ -235,8 +235,9 @@ export default function FarmersPage() {
 
   // 단일 농민 삭제 핸들러
   const handleDelete = async (farmerId: string) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
+    if (window.confirm('정말로 이 농민의 정보를 삭제하시겠습니까?')) {
       try {
+        const batch = writeBatch(db);
         await deleteFarmerImages(farmerId);
         await deleteDoc(doc(db, 'farmers', farmerId));
         setFarmers(prev => prev.filter(farmer => farmer.id !== farmerId));
