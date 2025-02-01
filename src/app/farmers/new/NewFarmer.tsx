@@ -9,57 +9,8 @@ import { v4 as uuidv4 } from 'uuid'
 import BasicInfo from '@/components/farmer/BasicInfo'
 import FarmingInfo from '@/components/farmer/FarmingInfo'
 import EquipmentInfo from '@/components/farmer/EquipmentInfo'
-import { FormData } from '@/types/farmer'
+import { FormData, MainCrop, FarmingTypes, Equipment } from '@/types/farmer'
 import { toast } from 'react-hot-toast'
-
-interface MainCrop {
-  foodCrops: boolean;
-  facilityHort: boolean;
-  fieldVeg: boolean;
-  fruits: boolean;
-  specialCrops: boolean;
-  flowers: boolean;
-  livestock: boolean;
-  foodCropsDetails: string[];
-  facilityHortDetails: string[];
-  fieldVegDetails: string[];
-  fruitsDetails: string[];
-  specialCropsDetails: string[];
-  flowersDetails: string[];
-  livestockDetails: string[];
-}
-
-interface FarmingTypes {
-  waterPaddy: boolean;
-  fieldFarming: boolean;
-  orchard: boolean;
-  livestock: boolean;
-  forageCrop: boolean;
-}
-
-interface Equipment {
-  id: string;
-  type: string;
-  manufacturer: string;
-  model: string;
-  horsepower: string;
-  year: string;
-  usageHours: string;
-  condition: number;
-  images: string[];
-  saleType: "new" | "used" | null;
-  tradeType: string;
-  desiredPrice: string;
-  saleStatus: string;
-  attachments?: Array<{
-    type: "loader" | "rotary" | "frontWheel" | "rearWheel";
-    manufacturer: string;
-    model: string;
-    condition?: number;
-    memo?: string;
-    images?: (string | File | null)[];
-  }>;
-}
 
 interface Props {
   mode?: 'new' | 'edit'
@@ -205,11 +156,28 @@ export default function NewFarmer({
         memo: formData.memo?.trim() || '',
         farmerImages: formData.farmerImages || [],
         mainCrop: (() => {
-          const selectedCrop = formData.mainCrop || {};
-          const cropTypes = ['foodCrops', 'facilityHort', 'fieldVeg', 'fruits', 'specialCrops', 'flowers', 'livestock'];
+          const selectedCrop: { [key: string]: any } = formData.mainCrop || {};
+          const cropTypes = ['foodCrops', 'facilityHort', 'fieldVeg', 'fruits', 'specialCrops', 'flowers', 'livestock'] as const;
           
-          // 선택된 모든 작물 타입에 대한 데이터 저장
-          const result = {};
+          // MainCrop 타입에 맞는 기본 객체 생성
+          const result: MainCrop = {
+            foodCrops: false,
+            facilityHort: false,
+            fieldVeg: false,
+            fruits: false,
+            specialCrops: false,
+            flowers: false,
+            livestock: false,
+            foodCropsDetails: [],
+            facilityHortDetails: [],
+            fieldVegDetails: [],
+            fruitsDetails: [],
+            specialCropsDetails: [],
+            flowersDetails: [],
+            livestockDetails: []
+          };
+
+          // 선택된 작물 타입 설정
           cropTypes.forEach(type => {
             if (selectedCrop[type]) {
               result[type] = true;
@@ -217,7 +185,7 @@ export default function NewFarmer({
             }
           });
           
-          return Object.keys(result).length > 0 ? result : null;
+          return Object.values(result).some(v => v === true) ? result : undefined;
         })(),
         farmingTypes: formData.farmingTypes || {
           waterPaddy: false,

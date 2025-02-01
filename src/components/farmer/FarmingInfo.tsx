@@ -2,6 +2,7 @@
 
 import { FormData, MainCropType } from '@/types/farmer';
 import { MAIN_CROPS } from '@/constants';
+import { MainCrop } from '@/types/farmer';
 
 interface Props {
   formData: FormData;
@@ -96,16 +97,30 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
                       ? formData.mainCrop[cropType] 
                       : false}
                     onChange={(e) => setFormData((prev: FormData) => {
-                      const currentMainCrop = prev.mainCrop || {};
-                      
+                      const currentMainCrop: MainCrop = prev.mainCrop || {
+                        foodCrops: false,
+                        facilityHort: false,
+                        fieldVeg: false,
+                        fruits: false,
+                        specialCrops: false,
+                        flowers: false,
+                        livestock: false,
+                        foodCropsDetails: [],
+                        facilityHortDetails: [],
+                        fieldVegDetails: [],
+                        fruitsDetails: [],
+                        specialCropsDetails: [],
+                        flowersDetails: [],
+                        livestockDetails: []
+                      };
+
                       return {
                         ...prev,
                         mainCrop: {
                           ...currentMainCrop,
-                          [cropType]: e.target.checked,  // 체크/해제 상태 반영
-                          // 체크 해제시 해당 작물의 세부 항목만 초기화
-                          [detailsKey]: e.target.checked ? currentMainCrop[detailsKey] || [] : []
-                        }
+                          [cropType]: e.target.checked,
+                          [`${cropType}Details`]: e.target.checked ? currentMainCrop[`${cropType}Details`] || [] : []
+                        } as MainCrop
                       };
                     })}
                     className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"

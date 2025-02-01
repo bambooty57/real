@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Farmer, FarmingTypes, MainCropType } from '@/types/farmer';
+import { Farmer, FarmingTypes, MainCropType, MainCrop } from '@/types/farmer';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import { getKoreanEquipmentType, getMainCropDisplay, cropDisplayNames } from '@/utils/mappings';
@@ -242,7 +242,7 @@ export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail 
                 {Object.entries(farmer.mainCrop)
                   .filter(([key, value]) => value && !key.endsWith('Details'))
                   .map(([type], index) => {
-                    const detailsKey = `${type}Details`;
+                    const detailsKey = `${type}Details` as keyof MainCrop;
                     const details = farmer.mainCrop?.[detailsKey];
                     
                     return (

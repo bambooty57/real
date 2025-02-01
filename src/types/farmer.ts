@@ -61,7 +61,14 @@ export interface AttachmentImages {
 
 export type MainCropType = 'foodCrops' | 'facilityHort' | 'fieldVeg' | 'fruits' | 'specialCrops' | 'flowers' | 'livestock';
 
-export interface MainCrop extends Record<MainCropType, boolean | undefined> {
+export interface MainCrop {
+  foodCrops?: boolean;
+  facilityHort?: boolean;
+  fieldVeg?: boolean;
+  fruits?: boolean;
+  specialCrops?: boolean;
+  flowers?: boolean;
+  livestock?: boolean;
   foodCropsDetails?: string[];
   facilityHortDetails?: string[];
   fieldVegDetails?: string[];
@@ -95,7 +102,7 @@ export interface Farmer {
   memo?: string;
   farmingMemo?: string;  // 영농정보메모
   farmerImages: string[];
-  mainCrop: MainCrop;
+  mainCrop?: MainCrop;
   farmingTypes: FarmingTypes;
   equipments: Equipment[];
   rating?: number;

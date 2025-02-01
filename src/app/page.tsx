@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { collection, getDocs, doc, setDoc, updateDoc, query, where, writeBatch, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, updateDoc, query, where, writeBatch, orderBy, deleteDoc, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { FaFileExcel, FaGoogle } from 'react-icons/fa';
@@ -21,6 +21,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
 import { Farmer } from '@/types/farmer';
 import { toast } from 'react-hot-toast';
+import { cropDisplayNames } from '@/utils/mappings';
 
 ChartJS.register(
   CategoryScale,
@@ -222,6 +223,7 @@ export default function Dashboard() {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFarmers, setSelectedFarmers] = useState<string[]>([]);
   const [uploadResult, setUploadResult] = useState<{
     total: number;
     success: number;
@@ -315,8 +317,8 @@ export default function Dashboard() {
         const mainCrop = farmer.mainCrop || {};
         const details = Object.entries(mainCrop)
           .filter(([key]) => key.endsWith('Details'))
-          .flatMap(([_, values]) => values || [])
-          .map(value => cropDisplayNames[value] || value);
+          .flatMap(([_, values]) => (Array.isArray(values) ? values : []))
+          .map(value => cropDisplayNames[value as keyof typeof cropDisplayNames] || value);
         return details.join(', ');
       })() || '',
       '우편번호': farmer.zipCode || '',
@@ -969,6 +971,65 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     }
   });
 
+  const handleDeleteYeongamFarmers = async () => {
+    const yeongamFarmers = farmers.filter(farmer => 
+      farmer.zipCode?.includes('영암군') || 
+      farmer.roadAddress?.includes('영암군') || 
+      farmer.jibunAddress?.includes('영암군')
+    );
+    
+    if (yeongamFarmers.length === 0) {
+      alert('영암군 농민이 없습니다.');
+      return;
+    }
+
+    if (window.confirm(`영암군 농민 ${yeongamFarmers.length}명을 삭제하시겠습니까?`)) {
+      try {
+        // 삭제 전 백업을 위한 엑셀 다운로드
+        handleExcelDownload();
+
+        // 농민 데이터 삭제
+        await Promise.all(yeongamFarmers.map(farmer => 
+          deleteDoc(doc(db, 'farmers', farmer.id))
+        ));
+
+        // 상태 업데이트
+        setFarmers(prev => prev.filter(farmer => !yeongamFarmers.includes(farmer)));
+        toast.success(`${yeongamFarmers.length}명의 영암군 농민이 삭제되었습니다.`);
+      } catch (error) {
+        console.error('삭제 중 오류 발생:', error);
+        toast.error('삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
+  const handleDeleteMainCropData = async () => {
+    if (window.confirm('모든 농민의 주작물 데이터를 삭제하시겠습니까?')) {
+      try {
+        // 삭제 전 백업을 위한 엑셀 다운로드
+        handleExcelDownload();
+
+        // 모든 농민 문서에서 mainCrop 필드 삭제
+        await Promise.all(farmers.map(farmer => 
+          updateDoc(doc(db, 'farmers', farmer.id), {
+            mainCrop: deleteField()
+          })
+        ));
+
+        // 상태 업데이트
+        setFarmers(prev => prev.map(farmer => ({
+          ...farmer,
+          mainCrop: undefined
+        })));
+        
+        toast.success('주작물 데이터가 삭제되었습니다.');
+      } catch (error) {
+        console.error('삭제 중 오류 발생:', error);
+        toast.error('삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
   if (error) {
     return <div className="text-center py-10 text-red-500">{error}</div>;
   }
@@ -1054,6 +1115,24 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         >
           <FaGoogle />
           구글 시트 동기화
+        </button>
+
+        {/* 영암군 농민 삭제 버튼 */}
+        <button
+          onClick={handleDeleteYeongamFarmers}
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FaFileExcel />
+          영암군 농민 삭제
+        </button>
+
+        {/* 주작물 데이터 삭제 버튼 */}
+        <button
+          onClick={handleDeleteMainCropData}
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          <FaFileExcel />
+          주작물 데이터 삭제
         </button>
       </div>
 

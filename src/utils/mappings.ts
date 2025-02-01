@@ -133,7 +133,7 @@ const farmingTypeDisplayNames: { [key: string]: string } = {
 };
 
 // 작물 한글명 매핑
-export const cropDisplayNames: { [key: string]: string } = {
+export const cropDisplayNames: Record<string, string> = {
   rice: '벼',
   barley: '보리',
   wheat: '밀',
@@ -169,7 +169,11 @@ export const cropDisplayNames: { [key: string]: string } = {
   pig: '돼지',
   chicken: '닭',
   duck: '오리',
-  goat: '염소'
+  goat: '염소',
+  persimmon: '감',
+  plum: '자두',
+  sorghum: '수수',
+  other: '기타'
 };
 
 export const getFarmingTypeDisplay = (key: string): string => {

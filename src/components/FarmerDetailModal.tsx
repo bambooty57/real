@@ -1,4 +1,4 @@
-import { Farmer } from '@/types/farmer';
+import { Farmer, MainCrop } from '@/types/farmer';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState } from 'react';
 import Image from 'next/image';
@@ -192,7 +192,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                         {Object.entries(farmer.mainCrop)
                           .filter(([key, value]) => value && !key.endsWith('Details'))
                           .map(([type], index) => {
-                            const detailsKey = `${type}Details`;
+                            const detailsKey = `${type}Details` as keyof MainCrop;
                             const details = farmer.mainCrop?.[detailsKey];
                             
                             return (
