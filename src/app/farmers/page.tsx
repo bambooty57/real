@@ -329,18 +329,21 @@ export default function FarmersPage() {
     // 헤더 설정
     worksheet.columns = [
       { header: 'ID', key: 'id', width: 20 },
-      { header: '이름', key: 'name', width: 10 },
-      { header: '상호', key: 'businessName', width: 15 },
-      { header: '연령대', key: 'ageGroup', width: 10 },
+      { header: '이름', key: 'name', width: 15 },
       { header: '전화번호', key: 'phone', width: 15 },
-      { header: '우편번호', key: 'zipCode', width: 10 },
-      { header: '지번주소', key: 'jibunAddress', width: 30 },
-      { header: '도로명주소', key: 'roadAddress', width: 30 },
-      { header: '상세주소', key: 'addressDetail', width: 20 },
-      { header: '우편수취가능여부', key: 'canReceiveMail', width: 15 },
+      { header: '상호', key: 'businessName', width: 20 },
       { header: '영농형태', key: 'farmingTypes', width: 15 },
-      { header: '주작물', key: 'mainCrop', width: 20 },
-      { header: '농민정보메모', key: 'memo', width: 50 }
+      { header: '주작물', key: 'mainCrop', width: 15 },
+      { header: '우편번호', key: 'zipCode', width: 10 },
+      { header: '도로명주소', key: 'roadAddress', width: 40 },
+      { header: '지번주소', key: 'jibunAddress', width: 40 },
+      { header: '상세주소', key: 'addressDetail', width: 30 },
+      { header: '메모', key: 'memo', width: 30 },
+      { header: '연령대', key: 'ageGroup', width: 10 },
+      { header: '우편수취가능여부', key: 'canReceiveMail', width: 15 },
+      { header: '보유농기계', key: 'equipments', width: 30 },
+      { header: '생성일', key: 'createdAt', width: 20 },
+      { header: '수정일', key: 'updatedAt', width: 20 }
     ];
 
     // 선택된 농민들의 데이터 추가
@@ -350,22 +353,31 @@ export default function FarmersPage() {
 
     farmersToExport.forEach(farmer => {
       worksheet.addRow({
-        id: farmer.id,
+        id: farmer.id || '',
         name: farmer.name || '',
-        businessName: farmer.businessName || '',
-        ageGroup: farmer.ageGroup || '',
         phone: farmer.phone || '',
-        zipCode: farmer.zipCode || '',
-        jibunAddress: farmer.jibunAddress || '',
-        roadAddress: farmer.roadAddress || '',
-        addressDetail: farmer.addressDetail || '',
-        canReceiveMail: farmer.canReceiveMail ? '가능' : '불가능',
+        businessName: farmer.businessName || '',
         farmingTypes: Object.entries(farmer.farmingTypes || {})
           .filter(([_, value]) => value)
           .map(([key]) => key)
           .join(', '),
-        mainCrop: JSON.stringify(farmer.mainCrop || ''),
-        memo: farmer.memo || ''
+        mainCrop: Object.entries(farmer.mainCrop || {})
+          .filter(([_, value]) => value)
+          .map(([key]) => key)
+          .join(', '),
+        zipCode: farmer.zipCode || '',
+        roadAddress: farmer.roadAddress || '',
+        jibunAddress: farmer.jibunAddress || '',
+        addressDetail: farmer.addressDetail || '',
+        memo: farmer.memo || '',
+        ageGroup: farmer.ageGroup || '',
+        canReceiveMail: farmer.canReceiveMail ? '가능' : '불가능',
+        equipments: (farmer.equipments || [])
+          .map(eq => `${eq.type || ''}(${eq.manufacturer || ''})`)
+          .filter(Boolean)
+          .join('; '),
+        createdAt: farmer.createdAt ? new Date(farmer.createdAt).toLocaleString('ko-KR') : '',
+        updatedAt: farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString('ko-KR') : ''
       });
     });
 

@@ -295,79 +295,50 @@ export default function Dashboard() {
   }, []);
 
   const handleExcelDownload = () => {
-    const excelData = farmers.map(farmer => {
-      // 기본 정보
-      const baseData = {
-        'ID': farmer.id,
-        '이름': farmer.name || '',
-        '상호': farmer.businessName || '',
-        '연령대': farmer.ageGroup || '',
-        '전화번호': farmer.phone || '',
-        '우편번호': farmer.zipCode || '',
-        '지번주소': farmer.jibunAddress || '',
-        '도로명주소': farmer.roadAddress || '',
-        '상세주소': farmer.addressDetail || '',
-        '우편수취가능여부': farmer.canReceiveMail ? '가능' : '불가능',
-        '영농형태': getFarmingTypeText(farmer.farmingTypes) || '',
-        '주작물': getMainCropText(farmer.mainCrop) || '',
-      };
-
-      // 농기계 정보를 종류별로 분리하고 여러 대일 경우 처리
-      const equipmentTypes = ['tractor', 'transplanter', 'combine', 'forklift', 'excavator', 'skidLoader'];
-      const equipmentData: { [key: string]: string } = {};
-
-      equipmentTypes.forEach(type => {
-        // 해당 종류의 모든 장비 찾기
-        const equipments = farmer.equipments?.filter(eq => eq.type === type) || [];
-        const koreanType = getKoreanEquipmentType(type);
-        
-        // 장비가 없는 경우 빈 값으로 설정
-        if (equipments.length === 0) {
-          equipmentData[`${koreanType}1 제조사`] = '';
-          equipmentData[`${koreanType}1 모델명`] = '';
-          equipmentData[`${koreanType}1 거래유형`] = '';
-          equipmentData[`${koreanType}1 판매구분`] = '';
-        } else {
-          // 각 장비별로 정보 추가
-          equipments.forEach((equipment, index) => {
-            const num = index + 1;
-            equipmentData[`${koreanType}${num} 제조사`] = equipment.manufacturer || '';
-            equipmentData[`${koreanType}${num} 모델명`] = equipment.model || '';
-            equipmentData[`${koreanType}${num} 거래유형`] = equipment.tradeType === 'sale' ? '판매' : 
-                                                         equipment.tradeType === 'purchase' ? '구매' : '';
-            equipmentData[`${koreanType}${num} 판매구분`] = equipment.saleType === 'new' ? '신규' : 
-                                                         equipment.saleType === 'used' ? '중고' : '';
-          });
-        }
-      });
-
-      return {
-        ...baseData,
-        ...equipmentData,
-        '농민정보메모': farmer.memo || ''
-      };
-    });
+    const excelData = farmers.map(farmer => ({
+      'ID': farmer.id || '',
+      '이름': farmer.name || '',
+      '전화번호': farmer.phone || '',
+      '상호': farmer.businessName || '',
+      '영농형태': getFarmingTypeText(farmer.farmingTypes) || '',
+      '주작물': getMainCropText(farmer.mainCrop) || '',
+      '우편번호': farmer.zipCode || '',
+      '도로명주소': farmer.roadAddress || '',
+      '지번주소': farmer.jibunAddress || '',
+      '상세주소': farmer.addressDetail || '',
+      '메모': farmer.memo || '',
+      '연령대': farmer.ageGroup || '',
+      '우편수취가능여부': farmer.canReceiveMail ? '가능' : '불가능',
+      '보유농기계': (farmer.equipments || [])
+        .map(eq => `${eq.type || ''}(${eq.manufacturer || ''})`)
+        .filter(Boolean)
+        .join('; '),
+      '생성일': farmer.createdAt ? new Date(farmer.createdAt).toLocaleString('ko-KR') : '',
+      '수정일': farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString('ko-KR') : ''
+    }));
 
     const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "농민목록");
     
-    // 열 너비 자동 조정 (각 농기계 종류별로 최대 3대까지 표시)
+    // 열 너비 자동 조정
     const colWidths = [
       { wch: 20 },  // ID
-      { wch: 10 },  // 이름
-      { wch: 15 },  // 상호
-      { wch: 10 },  // 연령대
+      { wch: 15 },  // 이름
       { wch: 15 },  // 전화번호
-      { wch: 10 },  // 우편번호
-      { wch: 30 },  // 지번주소
-      { wch: 30 },  // 도로명주소
-      { wch: 20 },  // 상세주소
-      { wch: 15 },  // 우편수취가능여부
+      { wch: 20 },  // 상호
       { wch: 15 },  // 영농형태
-      { wch: 20 },  // 주작물
-      ...Array(72).fill({ wch: 15 }),  // 농기계 정보 (6개 종류 x 3대 x 4개 열)
-      { wch: 50 },  // 농민정보메모
+      { wch: 15 },  // 주작물
+      { wch: 10 },  // 우편번호
+      { wch: 40 },  // 도로명주소
+      { wch: 40 },  // 지번주소
+      { wch: 30 },  // 상세주소
+      { wch: 30 },  // 메모
+      { wch: 10 },  // 연령대
+      { wch: 15 },  // 우편수취가능여부
+      { wch: 30 },  // 보유농기계
+      { wch: 20 },  // 생성일
+      { wch: 20 },  // 수정일
     ];
     ws['!cols'] = colWidths;
 
@@ -594,77 +565,61 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
   const handleTemplateDownload = () => {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([
-      ['이름', '상호', '연령대', '전화번호', '우편번호', '지번주소', '도로명주소', '상세주소'],
-      ['', '', '', '', '', '', '', '']
+      ['ID', '이름', '전화번호', '상호', '영농형태', '주작물', '우편번호', '도로명주소', '지번주소', '상세주소', '메모', '연령대', '우편수취가능여부', '보유농기계', '생성일', '수정일'],
+      ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
     ]);
 
     // 열 너비 설정
     ws['!cols'] = [
+      { wch: 20 },  // ID
       { wch: 15 },  // 이름
-      { wch: 20 },  // 상호
-      { wch: 10 },  // 연령대
       { wch: 15 },  // 전화번호
+      { wch: 20 },  // 상호
+      { wch: 15 },  // 영농형태
+      { wch: 15 },  // 주작물
       { wch: 10 },  // 우편번호
-      { wch: 40 },  // 지번주소
       { wch: 40 },  // 도로명주소
+      { wch: 40 },  // 지번주소
       { wch: 30 },  // 상세주소
+      { wch: 30 },  // 메모
+      { wch: 10 },  // 연령대
+      { wch: 15 },  // 우편수취가능여부
+      { wch: 30 },  // 보유농기계
+      { wch: 20 },  // 생성일
+      { wch: 20 },  // 수정일
     ];
 
     // 필수 입력 셀 스타일 설정 (이름, 전화번호)
-    ws['A1'] = {
-      v: '이름',
-      t: 's',
-      s: {
-        fill: { 
-          patternType: "solid", 
-          fgColor: { rgb: "FFFFE0E0" }  // 연한 빨간색 배경
-        },
-        font: { 
-          bold: true,
-          color: { rgb: "FFFF0000" },  // 빨간색 글자
-          sz: 12
-        },
-        border: {
-          top: { style: 'thin', color: { rgb: "FFFF0000" } },
-          bottom: { style: 'thin', color: { rgb: "FFFF0000" } },
-          left: { style: 'thin', color: { rgb: "FFFF0000" } },
-          right: { style: 'thin', color: { rgb: "FFFF0000" } }
-        },
-        alignment: {
-          horizontal: "center",
-          vertical: "center"
+    ['B1', 'C1'].forEach(cell => {
+      ws[cell] = {
+        v: ws[cell].v,
+        t: 's',
+        s: {
+          fill: { 
+            patternType: "solid", 
+            fgColor: { rgb: "FFFFE0E0" }  // 연한 빨간색 배경
+          },
+          font: { 
+            bold: true,
+            color: { rgb: "FFFF0000" },  // 빨간색 글자
+            sz: 12
+          },
+          border: {
+            top: { style: 'thin', color: { rgb: "FFFF0000" } },
+            bottom: { style: 'thin', color: { rgb: "FFFF0000" } },
+            left: { style: 'thin', color: { rgb: "FFFF0000" } },
+            right: { style: 'thin', color: { rgb: "FFFF0000" } }
+          },
+          alignment: {
+            horizontal: "center",
+            vertical: "center"
+          }
         }
-      }
-    };
-
-    ws['D1'] = {
-      v: '전화번호',
-      t: 's',
-      s: {
-        fill: { 
-          patternType: "solid", 
-          fgColor: { rgb: "FFFFE0E0" }  // 연한 빨간색 배경
-        },
-        font: { 
-          bold: true,
-          color: { rgb: "FFFF0000" },  // 빨간색 글자
-          sz: 12
-        },
-        border: {
-          top: { style: 'thin', color: { rgb: "FFFF0000" } },
-          bottom: { style: 'thin', color: { rgb: "FFFF0000" } },
-          left: { style: 'thin', color: { rgb: "FFFF0000" } },
-          right: { style: 'thin', color: { rgb: "FFFF0000" } }
-        },
-        alignment: {
-          horizontal: "center",
-          vertical: "center"
-        }
-      }
-    };
+      };
+    });
 
     // 선택 입력 셀 스타일 설정
-    ['B1', 'C1', 'E1', 'F1', 'G1', 'H1'].forEach(cell => {
+    ['A1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1', 'N1', 'O1', 'P1'].forEach(cell => {
       ws[cell] = {
         v: ws[cell].v,
         t: 's',
