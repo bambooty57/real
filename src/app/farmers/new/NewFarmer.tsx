@@ -207,14 +207,17 @@ export default function NewFarmer({
         mainCrop: (() => {
           const selectedCrop = formData.mainCrop || {};
           const cropTypes = ['foodCrops', 'facilityHort', 'fieldVeg', 'fruits', 'specialCrops', 'flowers', 'livestock'];
-          const selectedType = cropTypes.find(type => selectedCrop[type]);
           
-          if (!selectedType) return null;
-
-          return {
-            [selectedType]: true,
-            [`${selectedType}Details`]: selectedCrop[`${selectedType}Details`] || []
-          };
+          // 선택된 모든 작물 타입에 대한 데이터 저장
+          const result = {};
+          cropTypes.forEach(type => {
+            if (selectedCrop[type]) {
+              result[type] = true;
+              result[`${type}Details`] = selectedCrop[`${type}Details`] || [];
+            }
+          });
+          
+          return Object.keys(result).length > 0 ? result : null;
         })(),
         farmingTypes: formData.farmingTypes || {
           waterPaddy: false,

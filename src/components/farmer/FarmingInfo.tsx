@@ -97,18 +97,14 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
                       : false}
                     onChange={(e) => setFormData((prev: FormData) => {
                       const currentMainCrop = prev.mainCrop || {};
-                      const currentDetails = Array.isArray(currentMainCrop[detailsKey]) 
-                        ? currentMainCrop[detailsKey] 
-                        : [];
-
+                      
                       return {
                         ...prev,
                         mainCrop: {
                           ...currentMainCrop,
-                          [cropType]: true,  // 메인 작물 타입 유지
-                          [detailsKey]: e.target.checked
-                            ? [...currentDetails, value]
-                            : currentDetails.filter(v => v !== value)
+                          [cropType]: e.target.checked,  // 체크/해제 상태 반영
+                          // 체크 해제시 해당 작물의 세부 항목만 초기화
+                          [detailsKey]: e.target.checked ? currentMainCrop[detailsKey] || [] : []
                         }
                       };
                     })}
