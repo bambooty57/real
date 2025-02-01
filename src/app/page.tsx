@@ -334,22 +334,22 @@ export default function Dashboard() {
 
         try {
           return {
-            'ID': safeGet(farmer, 'id', ''),
-            '이름': safeGet(farmer, 'name', ''),
-            '전화번호': safeGet(farmer, 'phone', ''),
-            '상호': safeGet(farmer, 'businessName', ''),
-            '영농형태': Object.entries(safeGet(farmer, 'farmingTypes', {})
+            ID: safeGet(farmer, 'id', ''),
+            이름: safeGet(farmer, 'name', ''),
+            전화번호: safeGet(farmer, 'phone', ''),
+            상호: safeGet(farmer, 'businessName', ''),
+            영농형태: Object.entries(safeGet(farmer, 'farmingTypes', {}))
               .filter(([_, value]) => value)
               .map(([key]) => getFarmingTypeDisplay(key))
               .join(', '),
-            '주작물': (() => {
+            주작물: (() => {
               const mainCrop = safeGet(farmer, 'mainCrop', {});
               return Object.entries(mainCrop)
                 .filter(([key, value]) => value === true && !key.endsWith('Details'))
-                  .map(([key]) => getMainCropDisplay(key))
-                  .join(', ');
+                .map(([key]) => getMainCropDisplay(key))
+                .join(', ');
             })(),
-            '세부작물': (() => {
+            세부작물: (() => {
               const mainCrop = safeGet(farmer, 'mainCrop', {});
               return Object.entries(mainCrop)
                 .filter(([key]) => key.endsWith('Details'))
@@ -358,19 +358,19 @@ export default function Dashboard() {
                 .filter(Boolean)
                 .join(', ');
             })(),
-            '우편번호': safeGet(farmer, 'zipCode', ''),
-            '도로명주소': safeGet(farmer, 'roadAddress', ''),
-            '지번주소': safeGet(farmer, 'jibunAddress', ''),
-            '상세주소': safeGet(farmer, 'addressDetail', ''),
-            '메모': safeGet(farmer, 'memo', ''),
-            '연령대': safeGet(farmer, 'ageGroup', ''),
-            '우편수취가능여부': safeGet(farmer, 'canReceiveMail', false) ? '가능' : '불가능',
-            '보유농기계': (safeGet(farmer, 'equipments', []) as any[])
+            우편번호: safeGet(farmer, 'zipCode', ''),
+            도로명주소: safeGet(farmer, 'roadAddress', ''),
+            지번주소: safeGet(farmer, 'jibunAddress', ''),
+            상세주소: safeGet(farmer, 'addressDetail', ''),
+            메모: safeGet(farmer, 'memo', ''),
+            연령대: safeGet(farmer, 'ageGroup', ''),
+            우편수취가능여부: safeGet(farmer, 'canReceiveMail', false) ? '가능' : '불가능',
+            보유농기계: (safeGet(farmer, 'equipments', []) as any[])
               .map(eq => `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`)
               .filter(Boolean)
               .join('; '),
-            '생성일': formatTimestamp(farmer.createdAt),
-            '수정일': formatTimestamp(farmer.updatedAt)
+            생성일: formatTimestamp(farmer.createdAt),
+            수정일: formatTimestamp(farmer.updatedAt)
           };
         } catch (error) {
           console.error(`농민 데이터 처리 오류 (${farmer.name}):`, error);
