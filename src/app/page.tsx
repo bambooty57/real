@@ -300,8 +300,14 @@ export default function Dashboard() {
       '이름': farmer.name || '',
       '전화번호': farmer.phone || '',
       '상호': farmer.businessName || '',
-      '영농형태': getFarmingTypeText(farmer.farmingTypes) || '',
-      '주작물': getMainCropText(farmer.mainCrop) || '',
+      '영농형태': Object.entries(farmer.farmingTypes || {})
+        .filter(([_, value]) => value)
+        .map(([key]) => getFarmingTypeDisplay(key))
+        .join(', ') || '',
+      '주작물': Object.entries(farmer.mainCrop || {})
+        .filter(([_, value]) => value)
+        .map(([key]) => getMainCropDisplay(key))
+        .join(', ') || '',
       '우편번호': farmer.zipCode || '',
       '도로명주소': farmer.roadAddress || '',
       '지번주소': farmer.jibunAddress || '',
@@ -658,13 +664,29 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         message: '구글 시트 동기화 중...' 
       });
       
+      // 데이터 변환
+      const syncData = farmers.map(farmer => ({
+        ...farmer,
+        farmingTypes: Object.entries(farmer.farmingTypes || {})
+          .filter(([_, value]) => value)
+          .map(([key]) => getFarmingTypeDisplay(key))
+          .join(', '),
+        mainCrop: Object.entries(farmer.mainCrop || {})
+          .filter(([_, value]) => value)
+          .map(([key]) => getMainCropDisplay(key))
+          .join(', '),
+        equipments: (farmer.equipments || [])
+          .map(eq => `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`)
+          .join('; ')
+      }));
+      
       const response = await fetch('/api/sheets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache'
         },
-        body: JSON.stringify(farmers)
+        body: JSON.stringify(syncData)
       });
 
       const result = await response.json();
