@@ -6,6 +6,39 @@
 
 /* 인쇄 스타일 */
 @media print {
+  /* 인쇄 시 배경색과 이미지 표시 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 인쇄 시 페이지 여백 설정 */
+  @page {
+    margin: 2cm;
+  }
+
+  /* 인쇄 시 불필요한 요소 숨김 */
+  .print-hide {
+    display: none !important;
+  }
+
+  /* 인쇄 시 페이지 나누기 */
+  .print-page-break {
+    page-break-before: always;
+  }
+
+  /* 인쇄 시 링크 URL 표시 */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    font-weight: normal;
+  }
+
+  /* 전화번호 링크는 URL 표시하지 않음 */
+  a[href^="tel:"]::after {
+    content: "";
+  }
+
   /* 기본 설정 */
   @page {
     size: A4;

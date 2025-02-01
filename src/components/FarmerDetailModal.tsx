@@ -41,8 +41,8 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
       <div className="fixed inset-0 bg-black/30 print:hidden" aria-hidden="true" />
       
       {/* 모달 컨테이너 - 인쇄 시 전체 화면 */}
-      <div className="fixed inset-0 flex items-center justify-center p-4 print:p-0">
-        <Dialog.Panel className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl print:max-w-none print:max-h-none print:shadow-none print:m-0 print-content">
+      <div className="fixed inset-0 flex items-center justify-center p-4 print:p-0 print:static print:overflow-visible">
+        <Dialog.Panel className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl print:max-w-none print:max-h-none print:shadow-none print:m-0 print:overflow-visible print:static">
           {/* 모달 내용 */}
           <div className="p-6 print:p-8">
             {/* 헤더 - 인쇄 시 숨김 */}
