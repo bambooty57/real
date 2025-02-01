@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
-import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
+import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer, cropDisplayNames } from '@/utils/mappings';
 
 export const runtime = 'nodejs';
 
@@ -51,8 +51,9 @@ function formatDate(date: Date | null): string {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
     hour12: false
-  });
+  }).replace(/\b(\d)\b/g, '0$1'); // 한 자리 숫자를 두 자리로 패딩
 }
 
 // 데이터를 시트에 맞는 형식으로 변환
@@ -65,52 +66,52 @@ function formatFarmerData(farmers: any[]) {
     '생성일', '수정일'
   ];
 
-  // 농기계 정보 포맷팅
-  function formatEquipment(equipment: any) {
-    try {
-      if (!equipment || typeof equipment !== 'object') return '';
-      const type = equipment.type || '';
-      const manufacturer = equipment.manufacturer || '';
-      if (!type || !manufacturer) return '';
-      
-      const mainInfo = `${type}(${manufacturer})`;
-      if (!Array.isArray(equipment.attachments)) return mainInfo;
-      
-      const attachments = equipment.attachments
-        .map((att: any) => {
-          if (!att || typeof att !== 'object') return '';
-          return `${att.type || ''}(${att.manufacturer || ''})`;
-        })
-        .filter(Boolean)
-        .join(', ');
-      
-      return attachments ? `${mainInfo} - ${attachments}` : mainInfo;
-    } catch (error) {
-      console.error('농기계 정보 포맷팅 오류:', error);
-      return '';
-    }
-  }
-
   // 데이터 행 변환
   const rows = farmers.map(farmer => {
     try {
+      // 영농형태 변환
+      const farmingTypes = farmer.farmingTypes && typeof farmer.farmingTypes === 'object'
+        ? Object.entries(farmer.farmingTypes)
+            .filter(([_, value]) => value)
+            .map(([key]) => getFarmingTypeDisplay(key))
+            .join(', ')
+        : '';
+
+      // 주작물 변환 (상세 작물 포함)
+      const mainCrops = farmer.mainCrop && typeof farmer.mainCrop === 'object'
+        ? Object.entries(farmer.mainCrop)
+            .filter(([key, value]) => value === true && !key.endsWith('Details'))
+            .map(([key]) => getMainCropDisplay(key))
+            .join(', ')
+        : '';
+
+      // 농기계 정보 변환
+      const equipments = Array.isArray(farmer.equipments)
+        ? farmer.equipments
+            .map((eq: Equipment) => {
+              if (!eq) return '';
+              const mainEquipment = `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`;
+              
+              // 작업기 정보 추가
+              const attachments = eq.attachments
+                ? eq.attachments
+                    .map(att => `${getKoreanEquipmentType(att.type)}(${getKoreanManufacturer(att.manufacturer)})`)
+                    .join(', ')
+                : '';
+              
+              return attachments ? `${mainEquipment} - ${attachments}` : mainEquipment;
+            })
+            .filter(Boolean)
+            .join('; ')
+        : '';
+
       return [
         farmer.id || '',
         farmer.name || '',
         farmer.phone || '',
         farmer.businessName || '',
-        (farmer.farmingTypes && typeof farmer.farmingTypes === 'object' 
-          ? Object.entries(farmer.farmingTypes)
-              .filter(([_, value]) => value)
-              .map(([key]) => getFarmingTypeDisplay(key))
-              .join(', ') 
-          : ''),
-        (farmer.mainCrop && typeof farmer.mainCrop === 'object'
-          ? Object.entries(farmer.mainCrop)
-              .filter(([_, value]) => value)
-              .map(([key]) => getMainCropDisplay(key))
-              .join(', ')
-          : ''),
+        farmingTypes,
+        mainCrops,
         farmer.zipCode || '',
         farmer.roadAddress || '',
         farmer.jibunAddress || '',
@@ -118,11 +119,7 @@ function formatFarmerData(farmers: any[]) {
         farmer.memo || '',
         farmer.ageGroup || '',
         farmer.canReceiveMail ? '가능' : '불가능',
-        Array.isArray(farmer.equipments) 
-          ? farmer.equipments.map((eq: Equipment) => 
-              eq ? `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})` : ''
-            ).filter(Boolean).join('; ')
-          : '',
+        equipments,
         formatDate(convertTimestamp(farmer.createdAt)),
         formatDate(convertTimestamp(farmer.updatedAt))
       ];
