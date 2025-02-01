@@ -635,8 +635,8 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
   const handleTemplateDownload = () => {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([
-      ['ID', '이름', '전화번호', '상호', '영농형태', '주작물', '우편번호', '도로명주소', '지번주소', '상세주소', '메모', '연령대', '우편수취가능여부', '보유농기계', '생성일', '수정일'],
-      ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+      ['ID', '이름', '전화번호', '상호', '영농형태', '주작물', '세부작물', '우편번호', '도로명주소', '지번주소', '상세주소', '메모', '연령대', '우편수취가능여부', '보유농기계', '생성일', '수정일'],
+      ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
     ]);
 
     // 열 너비 설정
@@ -647,6 +647,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
       { wch: 20 },  // 상호
       { wch: 15 },  // 영농형태
       { wch: 15 },  // 주작물
+      { wch: 30 },  // 세부작물
       { wch: 10 },  // 우편번호
       { wch: 40 },  // 도로명주소
       { wch: 40 },  // 지번주소
@@ -689,7 +690,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     });
 
     // 선택 입력 셀 스타일 설정
-    ['A1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1', 'N1', 'O1', 'P1'].forEach(cell => {
+    ['A1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1', 'N1', 'O1', 'P1', 'Q1'].forEach(cell => {
       ws[cell] = {
         v: ws[cell].v,
         t: 's',
@@ -728,75 +729,14 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         message: '구글 시트 동기화 중...' 
       });
       
-      // 데이터 변환
-      const syncData = farmers.map(farmer => {
-        // 안전한 객체 접근
-        const safeGet = (obj: any, path: string, defaultValue: any = '') => {
-          try {
-            return path.split('.').reduce((acc, part) => (acc && acc[part] ? acc[part] : defaultValue), obj);
-          } catch (error) {
-            console.error('데이터 접근 오류:', error);
-            return defaultValue;
-          }
-        };
-
-        // 타임스탬프 처리
-        const formatTimestamp = (timestamp: any) => {
-          if (!timestamp) return '';
-          try {
-            if (typeof timestamp === 'object' && 'seconds' in timestamp) {
-              return new Date(timestamp.seconds * 1000).toLocaleString('ko-KR');
-            }
-            if (timestamp instanceof Date) {
-              return timestamp.toLocaleString('ko-KR');
-            }
-            if (typeof timestamp === 'string') {
-              return new Date(timestamp).toLocaleString('ko-KR');
-            }
-            return '';
-          } catch (error) {
-            console.error('타임스탬프 변환 오류:', error);
-            return '';
-          }
-        };
-
-        return {
-          id: safeGet(farmer, 'id', ''),
-          name: safeGet(farmer, 'name', ''),
-          phone: safeGet(farmer, 'phone', ''),
-          businessName: safeGet(farmer, 'businessName', ''),
-          zipCode: safeGet(farmer, 'zipCode', ''),
-          roadAddress: safeGet(farmer, 'roadAddress', ''),
-          jibunAddress: safeGet(farmer, 'jibunAddress', ''),
-          addressDetail: safeGet(farmer, 'addressDetail', ''),
-          canReceiveMail: safeGet(farmer, 'canReceiveMail', false) ? '가능' : '불가능',
-          ageGroup: safeGet(farmer, 'ageGroup', ''),
-          memo: safeGet(farmer, 'memo', ''),
-          farmingTypes: Object.entries(safeGet(farmer, 'farmingTypes', {}))
-            .filter(([_, value]) => value)
-            .map(([key]) => getFarmingTypeDisplay(key))
-            .join(', '),
-          mainCrop: Object.entries(safeGet(farmer, 'mainCrop', {}))
-            .filter(([key, value]) => value === true && !key.endsWith('Details'))
-            .map(([key]) => getMainCropDisplay(key))
-            .join(', '),
-          equipments: Array.isArray(farmer.equipments) 
-            ? farmer.equipments.map(eq => 
-                eq ? `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})` : ''
-              ).filter(Boolean).join('; ')
-            : '',
-          createdAt: formatTimestamp(farmer.createdAt),
-          updatedAt: formatTimestamp(farmer.updatedAt)
-        };
-      });
-      
+      // 원본 데이터 전송
       const response = await fetch('/api/sheets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache'
         },
-        body: JSON.stringify(syncData)
+        body: JSON.stringify(farmers)  // 변환하지 않은 원본 데이터 전송
       });
 
       const result = await response.json();

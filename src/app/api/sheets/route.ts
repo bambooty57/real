@@ -60,7 +60,7 @@ function formatDate(date: Date | null): string {
 function formatFarmerData(farmers: any[]) {
   // 헤더 행
   const headers = [
-    'ID', '이름', '전화번호', '상호', '영농형태', '주작물',
+    'ID', '이름', '전화번호', '상호', '영농형태', '주작물', '세부작물',
     '우편번호', '도로명주소', '지번주소', '상세주소',
     '메모', '연령대', '우편수취가능여부', '보유농기계',
     '생성일', '수정일'
@@ -88,6 +88,16 @@ function formatFarmerData(farmers: any[]) {
             .join(', ')
         : '';
       console.log('Main crops:', mainCrops, 'Original:', farmer.mainCrop);
+
+      // 세부작물 변환
+      const detailCrops = farmer.mainCrop && typeof farmer.mainCrop === 'object'
+        ? Object.entries(farmer.mainCrop)
+            .filter(([key]) => key.endsWith('Details'))
+            .flatMap(([_, values]) => Array.isArray(values) ? values : [])
+            .map(value => cropDisplayNames[value as keyof typeof cropDisplayNames] || value)
+            .filter(Boolean)
+            .join(', ')
+        : '';
 
       // 농기계 정보 변환
       const equipments = Array.isArray(farmer.equipments)
@@ -132,6 +142,7 @@ function formatFarmerData(farmers: any[]) {
         farmer.businessName || '',
         farmingTypes,
         mainCrops,
+        detailCrops,
         farmer.zipCode || '',
         farmer.roadAddress || '',
         farmer.jibunAddress || '',
@@ -149,7 +160,7 @@ function formatFarmerData(farmers: any[]) {
 
     } catch (error) {
       console.error('농민 데이터 변환 오류:', error);
-      return Array(16).fill('');
+      return Array(17).fill(''); // 17개 열에 맞춰 수정
     }
   });
 
@@ -190,7 +201,7 @@ export async function POST(req: Request) {
     // 5. 기존 데이터 삭제
     await sheets.spreadsheets.values.clear({
       spreadsheetId: GOOGLE_SHEET_ID,
-      range: '시트1!A1:P10000',
+      range: '시트1!A1:Q10000',
     });
 
     // 6. 새 데이터 추가
