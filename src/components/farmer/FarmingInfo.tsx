@@ -95,17 +95,23 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
                     checked={typeof formData.mainCrop?.[cropType] === 'boolean' 
                       ? formData.mainCrop[cropType] 
                       : false}
-                    onChange={(e) => setFormData((prev: FormData) => ({
-                      ...prev,
-                      mainCrop: {
-                        ...(prev.mainCrop || {}),
-                        [cropType]: e.target.checked,
-                        // 체크 해제시 하위 작물도 모두 해제
-                        ...(!e.target.checked && {
-                          [detailsKey]: []
-                        })
-                      }
-                    }))}
+                    onChange={(e) => setFormData((prev: FormData) => {
+                      const currentMainCrop = prev.mainCrop || {};
+                      const currentDetails = Array.isArray(currentMainCrop[detailsKey]) 
+                        ? currentMainCrop[detailsKey] 
+                        : [];
+
+                      return {
+                        ...prev,
+                        mainCrop: {
+                          ...currentMainCrop,
+                          [cropType]: true,  // 메인 작물 타입 유지
+                          [detailsKey]: e.target.checked
+                            ? [...currentDetails, value]
+                            : currentDetails.filter(v => v !== value)
+                        }
+                      };
+                    })}
                     className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm font-medium text-gray-700">{label}</span>

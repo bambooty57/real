@@ -204,22 +204,18 @@ export default function NewFarmer({
         ageGroup: formData.ageGroup || '',
         memo: formData.memo?.trim() || '',
         farmerImages: formData.farmerImages || [],
-        mainCrop: formData.mainCrop || {
-          foodCrops: false,
-          facilityHort: false,
-          fieldVeg: false,
-          fruits: false,
-          specialCrops: false,
-          flowers: false,
-          livestock: false,
-          foodCropsDetails: [],
-          facilityHortDetails: [],
-          fieldVegDetails: [],
-          fruitsDetails: [],
-          specialCropsDetails: [],
-          flowersDetails: [],
-          livestockDetails: []
-        },
+        mainCrop: (() => {
+          const selectedCrop = formData.mainCrop || {};
+          const cropTypes = ['foodCrops', 'facilityHort', 'fieldVeg', 'fruits', 'specialCrops', 'flowers', 'livestock'];
+          const selectedType = cropTypes.find(type => selectedCrop[type]);
+          
+          if (!selectedType) return null;
+
+          return {
+            [selectedType]: true,
+            [`${selectedType}Details`]: selectedCrop[`${selectedType}Details`] || []
+          };
+        })(),
         farmingTypes: formData.farmingTypes || {
           waterPaddy: false,
           fieldFarming: false,
