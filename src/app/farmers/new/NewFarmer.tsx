@@ -185,7 +185,7 @@ export default function NewFarmer({
             }
           });
           
-          return Object.values(result).some(v => v === true) ? result : undefined;
+          return result;  // 항상 객체 반환
         })(),
         farmingTypes: formData.farmingTypes || {
           waterPaddy: false,
