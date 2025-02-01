@@ -237,7 +237,6 @@ export default function FarmersPage() {
   const handleDelete = async (farmerId: string) => {
     if (window.confirm('정말로 이 농민의 정보를 삭제하시겠습니까?')) {
       try {
-        const batch = writeBatch(db);
         await deleteFarmerImages(farmerId);
         await deleteDoc(doc(db, 'farmers', farmerId));
         setFarmers(prev => prev.filter(farmer => farmer.id !== farmerId));
