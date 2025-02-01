@@ -310,7 +310,7 @@ export default function Dashboard() {
       '연령대': farmer.ageGroup || '',
       '우편수취가능여부': farmer.canReceiveMail ? '가능' : '불가능',
       '보유농기계': (farmer.equipments || [])
-        .map(eq => `${eq.type || ''}(${eq.manufacturer || ''})`)
+        .map(eq => `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`)
         .filter(Boolean)
         .join('; '),
       '생성일': farmer.createdAt && typeof farmer.createdAt === 'object' && 'seconds' in farmer.createdAt ? new Date(farmer.createdAt.seconds * 1000).toLocaleString('ko-KR') : '',
