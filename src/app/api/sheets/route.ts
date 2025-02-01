@@ -69,32 +69,37 @@ function formatFarmerData(farmers: any[]) {
   // 데이터 행 변환
   const rows = farmers.map(farmer => {
     try {
+      console.log('Processing farmer:', farmer);
+
       // 영농형태 변환
       const farmingTypes = farmer.farmingTypes && typeof farmer.farmingTypes === 'object'
         ? Object.entries(farmer.farmingTypes)
-            .filter(([_, value]) => value)
+            .filter(([_, value]) => value === true)
             .map(([key]) => getFarmingTypeDisplay(key))
             .join(', ')
         : '';
+      console.log('Farming types:', farmingTypes, 'Original:', farmer.farmingTypes);
 
-      // 주작물 변환 (상세 작물 포함)
+      // 주작물 변환
       const mainCrops = farmer.mainCrop && typeof farmer.mainCrop === 'object'
         ? Object.entries(farmer.mainCrop)
             .filter(([key, value]) => value === true && !key.endsWith('Details'))
             .map(([key]) => getMainCropDisplay(key))
             .join(', ')
         : '';
+      console.log('Main crops:', mainCrops, 'Original:', farmer.mainCrop);
 
       // 농기계 정보 변환
       const equipments = Array.isArray(farmer.equipments)
         ? farmer.equipments
-            .map((eq: Equipment) => {
-              if (!eq) return '';
+            .map(eq => {
+              if (!eq?.type || !eq?.manufacturer) return '';
               const mainEquipment = `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`;
               
               // 작업기 정보 추가
               const attachments = eq.attachments
                 ? eq.attachments
+                    .filter(att => att?.type && att?.manufacturer)
                     .map(att => `${getKoreanEquipmentType(att.type)}(${getKoreanManufacturer(att.manufacturer)})`)
                     .join(', ')
                 : '';
@@ -104,8 +109,21 @@ function formatFarmerData(farmers: any[]) {
             .filter(Boolean)
             .join('; ')
         : '';
+      console.log('Equipments:', equipments, 'Original:', farmer.equipments);
 
-      return [
+      // 날짜 변환
+      const createdAt = farmer.createdAt?.seconds 
+        ? new Date(farmer.createdAt.seconds * 1000).toLocaleString('ko-KR')
+        : '';
+      const updatedAt = farmer.updatedAt?.seconds
+        ? new Date(farmer.updatedAt.seconds * 1000).toLocaleString('ko-KR')
+        : '';
+      console.log('Dates:', { createdAt, updatedAt }, 'Original:', { 
+        createdAt: farmer.createdAt, 
+        updatedAt: farmer.updatedAt 
+      });
+
+      const row = [
         farmer.id || '',
         farmer.name || '',
         farmer.phone || '',
@@ -120,12 +138,16 @@ function formatFarmerData(farmers: any[]) {
         farmer.ageGroup || '',
         farmer.canReceiveMail ? '가능' : '불가능',
         equipments,
-        formatDate(convertTimestamp(farmer.createdAt)),
-        formatDate(convertTimestamp(farmer.updatedAt))
+        createdAt,
+        updatedAt
       ];
+
+      console.log('Final row:', row);
+      return row;
+
     } catch (error) {
       console.error('농민 데이터 변환 오류:', error);
-      return Array(16).fill(''); // 빈 데이터로 채움
+      return Array(16).fill('');
     }
   });
 
@@ -142,6 +164,8 @@ export async function POST(req: Request) {
 
     // 2. 요청 데이터 파싱
     const farmers = await req.json();
+    console.log('Received farmers data:', farmers);
+
     if (!Array.isArray(farmers)) {
       throw new Error('올바른 데이터 형식이 아닙니다.');
     }
@@ -159,6 +183,7 @@ export async function POST(req: Request) {
 
     // 4. 데이터 포맷팅
     const values = formatFarmerData(farmers);
+    console.log('Formatted values:', values);
 
     // 5. 기존 데이터 삭제
     await sheets.spreadsheets.values.clear({
@@ -167,12 +192,14 @@ export async function POST(req: Request) {
     });
 
     // 6. 새 데이터 추가
-    const response = await sheets.spreadsheets.values.append({
+    const response = await sheets.spreadsheets.values.update({
       spreadsheetId: GOOGLE_SHEET_ID,
       range: '시트1!A1',
       valueInputOption: 'RAW',
       requestBody: { values },
     });
+
+    console.log('Google Sheets API Response:', response.data);
 
     return NextResponse.json({
       success: true,
