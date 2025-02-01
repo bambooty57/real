@@ -13,6 +13,15 @@ export const getFarmingTypeDisplay = (type: string): string => {
 // 주작물 한글 표시
 export const getMainCropDisplay = (crop: string): string => {
   const displayNames: { [key: string]: string } = {
+    // 주작물 카테고리
+    foodCrops: '식량작물',
+    facilityHort: '시설원예',
+    fieldVeg: '노지채소',
+    fruits: '과수',
+    specialCrops: '특용작물',
+    flowers: '화훼',
+    livestock: '축산',
+    // 세부작물
     rice: '벼',
     barley: '보리',
     wheat: '밀',
