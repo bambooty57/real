@@ -14,12 +14,10 @@
 
   /* 전체 페이지 설정 */
   html, body {
-    width: 100% !important;
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: white !important;
-    overflow: visible !important;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
   }
 
   /* 모달 외 모든 내용 숨기기 */
@@ -29,19 +27,11 @@
 
   /* 모달 내용 스타일링 */
   .print-content {
-    display: block !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    background: white !important;
-  }
-
-  .print-content > *:not(.print-content) {
-    position: relative !important;
+    position: static !important;
     transform: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* 그리드 레이아웃 최적화 */
