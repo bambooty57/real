@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
+import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
 
 export const runtime = 'nodejs';
 
@@ -50,13 +51,13 @@ function formatFarmerData(farmers: any[]) {
         (farmer.farmingTypes && typeof farmer.farmingTypes === 'object' 
           ? Object.entries(farmer.farmingTypes)
               .filter(([_, value]) => value)
-              .map(([key]) => key)
+              .map(([key]) => getFarmingTypeDisplay(key))
               .join(', ') 
           : ''),
         (farmer.mainCrop && typeof farmer.mainCrop === 'object'
           ? Object.entries(farmer.mainCrop)
               .filter(([_, value]) => value)
-              .map(([key]) => key)
+              .map(([key]) => getMainCropDisplay(key))
               .join(', ')
           : ''),
         farmer.zipCode || '',
@@ -67,7 +68,9 @@ function formatFarmerData(farmers: any[]) {
         farmer.ageGroup || '',
         farmer.canReceiveMail ? '가능' : '불가능',
         Array.isArray(farmer.equipments) 
-          ? farmer.equipments.map(formatEquipment).filter(Boolean).join('; ')
+          ? farmer.equipments.map(eq => 
+              eq ? `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})` : ''
+            ).filter(Boolean).join('; ')
           : '',
         farmer.createdAt ? new Date(farmer.createdAt).toLocaleString('ko-KR') : '',
         farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString('ko-KR') : ''
