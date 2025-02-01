@@ -18,26 +18,32 @@
     height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: visible !important;
     background: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 
-  /* 모달 외 모든 내용 숨기기 */
-  body > *:not(.print-content) {
+  /* 모달 스타일 */
+  .headlessui-portal {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* 모달 배경 숨김 */
+  .print\\:hidden {
     display: none !important;
   }
 
-  /* 인쇄 컨텐츠 표시 */
-  .print-content {
-    display: block !important;
-    position: relative !important;
+  /* 모달 내용 스타일 */
+  .headlessui-portal > div > div {
+    position: static !important;
+    transform: none !important;
     width: 100% !important;
     height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
     overflow: visible !important;
-    background: white !important;
   }
 
   /* 인쇄 시 배경색과 이미지 표시 */
@@ -56,9 +62,8 @@
   }
 
   /* 페이지 나누기 */
-  .print-page-break {
-    page-break-before: always !important;
-    margin-top: 1cm !important;
+  .print\\:break-before-page {
+    break-before: page !important;
   }
 
   /* 여백 및 간격 최적화 */
@@ -72,22 +77,6 @@
   h2 { font-size: 18pt !important; margin-bottom: 0.5cm !important; }
   h3 { font-size: 14pt !important; margin-bottom: 0.3cm !important; }
   p, dt, dd { font-size: 11pt !important; line-height: 1.4 !important; }
-
-  /* 기타 스타일 */
-  .shadow { box-shadow: none !important; }
-  .rounded-lg { border-radius: 0 !important; }
-  .print\\:hidden { display: none !important; }
-  
-  /* 링크 스타일 */
-  a {
-    text-decoration: none !important;
-    color: black !important;
-  }
-
-  /* 전화번호 링크는 URL 표시하지 않음 */
-  a[href^="tel:"]::after {
-    content: "" !important;
-  }
 
   /* 배경색 강제 적용 */
   .bg-green-100 { background-color: #dcfce7 !important; }
@@ -109,11 +98,6 @@
   .grid { display: grid !important; }
   .print\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
   .print\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
-
-  /* 페이지 나누기 관련 */
-  .print\\:break-before-page { break-before: page !important; }
-  .print\\:break-after-page { break-after: page !important; }
-  .print\\:break-inside-avoid { break-inside: avoid !important; }
 }
 
 @layer base {
