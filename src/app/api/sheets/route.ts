@@ -4,6 +4,57 @@ import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getK
 
 export const runtime = 'nodejs';
 
+// 농기계 타입 정의
+interface Equipment {
+  type: string;
+  manufacturer: string;
+  attachments?: Array<{
+    type: string;
+    manufacturer: string;
+  }>;
+}
+
+// Firebase Timestamp를 Date 객체로 변환
+function convertTimestamp(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  
+  // Firestore Timestamp 객체인 경우
+  if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
+    return new Date(timestamp.seconds * 1000);
+  }
+  
+  // 이미 Date 객체인 경우
+  if (timestamp instanceof Date) {
+    return timestamp;
+  }
+  
+  // 숫자(Unix timestamp)인 경우
+  if (typeof timestamp === 'number') {
+    return new Date(timestamp);
+  }
+  
+  // 문자열인 경우
+  if (typeof timestamp === 'string') {
+    const date = new Date(timestamp);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  
+  return null;
+}
+
+// 날짜 포맷팅 함수
+function formatDate(date: Date | null): string {
+  if (!date) return '';
+  return date.toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+}
+
 // 데이터를 시트에 맞는 형식으로 변환
 function formatFarmerData(farmers: any[]) {
   // 헤더 행
@@ -68,12 +119,12 @@ function formatFarmerData(farmers: any[]) {
         farmer.ageGroup || '',
         farmer.canReceiveMail ? '가능' : '불가능',
         Array.isArray(farmer.equipments) 
-          ? farmer.equipments.map(eq => 
+          ? farmer.equipments.map((eq: Equipment) => 
               eq ? `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})` : ''
             ).filter(Boolean).join('; ')
           : '',
-        farmer.createdAt ? new Date(farmer.createdAt).toLocaleString('ko-KR') : '',
-        farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString('ko-KR') : ''
+        formatDate(convertTimestamp(farmer.createdAt)),
+        formatDate(convertTimestamp(farmer.updatedAt))
       ];
     } catch (error) {
       console.error('농민 데이터 변환 오류:', error);
