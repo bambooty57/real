@@ -297,71 +297,122 @@ export default function Dashboard() {
   }, []);
 
   const handleExcelDownload = () => {
-    const excelData = farmers.map(farmer => ({
-      'ID': farmer.id || '',
-      '이름': farmer.name || '',
-      '전화번호': farmer.phone || '',
-      '상호': farmer.businessName || '',
-      '영농형태': Object.entries(farmer.farmingTypes || {})
-        .filter(([_, value]) => value)
-        .map(([key]) => getFarmingTypeDisplay(key))
-        .join(', ') || '',
-      '주작물': (() => {
-        const mainCrop = farmer.mainCrop || {};
-        return Object.entries(mainCrop)
-          .filter(([key, value]) => value === true && !key.endsWith('Details'))
-          .map(([key]) => getMainCropDisplay(key))
-          .join(', ');
-      })() || '',
-      '세부작물': (() => {
-        const mainCrop = farmer.mainCrop || {};
-        const details = Object.entries(mainCrop)
-          .filter(([key]) => key.endsWith('Details'))
-          .flatMap(([_, values]) => (Array.isArray(values) ? values : []))
-          .map(value => cropDisplayNames[value as keyof typeof cropDisplayNames] || value);
-        return details.join(', ');
-      })() || '',
-      '우편번호': farmer.zipCode || '',
-      '도로명주소': farmer.roadAddress || '',
-      '지번주소': farmer.jibunAddress || '',
-      '상세주소': farmer.addressDetail || '',
-      '메모': farmer.memo || '',
-      '연령대': farmer.ageGroup || '',
-      '우편수취가능여부': farmer.canReceiveMail ? '가능' : '불가능',
-      '보유농기계': (farmer.equipments || [])
-        .map(eq => `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`)
-        .filter(Boolean)
-        .join('; '),
-      '생성일': farmer.createdAt && typeof farmer.createdAt === 'object' && 'seconds' in farmer.createdAt ? new Date(farmer.createdAt.seconds * 1000).toLocaleString('ko-KR') : '',
-      '수정일': farmer.updatedAt && typeof farmer.updatedAt === 'object' && 'seconds' in farmer.updatedAt ? new Date(farmer.updatedAt.seconds * 1000).toLocaleString('ko-KR') : ''
-    }));
+    try {
+      console.log('엑셀 다운로드 시작');
+      const excelData = farmers.map((farmer, index) => {
+        console.log(`농민 데이터 처리 중 ${index + 1}/${farmers.length}:`, farmer.name);
+        
+        // 타임스탬프 처리 함수
+        const formatTimestamp = (timestamp: any) => {
+          if (!timestamp) return '';
+          try {
+            if (typeof timestamp === 'object' && 'seconds' in timestamp) {
+              return new Date(timestamp.seconds * 1000).toLocaleString('ko-KR');
+            }
+            if (timestamp instanceof Date) {
+              return timestamp.toLocaleString('ko-KR');
+            }
+            if (typeof timestamp === 'string') {
+              return new Date(timestamp).toLocaleString('ko-KR');
+            }
+            return '';
+          } catch (error) {
+            console.error('타임스탬프 변환 오류:', error);
+            return '';
+          }
+        };
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "농민목록");
-    
-    // 열 너비 자동 조정
-    const colWidths = [
-      { wch: 20 },  // ID
-      { wch: 15 },  // 이름
-      { wch: 15 },  // 전화번호
-      { wch: 20 },  // 상호
-      { wch: 15 },  // 영농형태
-      { wch: 15 },  // 주작물
-      { wch: 10 },  // 우편번호
-      { wch: 40 },  // 도로명주소
-      { wch: 40 },  // 지번주소
-      { wch: 30 },  // 상세주소
-      { wch: 30 },  // 메모
-      { wch: 10 },  // 연령대
-      { wch: 15 },  // 우편수취가능여부
-      { wch: 30 },  // 보유농기계
-      { wch: 20 },  // 생성일
-      { wch: 20 },  // 수정일
-    ];
-    ws['!cols'] = colWidths;
+        // 안전한 객체 접근
+        const safeGet = (obj: any, path: string, defaultValue: any = '') => {
+          try {
+            return path.split('.').reduce((acc, part) => (acc && acc[part] ? acc[part] : defaultValue), obj);
+          } catch (error) {
+            console.error('데이터 접근 오류:', error);
+            return defaultValue;
+          }
+        };
 
-    XLSX.writeFile(wb, "농민목록.xlsx");
+        try {
+          return {
+            'ID': safeGet(farmer, 'id', ''),
+            '이름': safeGet(farmer, 'name', ''),
+            '전화번호': safeGet(farmer, 'phone', ''),
+            '상호': safeGet(farmer, 'businessName', ''),
+            '영농형태': Object.entries(safeGet(farmer, 'farmingTypes', {})
+              .filter(([_, value]) => value)
+              .map(([key]) => getFarmingTypeDisplay(key))
+              .join(', '),
+            '주작물': (() => {
+              const mainCrop = safeGet(farmer, 'mainCrop', {});
+              return Object.entries(mainCrop)
+                .filter(([key, value]) => value === true && !key.endsWith('Details'))
+                  .map(([key]) => getMainCropDisplay(key))
+                  .join(', ');
+            })(),
+            '세부작물': (() => {
+              const mainCrop = safeGet(farmer, 'mainCrop', {});
+              return Object.entries(mainCrop)
+                .filter(([key]) => key.endsWith('Details'))
+                .flatMap(([_, values]) => Array.isArray(values) ? values : [])
+                .map(value => cropDisplayNames[value as keyof typeof cropDisplayNames] || value)
+                .filter(Boolean)
+                .join(', ');
+            })(),
+            '우편번호': safeGet(farmer, 'zipCode', ''),
+            '도로명주소': safeGet(farmer, 'roadAddress', ''),
+            '지번주소': safeGet(farmer, 'jibunAddress', ''),
+            '상세주소': safeGet(farmer, 'addressDetail', ''),
+            '메모': safeGet(farmer, 'memo', ''),
+            '연령대': safeGet(farmer, 'ageGroup', ''),
+            '우편수취가능여부': safeGet(farmer, 'canReceiveMail', false) ? '가능' : '불가능',
+            '보유농기계': (safeGet(farmer, 'equipments', []) as any[])
+              .map(eq => `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`)
+              .filter(Boolean)
+              .join('; '),
+            '생성일': formatTimestamp(farmer.createdAt),
+            '수정일': formatTimestamp(farmer.updatedAt)
+          };
+        } catch (error) {
+          console.error(`농민 데이터 처리 오류 (${farmer.name}):`, error);
+          return null;
+        }
+      }).filter(Boolean); // null 값 제거
+
+      console.log('엑셀 데이터 생성 완료:', excelData.length);
+
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "농민목록");
+      
+      // 열 너비 자동 조정
+      const colWidths = [
+        { wch: 20 },  // ID
+        { wch: 15 },  // 이름
+        { wch: 15 },  // 전화번호
+        { wch: 20 },  // 상호
+        { wch: 15 },  // 영농형태
+        { wch: 15 },  // 주작물
+        { wch: 30 },  // 세부작물
+        { wch: 10 },  // 우편번호
+        { wch: 40 },  // 도로명주소
+        { wch: 40 },  // 지번주소
+        { wch: 30 },  // 상세주소
+        { wch: 30 },  // 메모
+        { wch: 10 },  // 연령대
+        { wch: 15 },  // 우편수취가능여부
+        { wch: 30 },  // 보유농기계
+        { wch: 20 },  // 생성일
+        { wch: 20 },  // 수정일
+      ];
+      ws['!cols'] = colWidths;
+
+      XLSX.writeFile(wb, "농민목록.xlsx");
+      console.log('엑셀 파일 저장 완료');
+      toast.success('엑셀 다운로드가 완료되었습니다.');
+    } catch (error) {
+      console.error('엑셀 다운로드 오류:', error);
+      toast.error('엑셀 다운로드 중 오류가 발생했습니다.');
+    }
   };
 
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -678,20 +729,66 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
       });
       
       // 데이터 변환
-      const syncData = farmers.map(farmer => ({
-        ...farmer,
-        farmingTypes: Object.entries(farmer.farmingTypes || {})
-          .filter(([_, value]) => value)
-          .map(([key]) => getFarmingTypeDisplay(key))
-          .join(', '),
-        mainCrop: Object.entries(farmer.mainCrop || {})
-          .filter(([_, value]) => value)
-          .map(([key]) => getMainCropDisplay(key))
-          .join(', '),
-        equipments: (farmer.equipments || [])
-          .map(eq => `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`)
-          .join('; ')
-      }));
+      const syncData = farmers.map(farmer => {
+        // 안전한 객체 접근
+        const safeGet = (obj: any, path: string, defaultValue: any = '') => {
+          try {
+            return path.split('.').reduce((acc, part) => (acc && acc[part] ? acc[part] : defaultValue), obj);
+          } catch (error) {
+            console.error('데이터 접근 오류:', error);
+            return defaultValue;
+          }
+        };
+
+        // 타임스탬프 처리
+        const formatTimestamp = (timestamp: any) => {
+          if (!timestamp) return '';
+          try {
+            if (typeof timestamp === 'object' && 'seconds' in timestamp) {
+              return new Date(timestamp.seconds * 1000).toLocaleString('ko-KR');
+            }
+            if (timestamp instanceof Date) {
+              return timestamp.toLocaleString('ko-KR');
+            }
+            if (typeof timestamp === 'string') {
+              return new Date(timestamp).toLocaleString('ko-KR');
+            }
+            return '';
+          } catch (error) {
+            console.error('타임스탬프 변환 오류:', error);
+            return '';
+          }
+        };
+
+        return {
+          id: safeGet(farmer, 'id', ''),
+          name: safeGet(farmer, 'name', ''),
+          phone: safeGet(farmer, 'phone', ''),
+          businessName: safeGet(farmer, 'businessName', ''),
+          zipCode: safeGet(farmer, 'zipCode', ''),
+          roadAddress: safeGet(farmer, 'roadAddress', ''),
+          jibunAddress: safeGet(farmer, 'jibunAddress', ''),
+          addressDetail: safeGet(farmer, 'addressDetail', ''),
+          canReceiveMail: safeGet(farmer, 'canReceiveMail', false) ? '가능' : '불가능',
+          ageGroup: safeGet(farmer, 'ageGroup', ''),
+          memo: safeGet(farmer, 'memo', ''),
+          farmingTypes: Object.entries(safeGet(farmer, 'farmingTypes', {}))
+            .filter(([_, value]) => value)
+            .map(([key]) => getFarmingTypeDisplay(key))
+            .join(', '),
+          mainCrop: Object.entries(safeGet(farmer, 'mainCrop', {}))
+            .filter(([key, value]) => value === true && !key.endsWith('Details'))
+            .map(([key]) => getMainCropDisplay(key))
+            .join(', '),
+          equipments: Array.isArray(farmer.equipments) 
+            ? farmer.equipments.map(eq => 
+                eq ? `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})` : ''
+              ).filter(Boolean).join('; ')
+            : '',
+          createdAt: formatTimestamp(farmer.createdAt),
+          updatedAt: formatTimestamp(farmer.updatedAt)
+        };
+      });
       
       const response = await fetch('/api/sheets', {
         method: 'POST',
@@ -709,19 +806,17 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           status: 'success', 
           message: '구글 시트 동기화가 완료되었습니다.' 
         });
+        toast.success('구글 시트 동기화가 완료되었습니다.');
       } else {
-        setUploadStatus({ 
-          status: 'error', 
-          message: '구글 시트 동기화 중 오류가 발생했습니다.' 
-        });
-        console.error('동기화 오류:', result.error);
+        throw new Error(result.error || '동기화 실패');
       }
     } catch (error) {
+      console.error('구글 시트 동기화 오류:', error);
       setUploadStatus({ 
         status: 'error', 
         message: '구글 시트 동기화 중 오류가 발생했습니다.' 
       });
-      console.error('동기화 오류:', error);
+      toast.error('구글 시트 동기화 중 오류가 발생했습니다.');
     }
 
     // 3초 후 상태 메시지 제거
