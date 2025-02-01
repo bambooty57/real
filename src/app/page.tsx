@@ -304,10 +304,21 @@ export default function Dashboard() {
         .filter(([_, value]) => value)
         .map(([key]) => getFarmingTypeDisplay(key))
         .join(', ') || '',
-      '주작물': Object.entries(farmer.mainCrop || {})
-        .filter(([_, value]) => value)
-        .map(([key]) => getMainCropDisplay(key))
-        .join(', ') || '',
+      '주작물': (() => {
+        const mainCrop = farmer.mainCrop || {};
+        return Object.entries(mainCrop)
+          .filter(([key, value]) => value === true && !key.endsWith('Details'))
+          .map(([key]) => getMainCropDisplay(key))
+          .join(', ');
+      })() || '',
+      '세부작물': (() => {
+        const mainCrop = farmer.mainCrop || {};
+        const details = Object.entries(mainCrop)
+          .filter(([key]) => key.endsWith('Details'))
+          .flatMap(([_, values]) => values || [])
+          .map(value => cropDisplayNames[value] || value);
+        return details.join(', ');
+      })() || '',
       '우편번호': farmer.zipCode || '',
       '도로명주소': farmer.roadAddress || '',
       '지번주소': farmer.jibunAddress || '',
