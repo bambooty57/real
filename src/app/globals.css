@@ -9,7 +9,7 @@
   /* 기본 설정 */
   @page {
     size: A4;
-    margin: 2cm;
+    margin: 1.5cm;
   }
 
   /* 전체 페이지 설정 */
@@ -26,54 +26,66 @@
   }
 
   /* 모달 내용 스타일링 */
-  .bg-white {
+  .print-content {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
     background: white !important;
-    box-shadow: none !important;
   }
 
   /* 그리드 레이아웃 최적화 */
   .grid {
     display: grid !important;
+  }
+
+  /* 1페이지 레이아웃 */
+  .print\\:grid-cols-2 {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1rem !important;
   }
 
-  /* 이미지 갤러리 최적화 */
-  .farmer-image-gallery {
+  /* 2페이지 이미지 갤러리 */
+  .print\\:grid-cols-3 {
     grid-template-columns: repeat(3, 1fr) !important;
-    page-break-inside: avoid;
   }
 
-  /* 텍스트 스타일 최적화 */
-  h1 { font-size: 24pt !important; }
-  h2 { font-size: 18pt !important; }
-  h3 { font-size: 14pt !important; }
-  p, dt, dd { font-size: 11pt !important; }
+  /* 페이지 나누기 */
+  .print\\:page-break-after-always {
+    page-break-after: always !important;
+  }
 
-  /* 여백 및 간격 조정 */
-  .p-6 { padding: 1rem !important; }
-  .gap-4 { gap: 1rem !important; }
-  .mb-4 { margin-bottom: 1rem !important; }
-  .mb-6 { margin-bottom: 1.5rem !important; }
+  .print\\:break-before-page {
+    break-before: page !important;
+  }
 
-  /* 배경색 및 그림자 제거 */
+  /* 여백 및 간격 최적화 */
+  .print\\:p-2 { padding: 0.5rem !important; }
+  .print\\:gap-2 { gap: 0.5rem !important; }
+  .print\\:mb-2 { margin-bottom: 0.5rem !important; }
+  .print\\:mt-2 { margin-top: 0.5rem !important; }
+
+  /* 텍스트 크기 최적화 */
+  h1 { font-size: 20pt !important; }
+  h2 { font-size: 16pt !important; }
+  h3 { font-size: 12pt !important; }
+  p, dt, dd { font-size: 10pt !important; }
+
+  /* 이미지 크기 최적화 */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* 기타 스타일 */
   .shadow { box-shadow: none !important; }
   .rounded-lg { border-radius: 0 !important; }
-
-  /* 인쇄 시 숨길 요소 */
-  .print\\:hidden {
-    display: none !important;
-  }
-
+  .print\\:hidden { display: none !important; }
+  
   /* 링크 스타일 */
   a {
     text-decoration: none !important;
     color: black !important;
-  }
-
-  /* 페이지 나누기 방지 */
-  .page-break-inside-avoid {
-    page-break-inside: avoid !important;
   }
 }
 
