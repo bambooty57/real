@@ -9,7 +9,7 @@
   /* 기본 설정 */
   @page {
     size: A4;
-    margin: 2cm;
+    margin: 1.5cm;
   }
 
   /* 전체 페이지 설정 */
@@ -23,33 +23,36 @@
 
   /* 섹션 간격 조정 */
   .space-y-6 > * + * {
-    margin-top: 1.5cm !important;
+    margin-top: 1rem !important;
   }
 
   /* 제목 스타일 개선 */
   h1 { 
-    font-size: 28pt !important; 
-    margin-bottom: 1.5cm !important;
-    border-bottom: 2px solid #000 !important;
-    padding-bottom: 0.5cm !important;
+    font-size: 24pt !important;
+    margin-bottom: 1cm !important;
   }
   
   h2 { 
-    font-size: 20pt !important; 
-    margin-bottom: 0.8cm !important;
+    font-size: 18pt !important;
+    margin-bottom: 0.5cm !important;
     border-bottom: 1px solid #666 !important;
     padding-bottom: 0.3cm !important;
   }
 
+  h3 { 
+    font-size: 14pt !important;
+    margin-bottom: 0.3cm !important;
+  }
+
   /* 내용 영역 여백 조정 */
   .print\\:p-2 { 
-    padding: 1rem !important; 
+    padding: 0.5rem !important; 
     margin-bottom: 1cm !important;
   }
 
   /* 그리드 레이아웃 간격 조정 */
   .print\\:gap-2 { 
-    gap: 1rem !important; 
+    gap: 0.5rem !important; 
   }
 
   /* 장비 섹션 구분선 */
@@ -61,14 +64,15 @@
 
   /* 텍스트 크기 최적화 */
   p, dt, dd { 
-    font-size: 12pt !important; 
-    line-height: 1.6 !important; 
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
   }
 
   /* 이미지 갤러리 최적화 */
   .farmer-image {
     break-inside: avoid !important;
-    margin-bottom: 1cm !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 0.5rem !important;
   }
 
   /* 모달 스타일 */
@@ -140,7 +144,7 @@
   /* 그리드 레이아웃 최적화 */
   .grid { display: grid !important; }
   .print\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
-  .print\\:grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; gap: 1cm !important; }
+  .print\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
 
   /* 중복 출력 방지 */
   .headlessui-portal {
@@ -165,22 +169,19 @@
     page-break-inside: avoid !important;
   }
 
-  /* 이미지 출력 최적화 */
-  img {
-    display: block !important;
-    max-width: 100% !important;
-    height: auto !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  /* 장비 정보 카드 최적화 */
+  .border {
+    border: 1px solid #e5e7eb !important;
   }
 
-  /* Next.js Image 컴포넌트 최적화 */
-  span[style*="box-sizing: border-box"] {
-    display: block !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+  .rounded-lg {
+    border-radius: 0.5rem !important;
+  }
+
+  /* 링크 스타일 최적화 */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
   }
 
   /* 이미지 갤러리 그리드 최적화 */

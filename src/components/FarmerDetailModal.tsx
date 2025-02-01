@@ -16,9 +16,15 @@ interface FarmerDetailModalProps {
   onClose: () => void;
 }
 
-// 별점 표시 함수
+// 별점 표시 함수 개선
 const getRatingStars = (rating: number) => {
-  return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  return (
+    <span className="text-yellow-400 text-xl print:text-base">
+      {stars}
+      <span className="text-gray-600 text-sm ml-2">({rating}/5)</span>
+    </span>
+  );
 };
 
 export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDetailModalProps) {
@@ -39,8 +45,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30 print:hidden" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl">
-          {/* 모달 내용 */}
+        <Dialog.Panel className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl print:max-h-none print:overflow-visible">
           <div className="p-6">
             {/* 화면용 헤더 - 인쇄 시 숨김 */}
             <div className="flex justify-between items-center mb-6 print:hidden">
@@ -75,7 +80,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
             </div>
 
             {/* 내용 */}
-            <div className="space-y-6">
+            <div className="space-y-6 print:space-y-4">
               {/* 기본 정보 */}
               <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
                 <h2 className="text-xl font-semibold mb-4 print:mb-2">기본 정보</h2>
@@ -89,8 +94,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                     <dt className="text-gray-600">농민 평가</dt>
                     <dd className="font-medium">
                       <div className="flex items-center gap-2">
-                        <span className="text-yellow-400 text-xl">{getRatingStars(farmer.rating || 0)}</span>
-                        <span className="text-gray-600">({farmer.rating || 0}/5)</span>
+                        {getRatingStars(farmer.rating || 0)}
                       </div>
                     </dd>
                   </div>
@@ -105,14 +109,14 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                     <dd className="font-medium">
                       <a 
                         href={`tel:${farmer.phone}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                        className="text-blue-600 hover:text-blue-800 hover:underline print:text-black print:no-underline"
                       >
                         {formatPhoneNumber(farmer.phone)}
                       </a>
                     </dd>
                   </div>
                   {farmer.roadAddress && (
-                    <div>
+                    <div className="col-span-2">
                       <dt className="text-gray-600">주소</dt>
                       <dd className="font-medium">
                         {farmer.zipCode && <div>({farmer.zipCode})</div>}
@@ -121,10 +125,10 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                             href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.roadAddress)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                            className="text-blue-600 hover:text-blue-800 hover:underline print:text-black print:no-underline flex items-center gap-1"
                           >
                             {farmer.roadAddress}
-                            <span role="img" aria-label="지도">🗺️</span>
+                            <span role="img" aria-label="지도" className="print:hidden">🗺️</span>
                           </a>
                         </div>
                         {farmer.jibunAddress && (
@@ -133,10 +137,10 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                               href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.jibunAddress)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                              className="text-blue-600 hover:text-blue-800 hover:underline print:text-black print:no-underline flex items-center gap-1"
                             >
                               [지번] {farmer.jibunAddress}
-                              <span role="img" aria-label="지도">🗺️</span>
+                              <span role="img" aria-label="지도" className="print:hidden">🗺️</span>
                             </a>
                           </div>
                         )}
@@ -162,12 +166,12 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               </div>
 
               {/* 영농 정보 */}
-              <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none print:mt-2">
+              <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
                 <h2 className="text-xl font-semibold mb-4 print:mb-2">영농 정보</h2>
-                <dl className="grid grid-cols-1 gap-4 print:gap-2">
+                <dl className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4 print:gap-2">
                   {/* 영농형태 */}
                   {farmer.farmingTypes && Object.entries(farmer.farmingTypes).some(([_, value]) => value) && (
-                    <div>
+                    <div className="col-span-2">
                       <dt className="text-gray-600 mb-2">영농형태</dt>
                       <dd className="flex flex-wrap gap-2">
                         {Object.entries(farmer.farmingTypes)
@@ -183,7 +187,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
 
                   {/* 주작물 */}
                   {farmer.mainCrop && (
-                    <div>
+                    <div className="col-span-2">
                       <dt className="text-gray-600 mb-2">주작물</dt>
                       <dd className="flex flex-wrap gap-2">
                         {Object.entries(farmer.mainCrop)
@@ -213,7 +217,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
 
                   {/* 메모 */}
                   {farmer.memo && (
-                    <div>
+                    <div className="col-span-2">
                       <dt className="text-gray-600 mb-2">메모</dt>
                       <dd className="whitespace-pre-wrap bg-gray-50 p-3 rounded-lg text-gray-700">
                         {farmer.memo}
@@ -224,30 +228,20 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               </div>
 
               {/* 보유 장비 */}
-              <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none print:mt-2">
+              <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
                 <h2 className="text-xl font-semibold mb-4 print:mb-2">보유 장비</h2>
-                <div className="space-y-4 print:space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 print:gap-4">
                   {farmer.equipments.map((equipment, index) => (
-                    <div key={equipment.id} className="border-t pt-4 first:border-t-0 first:pt-0">
+                    <div key={equipment.id} className="border rounded-lg p-4 print:break-inside-avoid">
                       <h3 className="font-semibold mb-2">
                         {getKoreanEquipmentType(equipment.type)} #{index + 1}
                       </h3>
-                      {/* 장비 평가 추가 */}
-                      <div className="mb-4">
-                        <dt className="text-gray-600 mb-1">장비 상태</dt>
-                        <dd className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <span className="text-yellow-400 text-xl">
-                              {getRatingStars(equipment.condition || 0)}
-                            </span>
-                            <span className="text-gray-600">({equipment.condition || 0}/5)</span>
-                          </div>
-                        </dd>
-                      </div>
-                      <dl className="grid grid-cols-1 gap-4">
+                      <dl className="space-y-2">
                         <div>
-                          <dt className="text-gray-600">기종</dt>
-                          <dd className="font-medium">{getKoreanEquipmentType(equipment.type)}</dd>
+                          <dt className="text-gray-600">장비 상태</dt>
+                          <dd className="font-medium">
+                            {getRatingStars(equipment.condition || 0)}
+                          </dd>
                         </div>
                         <div>
                           <dt className="text-gray-600">제조사</dt>
@@ -299,10 +293,10 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                         {/* 부착작업기 정보 */}
                         {equipment.attachments && equipment.attachments.length > 0 && (
                           <div>
-                            <dt className="text-gray-600 mb-2">부착작업기</dt>
-                            <dd className="grid grid-cols-1 gap-4">
+                            <dt className="text-gray-600 mt-4 mb-2">부착작업기</dt>
+                            <dd className="space-y-3">
                               {equipment.attachments.map((attachment, attIndex) => (
-                                <div key={attIndex} className="bg-gray-50 p-4 rounded-lg">
+                                <div key={attIndex} className="bg-gray-50 p-3 rounded-lg">
                                   <h4 className="font-medium mb-2">
                                     {attachment.type === 'loader' ? '로더' :
                                      attachment.type === 'rotary' ? '로터리' :
@@ -310,7 +304,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                      attachment.type === 'rearWheel' ? '후륜' :
                                      attachment.type}
                                   </h4>
-                                  <div className="space-y-2 text-sm">
+                                  <div className="space-y-1 text-sm">
                                     <div>
                                       <span className="text-gray-600">제조사:</span>{' '}
                                       {attachment.manufacturer}
@@ -345,7 +339,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               <div className="print:break-before-page">
                 <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
                   <h2 className="text-xl font-semibold mb-4 print:mb-2">이미지 갤러리</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 print:grid-cols-3 gap-4 print:gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-4 gap-4 print:gap-2">
                     {/* 농민 이미지 */}
                     {farmer.farmerImages?.map((image, index) => (
                       <div key={`farmer-${index}`} className="farmer-image aspect-[4/3]">
@@ -355,6 +349,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           width={400}
                           height={300}
                           className="rounded-lg object-cover w-full h-full"
+                          unoptimized={true}
+                          priority={true}
+                          loading="eager"
                         />
                         <p className="text-sm text-gray-600 mt-1">농민 이미지 {index + 1}</p>
                       </div>
@@ -371,6 +368,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                               width={400}
                               height={300}
                               className="rounded-lg object-cover w-full h-full"
+                              unoptimized={true}
+                              priority={true}
+                              loading="eager"
                             />
                             <p className="text-sm text-gray-600 mt-1">
                               {equipment.manufacturer} {equipment.model} {getKoreanEquipmentType(equipment.type)}
@@ -388,6 +388,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                 width={400}
                                 height={300}
                                 className="rounded-lg object-cover w-full h-full"
+                                unoptimized={true}
+                                priority={true}
+                                loading="eager"
                               />
                               <p className="text-sm text-gray-600 mt-1">
                                 {getKoreanEquipmentType(equipment.type)}의 
