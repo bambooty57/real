@@ -530,8 +530,12 @@ export default function Dashboard() {
               // 기존 데이터 업데이트
               const farmerRef = doc(db, 'farmers', existingFarmer.id);
               const updateData = {
+                ...existingFarmer,
                 ...farmerData,
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
+                mainCrop: existingFarmer.mainCrop || {},
+                farmingTypes: existingFarmer.farmingTypes || {},
+                equipments: existingFarmer.equipments || []
               };
               batch.update(farmerRef, updateData);
               updateCount++;
@@ -550,7 +554,8 @@ export default function Dashboard() {
                 createdAt: new Date().toISOString(),
                 memo: '',
                 canReceiveMail: false,
-                farmingTypes: [],
+                farmingTypes: {},
+                mainCrop: {},
                 equipments: []
               };
               batch.set(newFarmerRef, newData);
