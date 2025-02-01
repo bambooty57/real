@@ -362,7 +362,7 @@ export default function FarmersPage() {
           .map(([key]) => key)
           .join(', '),
         mainCrop: Object.entries(farmer.mainCrop || {})
-          .filter(([_, value]) => value)
+          .filter(([key, value]) => value && !key.endsWith('Details'))
           .map(([key]) => key)
           .join(', '),
         zipCode: farmer.zipCode || '',
@@ -376,8 +376,20 @@ export default function FarmersPage() {
           .map(eq => `${eq.type || ''}(${eq.manufacturer || ''})`)
           .filter(Boolean)
           .join('; '),
-        createdAt: farmer.createdAt ? new Date(farmer.createdAt).toLocaleString('ko-KR') : '',
-        updatedAt: farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString('ko-KR') : ''
+        createdAt: farmer.createdAt 
+          ? typeof farmer.createdAt === 'number' 
+            ? new Date(farmer.createdAt).toLocaleString('ko-KR')
+            : 'seconds' in farmer.createdAt 
+              ? new Date(farmer.createdAt.seconds * 1000).toLocaleString('ko-KR')
+              : ''
+          : '',
+        updatedAt: farmer.updatedAt
+          ? typeof farmer.updatedAt === 'number'
+            ? new Date(farmer.updatedAt).toLocaleString('ko-KR')
+            : 'seconds' in farmer.updatedAt
+              ? new Date(farmer.updatedAt.seconds * 1000).toLocaleString('ko-KR')
+              : ''
+          : ''
       });
     });
 

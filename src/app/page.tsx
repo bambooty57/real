@@ -313,8 +313,8 @@ export default function Dashboard() {
         .map(eq => `${eq.type || ''}(${eq.manufacturer || ''})`)
         .filter(Boolean)
         .join('; '),
-      '생성일': farmer.createdAt ? new Date(farmer.createdAt).toLocaleString('ko-KR') : '',
-      '수정일': farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString('ko-KR') : ''
+      '생성일': farmer.createdAt && typeof farmer.createdAt === 'object' && 'seconds' in farmer.createdAt ? new Date(farmer.createdAt.seconds * 1000).toLocaleString('ko-KR') : '',
+      '수정일': farmer.updatedAt && typeof farmer.updatedAt === 'object' && 'seconds' in farmer.updatedAt ? new Date(farmer.updatedAt.seconds * 1000).toLocaleString('ko-KR') : ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(excelData);

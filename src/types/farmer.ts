@@ -1,3 +1,5 @@
+import { FieldValue } from 'firebase/firestore';
+
 export interface Equipment {
   id: string;
   type: string;
@@ -97,6 +99,8 @@ export interface Farmer {
   farmingTypes: FarmingTypes;
   equipments: Equipment[];
   rating?: number;
+  createdAt?: number | { seconds: number; nanoseconds: number } | FieldValue;  // Firebase Timestamp or FieldValue
+  updatedAt?: number | { seconds: number; nanoseconds: number } | FieldValue;  // Firebase Timestamp or FieldValue
 }
 
 export interface Attachment {
