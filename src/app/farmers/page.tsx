@@ -16,6 +16,7 @@ import { useSearchFilter } from '@/contexts/SearchFilterContext';
 import FarmerList from './components/FarmerList';
 import FarmerFilter from './components/FarmerFilter';
 import Pagination from './components/Pagination';
+import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer, cropDisplayNames } from '@/utils/displayNames';
 
 export default function FarmersPage() {
   const { filterState, setFilterState } = useSearchFilter();
@@ -68,6 +69,9 @@ export default function FarmersPage() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+    let unsubscribe: (() => void) | undefined;
+
     const fetchFarmers = async () => {
       try {
         const q = query(collection(db, 'farmers'), orderBy('createdAt', 'desc'));
@@ -76,62 +80,76 @@ export default function FarmersPage() {
           id: doc.id,
           ...doc.data()
         })) as Farmer[];
-        setFarmers(farmersData);
         
-        // 주소 데이터 추출 - 시/군별 읍면동 매핑
-        const cities = new Set<string>();
-        const districtsByCity = new Map<string, Set<string>>();
-        const villagesByDistrict = new Map<string, Set<string>>();
+        if (isMounted) {
+          setFarmers(farmersData);
+          
+          // 주소 데이터 추출 - 시/군별 읍면동 매핑
+          const cities = new Set<string>();
+          const districtsByCity = new Map<string, Set<string>>();
+          const villagesByDistrict = new Map<string, Set<string>>();
 
-        // 전라남도 시/군 추가
-        [
-          '목포시', '여수시', '순천시', '나주시', '광양시', 
-          '담양군', '곡성군', '구례군', '고흥군', '보성군',
-          '화순군', '장흥군', '강진군', '해남군', '영암군',
-          '무안군', '함평군', '영광군', '장성군', '완도군',
-          '진도군', '신안군'
-        ].forEach(city => {
-          cities.add(city);
-          districtsByCity.set(city, new Set<string>());
-        });
+          // 전라남도 시/군 추가
+          [
+            '목포시', '여수시', '순천시', '나주시', '광양시', 
+            '담양군', '곡성군', '구례군', '고흥군', '보성군',
+            '화순군', '장흥군', '강진군', '해남군', '영암군',
+            '무안군', '함평군', '영광군', '장성군', '완도군',
+            '진도군', '신안군'
+          ].forEach(city => {
+            cities.add(city);
+            districtsByCity.set(city, new Set<string>());
+          });
 
-        // 주소에서 읍면동, 리 추출
-        farmersData.forEach(farmer => {
-          const address = farmer.jibunAddress || farmer.roadAddress;
-          if (!address?.startsWith('전라남도')) return;
+          // 주소에서 읍면동, 리 추출
+          farmersData.forEach(farmer => {
+            const address = farmer.jibunAddress || farmer.roadAddress;
+            if (!address?.startsWith('전라남도')) return;
 
-          const parts = address.split(' ');
-          if (parts.length < 3) return;
+            const parts = address.split(' ');
+            if (parts.length < 3) return;
 
-          const city = parts[1];
-          const district = parts[2];
-          const village = parts[3];
+            const city = parts[1];
+            const district = parts[2];
+            const village = parts[3];
 
-          if (city && district) {
-            const cityDistricts = districtsByCity.get(city) || new Set<string>();
-            cityDistricts.add(district);
-            districtsByCity.set(city, cityDistricts);
+            if (city && district) {
+              const cityDistricts = districtsByCity.get(city) || new Set<string>();
+              cityDistricts.add(district);
+              districtsByCity.set(city, cityDistricts);
 
-            if (district && village) {
-              const districtVillages = villagesByDistrict.get(district) || new Set<string>();
-              districtVillages.add(village);
-              villagesByDistrict.set(district, districtVillages);
+              if (district && village) {
+                const districtVillages = villagesByDistrict.get(district) || new Set<string>();
+                districtVillages.add(village);
+                villagesByDistrict.set(district, districtVillages);
+              }
             }
-          }
-        });
+          });
 
-        setAvailableCities(cities);
-        setDistrictsByCity(districtsByCity);
-        setVillagesByDistrict(villagesByDistrict);
+          setAvailableCities(cities);
+          setDistrictsByCity(districtsByCity);
+          setVillagesByDistrict(villagesByDistrict);
+        }
       } catch (error) {
         console.error('Error fetching farmers:', error);
-        toast.error('데이터 로딩 중 오류가 발생했습니다.');
+        if (isMounted) {
+          toast.error('데이터 로딩 중 오류가 발생했습니다.');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchFarmers();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   // 필터링 로직
@@ -392,18 +410,18 @@ export default function FarmersPage() {
             businessName: safeGet(farmer, 'businessName', ''),
             farmingTypes: Object.entries(safeGet(farmer, 'farmingTypes', {}))
               .filter(([_, value]) => value)
-              .map(([key]) => key)
+              .map(([key]) => getFarmingTypeDisplay(key))
               .join(', '),
             mainCrop: Object.entries(safeGet(farmer, 'mainCrop', {}))
               .filter(([key, value]) => value === true && !key.endsWith('Details'))
-              .map(([key]) => key)
+              .map(([key]) => getMainCropDisplay(key))
               .join(', '),
             detailCrops: (() => {
               const mainCrop = safeGet(farmer, 'mainCrop', {});
               return Object.entries(mainCrop)
                 .filter(([key]) => key.endsWith('Details'))
                 .flatMap(([_, values]) => Array.isArray(values) ? values : [])
-                .map(value => value as string)
+                .map(value => cropDisplayNames[value as keyof typeof cropDisplayNames] || value)
                 .filter(Boolean)
                 .join(', ');
             })(),
@@ -415,7 +433,7 @@ export default function FarmersPage() {
             ageGroup: safeGet(farmer, 'ageGroup', ''),
             canReceiveMail: safeGet(farmer, 'canReceiveMail', false) ? '가능' : '불가능',
             equipments: (safeGet(farmer, 'equipments', []) as any[])
-              .map(eq => eq ? `${eq.type || ''}(${eq.manufacturer || ''})` : '')
+              .map(eq => eq ? `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})` : '')
               .filter(Boolean)
               .join('; '),
             createdAt: formatTimestamp(farmer.createdAt),

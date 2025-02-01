@@ -54,6 +54,7 @@ export const MANUFACTURERS = {
     { value: 'heemang', label: '희망' },
     { value: 'jangsu', label: '장수' },
     { value: 'bonsa', label: '본사' },
+    { value: 'heungsung', label: '흥성' },
     { value: 'other', label: '기타' }
   ],
   ROTARY: [
@@ -66,6 +67,8 @@ export const MANUFACTURERS = {
     { value: 'jungang', label: '중앙' },
     { value: 'folder', label: '폴더' },
     { value: 'sungwoo', label: '성우' },
+    { value: 'sewoong', label: '세웅' },
+    { value: 'bonsa', label: '본사' },
     { value: 'other', label: '기타' }
   ],
   WHEEL: [

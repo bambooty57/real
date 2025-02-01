@@ -15,47 +15,68 @@ function formatFarmerData(farmers: any[]) {
 
   // 농기계 정보 포맷팅
   function formatEquipment(equipment: any) {
-    if (!equipment) return '';
-    const mainInfo = `${equipment.type || ''}(${equipment.manufacturer || ''})`;
-    if (!equipment.attachments?.length) return mainInfo;
-    
-    const attachments = equipment.attachments
-      .map((att: any) => `${att.type || ''}(${att.manufacturer || ''})`)
-      .filter(Boolean)
-      .join(', ');
-    
-    return attachments ? `${mainInfo} - ${attachments}` : mainInfo;
+    try {
+      if (!equipment || typeof equipment !== 'object') return '';
+      const type = equipment.type || '';
+      const manufacturer = equipment.manufacturer || '';
+      if (!type || !manufacturer) return '';
+      
+      const mainInfo = `${type}(${manufacturer})`;
+      if (!Array.isArray(equipment.attachments)) return mainInfo;
+      
+      const attachments = equipment.attachments
+        .map((att: any) => {
+          if (!att || typeof att !== 'object') return '';
+          return `${att.type || ''}(${att.manufacturer || ''})`;
+        })
+        .filter(Boolean)
+        .join(', ');
+      
+      return attachments ? `${mainInfo} - ${attachments}` : mainInfo;
+    } catch (error) {
+      console.error('농기계 정보 포맷팅 오류:', error);
+      return '';
+    }
   }
 
   // 데이터 행 변환
-  const rows = farmers.map(farmer => [
-    farmer.id || '',
-    farmer.name || '',
-    farmer.phone || '',
-    farmer.businessName || '',
-    (farmer.farmingTypes && typeof farmer.farmingTypes === 'object' 
-      ? Object.entries(farmer.farmingTypes)
-          .filter(([_, value]) => value)
-          .map(([key]) => key)
-          .join(', ') 
-      : ''),
-    (farmer.mainCrop && typeof farmer.mainCrop === 'object'
-      ? Object.entries(farmer.mainCrop)
-          .filter(([_, value]) => value)
-          .map(([key]) => key)
-          .join(', ')
-      : ''),
-    farmer.zipCode || '',
-    farmer.roadAddress || '',
-    farmer.jibunAddress || '',
-    farmer.addressDetail || '',
-    farmer.memo || '',
-    farmer.ageGroup || '',
-    farmer.canReceiveMail ? '가능' : '불가능',
-    (farmer.equipments || []).map(formatEquipment).filter(Boolean).join('; '),
-    farmer.createdAt ? new Date(farmer.createdAt).toLocaleString('ko-KR') : '',
-    farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString('ko-KR') : ''
-  ]);
+  const rows = farmers.map(farmer => {
+    try {
+      return [
+        farmer.id || '',
+        farmer.name || '',
+        farmer.phone || '',
+        farmer.businessName || '',
+        (farmer.farmingTypes && typeof farmer.farmingTypes === 'object' 
+          ? Object.entries(farmer.farmingTypes)
+              .filter(([_, value]) => value)
+              .map(([key]) => key)
+              .join(', ') 
+          : ''),
+        (farmer.mainCrop && typeof farmer.mainCrop === 'object'
+          ? Object.entries(farmer.mainCrop)
+              .filter(([_, value]) => value)
+              .map(([key]) => key)
+              .join(', ')
+          : ''),
+        farmer.zipCode || '',
+        farmer.roadAddress || '',
+        farmer.jibunAddress || '',
+        farmer.addressDetail || '',
+        farmer.memo || '',
+        farmer.ageGroup || '',
+        farmer.canReceiveMail ? '가능' : '불가능',
+        Array.isArray(farmer.equipments) 
+          ? farmer.equipments.map(formatEquipment).filter(Boolean).join('; ')
+          : '',
+        farmer.createdAt ? new Date(farmer.createdAt).toLocaleString('ko-KR') : '',
+        farmer.updatedAt ? new Date(farmer.updatedAt).toLocaleString('ko-KR') : ''
+      ];
+    } catch (error) {
+      console.error('농민 데이터 변환 오류:', error);
+      return Array(16).fill(''); // 빈 데이터로 채움
+    }
+  });
 
   return [headers, ...rows];
 }
