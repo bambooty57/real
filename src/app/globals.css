@@ -6,39 +6,6 @@
 
 /* 인쇄 스타일 */
 @media print {
-  /* 인쇄 시 배경색과 이미지 표시 */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* 인쇄 시 페이지 여백 설정 */
-  @page {
-    margin: 2cm;
-  }
-
-  /* 인쇄 시 불필요한 요소 숨김 */
-  .print-hide {
-    display: none !important;
-  }
-
-  /* 인쇄 시 페이지 나누기 */
-  .print-page-break {
-    page-break-before: always;
-  }
-
-  /* 인쇄 시 링크 URL 표시 */
-  a[href]::after {
-    content: " (" attr(href) ")";
-    font-size: 0.8em;
-    font-weight: normal;
-  }
-
-  /* 전화번호 링크는 URL 표시하지 않음 */
-  a[href^="tel:"]::after {
-    content: "";
-  }
-
   /* 기본 설정 */
   @page {
     size: A4;
@@ -47,10 +14,15 @@
 
   /* 전체 페이지 설정 */
   html, body {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    background: white;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   /* 모달 외 모든 내용 숨기기 */
@@ -58,37 +30,35 @@
     display: none !important;
   }
 
-  /* 모달 내용 스타일링 */
+  /* 인쇄 컨텐츠 표시 */
   .print-content {
-    position: static !important;
-    transform: none !important;
+    display: block !important;
+    position: relative !important;
     width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
   }
 
-  /* 그리드 레이아웃 최적화 */
-  .grid {
-    display: grid !important;
+  /* 인쇄 시 배경색과 이미지 표시 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
-  /* 1페이지 레이아웃 */
-  .print\\:grid-cols-2 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  /* 2페이지 이미지 갤러리 */
-  .print\\:grid-cols-3 {
-    grid-template-columns: repeat(3, 1fr) !important;
+  /* 이미지 최적화 */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid !important;
+    display: block !important;
   }
 
   /* 페이지 나누기 */
-  .print\\:page-break-after-always {
-    page-break-after: always !important;
-  }
-
-  .print\\:break-before-page {
-    break-before: page !important;
+  .print-page-break {
+    page-break-before: always !important;
+    margin-top: 1cm !important;
   }
 
   /* 여백 및 간격 최적화 */
@@ -98,17 +68,10 @@
   .print\\:mt-2 { margin-top: 0.5rem !important; }
 
   /* 텍스트 크기 최적화 */
-  h1 { font-size: 20pt !important; }
-  h2 { font-size: 16pt !important; }
-  h3 { font-size: 12pt !important; }
-  p, dt, dd { font-size: 10pt !important; }
-
-  /* 이미지 크기 최적화 */
-  img {
-    max-width: 100% !important;
-    height: auto !important;
-    page-break-inside: avoid !important;
-  }
+  h1 { font-size: 24pt !important; margin-bottom: 1cm !important; }
+  h2 { font-size: 18pt !important; margin-bottom: 0.5cm !important; }
+  h3 { font-size: 14pt !important; margin-bottom: 0.3cm !important; }
+  p, dt, dd { font-size: 11pt !important; line-height: 1.4 !important; }
 
   /* 기타 스타일 */
   .shadow { box-shadow: none !important; }
@@ -120,6 +83,37 @@
     text-decoration: none !important;
     color: black !important;
   }
+
+  /* 전화번호 링크는 URL 표시하지 않음 */
+  a[href^="tel:"]::after {
+    content: "" !important;
+  }
+
+  /* 배경색 강제 적용 */
+  .bg-green-100 { background-color: #dcfce7 !important; }
+  .bg-yellow-100 { background-color: #fef9c3 !important; }
+  .bg-blue-100 { background-color: #dbeafe !important; }
+  .bg-red-100 { background-color: #fee2e2 !important; }
+  .bg-gray-100 { background-color: #f3f4f6 !important; }
+  .bg-gray-50 { background-color: #f9fafb !important; }
+
+  /* 텍스트 색상 강제 적용 */
+  .text-green-800 { color: #166534 !important; }
+  .text-yellow-800 { color: #854d0e !important; }
+  .text-blue-800 { color: #1e40af !important; }
+  .text-red-800 { color: #991b1b !important; }
+  .text-gray-800 { color: #1f2937 !important; }
+  .text-gray-600 { color: #4b5563 !important; }
+
+  /* 그리드 레이아웃 최적화 */
+  .grid { display: grid !important; }
+  .print\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  .print\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* 페이지 나누기 관련 */
+  .print\\:break-before-page { break-before: page !important; }
+  .print\\:break-after-page { break-after: page !important; }
+  .print\\:break-inside-avoid { break-inside: avoid !important; }
 }
 
 @layer base {
