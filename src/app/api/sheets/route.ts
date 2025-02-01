@@ -92,15 +92,17 @@ function formatFarmerData(farmers: any[]) {
       // 농기계 정보 변환
       const equipments = Array.isArray(farmer.equipments)
         ? farmer.equipments
-            .map(eq => {
+            .map((eq: Equipment) => {
               if (!eq?.type || !eq?.manufacturer) return '';
               const mainEquipment = `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`;
               
               // 작업기 정보 추가
               const attachments = eq.attachments
                 ? eq.attachments
-                    .filter(att => att?.type && att?.manufacturer)
-                    .map(att => `${getKoreanEquipmentType(att.type)}(${getKoreanManufacturer(att.manufacturer)})`)
+                    .filter((att: { type: string; manufacturer: string }) => att?.type && att?.manufacturer)
+                    .map((att: { type: string; manufacturer: string }) => 
+                      `${getKoreanEquipmentType(att.type)}(${getKoreanManufacturer(att.manufacturer)})`
+                    )
                     .join(', ')
                 : '';
               
