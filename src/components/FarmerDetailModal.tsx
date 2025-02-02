@@ -80,9 +80,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
             </div>
 
             {/* 내용 */}
-            <div className="space-y-6 print:space-y-4">
+            <div className="print:only-child">
               {/* 첫 페이지: 기본 정보, 영농 정보, 보유 장비 */}
-              <div className="print:first-page">
+              <div className="print:first-page space-y-6">
                 {/* 기본 정보 */}
                 <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none print:break-inside-avoid mb-6">
                   <h2 className="text-lg font-semibold mb-4">기본 정보</h2>
@@ -339,7 +339,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               </div>
 
               {/* 마지막 페이지: 이미지 갤러리 */}
-              <div className="print:last-page">
+              <div className="print:last-page mt-6">
                 <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
                   <h2 className="text-lg font-semibold mb-4">이미지 갤러리</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:grid-cols-4">
