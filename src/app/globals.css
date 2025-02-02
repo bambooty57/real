@@ -97,9 +97,8 @@
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     overflow: visible !important;
-    background: white !important;
   }
 
   /* 모달 배경 숨김 */
