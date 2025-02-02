@@ -99,6 +99,31 @@
     width: 100% !important;
     height: 100% !important;
     overflow: visible !important;
+    background: white !important;
+  }
+
+  /* 모달 배경 숨김 */
+  .headlessui-portal > div:first-child {
+    display: none !important;
+  }
+
+  /* 모달 내용 스타일 */
+  .headlessui-portal > div:last-child {
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+  }
+
+  /* 모달 패널 스타일 */
+  .headlessui-portal [role="dialog"] {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    background: white !important;
   }
 
   /* 스크롤바 제거 */
