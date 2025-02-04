@@ -185,7 +185,14 @@ export default function FarmersClient() {
                   onChange={() => handleSelectFarmer(farmer.id)}
                   className="w-4 h-4"
                 />
-                <h2 className="text-xl font-semibold">{farmer.name}</h2>
+                <h2 className="text-xl font-semibold">
+                  {farmer.name}
+                  {farmer.businessName && (
+                    <span className="ml-2 text-gray-600 text-base">
+                      ({farmer.businessName})
+                    </span>
+                  )}
+                </h2>
               </div>
               <div className="flex space-x-2">
                 <Link
