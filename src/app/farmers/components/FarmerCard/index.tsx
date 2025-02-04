@@ -145,7 +145,16 @@ export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail 
 
       <div className="p-4">
         <div className="flex justify-between items-start mb-4">
-          <h3 className="text-lg font-semibold">{farmer.name}</h3>
+          <div>
+            <h3 className="text-lg font-semibold">
+              {farmer.name}
+              {farmer.businessName && (
+                <span className="ml-2 text-gray-600 text-base">
+                  ({farmer.businessName})
+                </span>
+              )}
+            </h3>
+          </div>
           <button
             onClick={() => onViewDetail(farmer)}
             className="text-blue-600 hover:text-blue-800"
