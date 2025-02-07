@@ -1,7 +1,7 @@
 import { Farmer, MainCrop } from '@/types/farmer';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import NextImage from 'next/image';
 import { MAIN_CROPS } from '@/constants';
 import { useRouter } from 'next/navigation';
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
@@ -98,7 +98,7 @@ const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title, handleImageDownl
             </div>
             <div className="relative aspect-[4/3] w-full mb-4">
               {downloadURL ? (
-                <Image
+                <NextImage
                   src={downloadURL}
                   alt={title}
                   fill
@@ -152,7 +152,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   // 이미지 프리로딩 함수
   const preloadImage = async (url: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => resolve(url);
       img.onerror = reject;
       img.src = url;
