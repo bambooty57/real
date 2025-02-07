@@ -22,7 +22,6 @@ import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getK
 import { Farmer } from '@/types/farmer';
 import { toast } from 'react-hot-toast';
 import { cropDisplayNames } from '@/utils/mappings';
-import { getSession } from '@/lib/auth';
 
 ChartJS.register(
   CategoryScale,
@@ -704,12 +703,6 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           message: retryCount > 0 ? `구글 시트 동기화 중... (재시도 ${retryCount}/${MAX_RETRIES})` : '구글 시트 동기화 중...' 
         });
         
-        // 세션에서 액세스 토큰 가져오기
-        const session = await getSession();
-        if (!session?.user?.accessToken) {
-          throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
-        }
-        
         // AbortController 설정
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
@@ -718,8 +711,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache',
-            'Authorization': `Bearer ${session.user.accessToken}`
+            'Cache-Control': 'no-cache'
           },
           body: JSON.stringify(farmers),
           signal: controller.signal
@@ -745,7 +737,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           throw new Error(result.error || '동기화 실패');
         }
       } catch (error: any) {
-        if (retryCount < MAX_RETRIES && error.message !== '인증 토큰이 없습니다. 다시 로그인해주세요.') {
+        if (retryCount < MAX_RETRIES) {
           console.log(`동기화 시도 ${retryCount + 1}/${MAX_RETRIES} 실패, 재시도 중...`);
           retryCount++;
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
@@ -755,9 +747,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         console.error('구글 시트 동기화 오류:', error);
         let errorMessage = '구글 시트 동기화 중 오류가 발생했습니다.';
         
-        if (error.message === '인증 토큰이 없습니다. 다시 로그인해주세요.') {
-          errorMessage = error.message;
-        } else if (error.name === 'AbortError') {
+        if (error.name === 'AbortError') {
           errorMessage = '구글 시트 동기화 시간이 초과되었습니다. 다시 시도해주세요.';
         }
         
