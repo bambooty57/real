@@ -113,30 +113,58 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   const [selectedImageTitle, setSelectedImageTitle] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // PDF 다운로드 함수
-  const handlePDFDownload = () => {
+  // PDF 다운로드 함수 수정
+  const handlePDFDownload = async () => {
     if (!contentRef.current) return;
 
-    const element = contentRef.current;
-    const opt = {
-      margin: 10,
-      filename: `${farmer.name}_상세정보.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2,
-        useCORS: true,
-        logging: true
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    try {
+      // 모든 이미지 URL을 Firebase Storage 다운로드 URL로 변환
+      const images = contentRef.current.getElementsByTagName('img');
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        const src = img.getAttribute('src');
+        if (src && src.includes('firebase')) {
+          const imageRef = ref(storage, src);
+          const downloadURL = await getDownloadURL(imageRef);
+          img.setAttribute('src', downloadURL);
+          img.setAttribute('crossOrigin', 'anonymous');
+        }
+      }
 
-    // 인쇄용 스타일을 적용
-    element.classList.add('print-mode');
+      const element = contentRef.current;
+      const opt = {
+        margin: 10,
+        filename: `${farmer.name}_상세정보.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          logging: true,
+          allowTaint: true,
+          foreignObjectRendering: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait'
+        },
+        pagebreak: { 
+          mode: ['css', 'legacy'],
+          before: '.page-break'
+        }
+      };
 
-    html2pdf().set(opt).from(element).save().then(() => {
+      // 인쇄용 스타일을 적용
+      element.classList.add('print-mode');
+
+      await html2pdf().set(opt).from(element).save();
+      
       // PDF 생성 후 인쇄용 스타일 제거
       element.classList.remove('print-mode');
-    });
+    } catch (error) {
+      console.error('PDF 생성 중 오류 발생:', error);
+      alert('PDF 생성에 실패했습니다.');
+    }
   };
 
   // 이미지 선택 함수
@@ -196,8 +224,8 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
 
               {/* 내용 영역 - PDF 변환 대상 */}
               <div ref={contentRef}>
-                {/* 첫 페이지: 기본 정보, 영농 정보, 보유 장비 */}
-                <div className="print:first-page space-y-6">
+                {/* 첫 페이지: 기본 정보, 영농 정보, 메모 */}
+                <div className="first-page space-y-6">
                   {/* 기본 정보 */}
                   <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none print:break-inside-avoid mb-6">
                     <h2 className="text-lg font-semibold mb-4">기본 정보</h2>
@@ -343,8 +371,12 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                       )}
                     </dl>
                   </div>
+                </div>
 
-                  {/* 보유 장비 */}
+                {/* 두 번째 페이지: 보유 장비 */}
+                <div className="page-break" />
+                <div className="second-page space-y-6">
+                  <h1 className="text-3xl font-bold text-center mb-6">{farmer.name} 보유 장비</h1>
                   <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none print:break-inside-avoid">
                     <h2 className="text-lg font-semibold mb-4">보유 장비</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 print:gap-4">
@@ -369,9 +401,16 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                               <dd className="font-medium">{equipment.model}</dd>
                             </div>
                             <div>
-                              <dt className="text-gray-600">거래방식</dt>
+                              <dt className="text-gray-600">거래유형</dt>
                               <dd className="font-medium">
                                 {equipment.saleType ? (equipment.saleType === 'new' ? '신규' : '중고') : '없음'}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-gray-600">거래방식</dt>
+                              <dd className="font-medium">
+                                {equipment.tradeType === 'sale' ? '판매' : 
+                                 equipment.tradeType === 'purchase' ? '구매' : '없음'}
                               </dd>
                             </div>
                             {equipment.desiredPrice && (
@@ -453,8 +492,10 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                   </div>
                 </div>
 
-                {/* 마지막 페이지: 이미지 갤러리 */}
-                <div className="print:last-page mt-6">
+                {/* 세 번째 페이지: 이미지 갤러리 */}
+                <div className="page-break" />
+                <div className="third-page space-y-6">
+                  <h1 className="text-3xl font-bold text-center mb-6">{farmer.name} 이미지 갤러리</h1>
                   <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-lg font-semibold">이미지 갤러리</h2>
@@ -479,6 +520,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                             unoptimized={true}
                             priority={true}
                             loading="eager"
+                            crossOrigin="anonymous"
                           />
                           <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
                           <p className="text-sm text-gray-600 mt-1">농민 이미지 {index + 1}</p>
@@ -506,6 +548,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                 unoptimized={true}
                                 priority={true}
                                 loading="eager"
+                                crossOrigin="anonymous"
                               />
                               <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
                               <p className="text-sm text-gray-600 mt-1">
@@ -540,6 +583,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                   unoptimized={true}
                                   priority={true}
                                   loading="eager"
+                                  crossOrigin="anonymous"
                                 />
                                 <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
                                 <p className="text-sm text-gray-600 mt-1">
