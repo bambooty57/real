@@ -22,6 +22,7 @@ import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getK
 import { Farmer } from '@/types/farmer';
 import { toast } from 'react-hot-toast';
 import { cropDisplayNames } from '@/utils/mappings';
+import { getSession } from '@/lib/auth';
 
 ChartJS.register(
   CategoryScale,
@@ -692,49 +693,93 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
   };
 
   const handleGoogleSheetSync = useCallback(async () => {
-    try {
-      setUploadStatus({ 
-        status: 'processing', 
-        message: '구글 시트 동기화 중...' 
-      });
-      
-      // 원본 데이터 전송
-      const response = await fetch('/api/sheets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify(farmers)  // 변환하지 않은 원본 데이터 전송
-      });
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    const TIMEOUT = 65000; // 65초
 
-      const result = await response.json();
-
-      if (result.success) {
+    const attemptSync = async () => {
+      try {
         setUploadStatus({ 
-          status: 'success', 
-          message: '구글 시트 동기화가 완료되었습니다.' 
+          status: 'processing', 
+          message: retryCount > 0 ? `구글 시트 동기화 중... (재시도 ${retryCount}/${MAX_RETRIES})` : '구글 시트 동기화 중...' 
         });
-        toast.success('구글 시트 동기화가 완료되었습니다.');
-      } else {
-        throw new Error(result.error || '동기화 실패');
-      }
-    } catch (error) {
-      console.error('구글 시트 동기화 오류:', error);
-      setUploadStatus({ 
-        status: 'error', 
-        message: '구글 시트 동기화 중 오류가 발생했습니다.' 
-      });
-      toast.error('구글 시트 동기화 중 오류가 발생했습니다.');
-    }
+        
+        // 세션에서 액세스 토큰 가져오기
+        const session = await getSession();
+        if (!session?.user?.accessToken) {
+          throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
+        }
+        
+        // AbortController 설정
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
 
-    // 3초 후 상태 메시지 제거
-    setTimeout(() => {
-      setUploadStatus({ 
-        status: 'idle', 
-        message: '' 
-      });
-    }, 3000);
+        const response = await fetch('/api/sheets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Authorization': `Bearer ${session.user.accessToken}`
+          },
+          body: JSON.stringify(farmers),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '동기화 실패');
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          setUploadStatus({ 
+            status: 'success', 
+            message: '구글 시트 동기화가 완료되었습니다.' 
+          });
+          toast.success('구글 시트 동기화가 완료되었습니다.');
+          return true;
+        } else {
+          throw new Error(result.error || '동기화 실패');
+        }
+      } catch (error: any) {
+        if (retryCount < MAX_RETRIES && error.message !== '인증 토큰이 없습니다. 다시 로그인해주세요.') {
+          console.log(`동기화 시도 ${retryCount + 1}/${MAX_RETRIES} 실패, 재시도 중...`);
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+          return attemptSync();
+        }
+        
+        console.error('구글 시트 동기화 오류:', error);
+        let errorMessage = '구글 시트 동기화 중 오류가 발생했습니다.';
+        
+        if (error.message === '인증 토큰이 없습니다. 다시 로그인해주세요.') {
+          errorMessage = error.message;
+        } else if (error.name === 'AbortError') {
+          errorMessage = '구글 시트 동기화 시간이 초과되었습니다. 다시 시도해주세요.';
+        }
+        
+        setUploadStatus({ 
+          status: 'error', 
+          message: errorMessage 
+        });
+        toast.error(errorMessage);
+        return false;
+      }
+    };
+
+    const success = await attemptSync();
+
+    if (success || retryCount >= MAX_RETRIES) {
+      setTimeout(() => {
+        setUploadStatus({ 
+          status: 'idle', 
+          message: '' 
+        });
+      }, 3000);
+    }
   }, [farmers]);
 
   // 차트 데이터 업데이트

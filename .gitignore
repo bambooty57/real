@@ -49,4 +49,4 @@ firebase-debug.log
 
 # Scripts
 scripts/
-src/scripts/ 
+src/scripts/ .env.local

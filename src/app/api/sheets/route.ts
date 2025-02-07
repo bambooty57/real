@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer, cropDisplayNames } from '@/utils/mappings';
 
 export const runtime = 'nodejs';
+export const maxDuration = 300; // 타임아웃을 5분으로 설정
 
 // 농기계 타입 정의
 interface Equipment {
@@ -137,57 +138,110 @@ function formatFarmerData(farmers: any[]) {
 export async function POST(req: Request) {
   try {
     // 1. 환경변수 검증
-    const { GOOGLE_CLIENT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, GOOGLE_SHEET_ID } = process.env;
-    if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_SERVICE_ACCOUNT_KEY || !GOOGLE_SHEET_ID) {
-      throw new Error('필수 환경변수가 설정되지 않았습니다.');
+    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_SHEET_ID } = process.env;
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_SHEET_ID) {
+      console.error('Missing required environment variables:', {
+        hasClientId: !!GOOGLE_CLIENT_ID,
+        hasClientSecret: !!GOOGLE_CLIENT_SECRET,
+        hasSheetId: !!GOOGLE_SHEET_ID
+      });
+      return NextResponse.json({
+        success: false,
+        error: '필수 환경변수가 설정되지 않았습니다.'
+      }, { status: 500 });
     }
 
     // 2. 요청 데이터 파싱
     const farmers = await req.json();
 
     if (!Array.isArray(farmers)) {
-      throw new Error('올바른 데이터 형식이 아닙니다.');
+      return NextResponse.json({
+        success: false,
+        error: '올바른 데이터 형식이 아닙니다.'
+      }, { status: 400 });
     }
 
-    // 3. Google Sheets API 인증
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: GOOGLE_CLIENT_EMAIL,
-        private_key: GOOGLE_SERVICE_ACCOUNT_KEY.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    // 3. OAuth2 클라이언트 설정
+    const oauth2Client = new google.auth.OAuth2(
+      GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET,
+      'https://real-kappa-wheat.vercel.app/api/auth/callback/google'
+    );
+
+    // 액세스 토큰 설정
+    oauth2Client.setCredentials({
+      access_token: req.headers.get('Authorization')?.replace('Bearer ', '')
     });
 
-    const sheets = google.sheets({ version: 'v4', auth });
+    const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 
     // 4. 데이터 포맷팅
     const values = formatFarmerData(farmers);
 
-    // 5. 기존 데이터 삭제
-    await sheets.spreadsheets.values.clear({
-      spreadsheetId: GOOGLE_SHEET_ID,
-      range: '시트1!A1:Q10000',
-    });
+    // 5. API 호출 작업을 청크로 나누어 처리
+    const CHUNK_SIZE = 1000;
+    const totalChunks = Math.ceil(values.length / CHUNK_SIZE);
+    
+    try {
+      // 기존 데이터 삭제
+      await sheets.spreadsheets.values.clear({
+        spreadsheetId: GOOGLE_SHEET_ID,
+        range: '시트1!A1:Q10000',
+      });
 
-    // 6. 새 데이터 추가
-    const response = await sheets.spreadsheets.values.update({
-      spreadsheetId: GOOGLE_SHEET_ID,
-      range: '시트1!A1',
-      valueInputOption: 'RAW',
-      requestBody: { values },
-    });
+      // 청크 단위로 데이터 업로드
+      for (let i = 0; i < values.length; i += CHUNK_SIZE) {
+        const chunk = values.slice(i, i + CHUNK_SIZE);
+        const currentChunk = Math.floor(i / CHUNK_SIZE) + 1;
+        
+        console.log(`청크 처리 중: ${currentChunk}/${totalChunks}`);
+        
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: GOOGLE_SHEET_ID,
+          range: `시트1!A${i + 1}`,
+          valueInputOption: 'RAW',
+          requestBody: { values: chunk },
+        });
+      }
 
-    return NextResponse.json({
-      success: true,
-      message: `${values.length - 1}개의 데이터가 성공적으로 동기화되었습니다.`,
-    });
+      return NextResponse.json({
+        success: true,
+        message: `${values.length - 1}개의 데이터가 성공적으로 동기화되었습니다.`,
+      });
+
+    } catch (error: any) {
+      console.error('Google Sheets API 호출 중 오류:', error);
+      
+      let errorMessage = '구글 시트 API 호출 중 오류가 발생했습니다.';
+      let statusCode = 500;
+
+      if (error.code === 401) {
+        errorMessage = '인증이 만료되었습니다. 다시 로그인해주세요.';
+        statusCode = 401;
+      } else if (error.code === 403) {
+        errorMessage = '구글 시트 접근 권한이 없습니다. 권한을 확인해주세요.';
+        statusCode = 403;
+      } else if (error.code === 404) {
+        errorMessage = '구글 시트를 찾을 수 없습니다. 시트 ID를 확인해주세요.';
+        statusCode = 404;
+      } else if (error.code === 429) {
+        errorMessage = 'API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
+        statusCode = 429;
+      }
+
+      return NextResponse.json({
+        success: false,
+        error: errorMessage,
+        details: error.message
+      }, { status: statusCode });
+    }
 
   } catch (error: any) {
-    console.error('Google Sheets 동기화 오류:', error);
-    
+    console.error('예상치 못한 오류:', error);
     return NextResponse.json({
       success: false,
-      error: error.message || '동기화 중 오류가 발생했습니다.',
+      error: '예상치 못한 오류가 발생했습니다.',
+      details: error.message
     }, { status: 500 });
   }
 } 
