@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings';
 import { formatPhoneNumber } from '@/utils/format';
 import React from 'react';
-import { FaPrint } from 'react-icons/fa';
+import { FaPrint, FaDownload } from 'react-icons/fa';
 import { cropDisplayNames } from '@/utils/mappings';
 
 interface FarmerDetailModalProps {
@@ -31,6 +31,41 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   if (!farmer) return null;
 
   const router = useRouter();
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+
+  // 이미지 선택 토글 함수
+  const toggleImageSelection = (imageUrl: string) => {
+    setSelectedImages(prev => 
+      prev.includes(imageUrl) 
+        ? prev.filter(url => url !== imageUrl)
+        : [...prev, imageUrl]
+    );
+  };
+
+  // 선택된 이미지 일괄 다운로드
+  const handleBulkDownload = async () => {
+    if (selectedImages.length === 0) {
+      alert('다운로드할 이미지를 선택해주세요.');
+      return;
+    }
+
+    for (const [index, imageUrl] of selectedImages.entries()) {
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${farmer.name}_이미지_${index + 1}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('이미지 다운로드 중 오류 발생:', error);
+      }
+    }
+  };
 
   const handleEdit = () => {
     router.push(`/farmers/${farmer.id}/edit`);
@@ -341,11 +376,39 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               {/* 마지막 페이지: 이미지 갤러리 */}
               <div className="print:last-page mt-6">
                 <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
-                  <h2 className="text-lg font-semibold mb-4">이미지 갤러리</h2>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold">이미지 갤러리</h2>
+                    <div className="flex items-center gap-2 print:hidden">
+                      <button
+                        onClick={() => setSelectedImages([])}
+                        className="text-gray-600 hover:text-gray-800 text-sm"
+                      >
+                        선택 해제
+                      </button>
+                      <button
+                        onClick={handleBulkDownload}
+                        disabled={selectedImages.length === 0}
+                        className={`flex items-center gap-2 px-4 py-2 rounded ${
+                          selectedImages.length > 0
+                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        <FaDownload />
+                        선택 이미지 다운로드 ({selectedImages.length})
+                      </button>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:grid-cols-4">
                     {/* 농민 이미지 */}
                     {farmer.farmerImages?.map((image, index) => (
-                      <div key={`farmer-${index}`} className="farmer-image aspect-[4/3]">
+                      <div 
+                        key={`farmer-${index}`} 
+                        className={`farmer-image aspect-[4/3] relative group cursor-pointer ${
+                          selectedImages.includes(image.toString()) ? 'ring-2 ring-blue-500' : ''
+                        }`}
+                        onClick={() => toggleImageSelection(image.toString())}
+                      >
                         <Image
                           src={image.toString()}
                           alt={`농민 이미지 ${index + 1}`}
@@ -356,6 +419,23 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           priority={true}
                           loading="eager"
                         />
+                        <div className={`absolute inset-0 bg-black bg-opacity-50 transition-opacity ${
+                          selectedImages.includes(image.toString()) ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
+                        }`}>
+                          <div className="absolute top-2 right-2">
+                            <div className={`w-6 h-6 border-2 rounded ${
+                              selectedImages.includes(image.toString())
+                                ? 'border-blue-500 bg-blue-500'
+                                : 'border-white'
+                            }`}>
+                              {selectedImages.includes(image.toString()) && (
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                         <p className="text-sm text-gray-600 mt-1">농민 이미지 {index + 1}</p>
                       </div>
                     ))}
@@ -364,7 +444,13 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                     {farmer.equipments?.map((equipment, eqIndex) => (
                       <React.Fragment key={`eq-${eqIndex}`}>
                         {equipment.images?.map((image, imgIndex) => (
-                          <div key={`eq-${eqIndex}-${imgIndex}`} className="farmer-image aspect-[4/3]">
+                          <div 
+                            key={`eq-${eqIndex}-${imgIndex}`} 
+                            className={`farmer-image aspect-[4/3] relative group cursor-pointer ${
+                              selectedImages.includes(image.toString()) ? 'ring-2 ring-blue-500' : ''
+                            }`}
+                            onClick={() => toggleImageSelection(image.toString())}
+                          >
                             <Image
                               src={image.toString()}
                               alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
@@ -375,6 +461,23 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                               priority={true}
                               loading="eager"
                             />
+                            <div className={`absolute inset-0 bg-black bg-opacity-50 transition-opacity ${
+                              selectedImages.includes(image.toString()) ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
+                            }`}>
+                              <div className="absolute top-2 right-2">
+                                <div className={`w-6 h-6 border-2 rounded ${
+                                  selectedImages.includes(image.toString())
+                                    ? 'border-blue-500 bg-blue-500'
+                                    : 'border-white'
+                                }`}>
+                                  {selectedImages.includes(image.toString()) && (
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                             <p className="text-sm text-gray-600 mt-1">
                               {getKoreanManufacturer(equipment.manufacturer)} {equipment.model} {getKoreanEquipmentType(equipment.type)}
                             </p>
@@ -384,7 +487,13 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                         {/* 부착장비 이미지 */}
                         {equipment.attachments?.map((attachment, attIndex) =>
                           attachment.images?.map((image, imgIndex) => (
-                            <div key={`att-${eqIndex}-${attIndex}-${imgIndex}`} className="farmer-image aspect-[4/3]">
+                            <div 
+                              key={`att-${eqIndex}-${attIndex}-${imgIndex}`} 
+                              className={`farmer-image aspect-[4/3] relative group cursor-pointer ${
+                                selectedImages.includes(image.toString()) ? 'ring-2 ring-blue-500' : ''
+                              }`}
+                              onClick={() => toggleImageSelection(image.toString())}
+                            >
                               <Image
                                 src={image.toString()}
                                 alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
@@ -395,6 +504,23 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                 priority={true}
                                 loading="eager"
                               />
+                              <div className={`absolute inset-0 bg-black bg-opacity-50 transition-opacity ${
+                                selectedImages.includes(image.toString()) ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
+                              }`}>
+                                <div className="absolute top-2 right-2">
+                                  <div className={`w-6 h-6 border-2 rounded ${
+                                    selectedImages.includes(image.toString())
+                                      ? 'border-blue-500 bg-blue-500'
+                                      : 'border-white'
+                                  }`}>
+                                    {selectedImages.includes(image.toString()) && (
+                                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
                               <p className="text-sm text-gray-600 mt-1">
                                 {getKoreanEquipmentType(equipment.type)}의 
                                 {attachment.type === 'loader' ? ' 로더' :
