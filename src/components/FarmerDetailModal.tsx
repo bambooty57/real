@@ -162,7 +162,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
           allowTaint: true,
           foreignObjectRendering: true,
           imageTimeout: 0,
-          onclone: function(clonedDoc) {
+          onclone: function(clonedDoc: Document) {
             const images = clonedDoc.getElementsByTagName('img');
             for (let i = 0; i < images.length; i++) {
               images[i].style.maxWidth = '100%';
