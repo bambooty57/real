@@ -257,31 +257,23 @@ export default function Dashboard() {
       try {
         setLoading(true);
         setError(null);
-        console.log('Firebase 데이터 로딩 시작...');
 
         const farmersRef = collection(db, 'farmers');
         const q = query(farmersRef, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        
-        const loadedFarmers: Farmer[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          console.log('Firebase 문서 데이터:', data); // 각 문서의 데이터 로깅
-          loadedFarmers.push({
+        await getDocs(q).then((snapshot) => {
+          const data = snapshot.docs.map(doc => ({
             id: doc.id,
-            ...data
-          } as Farmer);
+            ...doc.data()
+          }));
+          if (isMounted) {
+            setFarmers(data as Farmer[]);
+          }
+        }).catch((err) => {
+          console.error('Firebase 데이터 로딩 오류:', err);
+          if (isMounted) {
+            setError('데이터를 불러오는 중 오류가 발생했습니다.');
+          }
         });
-
-        if (isMounted) {
-          console.log('로드된 농민 데이터:', loadedFarmers.length, '명');
-          setFarmers(loadedFarmers);
-        }
-      } catch (err) {
-        console.error('Firebase 데이터 로딩 오류:', err);
-        if (isMounted) {
-          setError('데이터를 불러오는 중 오류가 발생했습니다.');
-        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -296,32 +288,9 @@ export default function Dashboard() {
     };
   }, []);
 
-  const handleExcelDownload = () => {
+  const handleExcelDownload = async () => {
     try {
-      console.log('엑셀 다운로드 시작');
-      const excelData = farmers.map((farmer, index) => {
-        console.log(`농민 데이터 처리 중 ${index + 1}/${farmers.length}:`, farmer.name);
-        
-        // 타임스탬프 처리 함수
-        const formatTimestamp = (timestamp: any) => {
-          if (!timestamp) return '';
-          try {
-            if (typeof timestamp === 'object' && 'seconds' in timestamp) {
-              return new Date(timestamp.seconds * 1000).toLocaleString('ko-KR');
-            }
-            if (timestamp instanceof Date) {
-              return timestamp.toLocaleString('ko-KR');
-            }
-            if (typeof timestamp === 'string') {
-              return new Date(timestamp).toLocaleString('ko-KR');
-            }
-            return '';
-          } catch (error) {
-            console.error('타임스탬프 변환 오류:', error);
-            return '';
-          }
-        };
-
+      const excelData = await Promise.all(farmers.map(async (farmer, index) => {
         // 안전한 객체 접근
         const safeGet = (obj: any, path: string, defaultValue: any = '') => {
           try {
@@ -338,10 +307,10 @@ export default function Dashboard() {
             이름: safeGet(farmer, 'name', ''),
             전화번호: safeGet(farmer, 'phone', ''),
             상호: safeGet(farmer, 'businessName', ''),
-            영농형태: Object.entries(safeGet(farmer, 'farmingTypes', {}))
+            영농형태: Object.entries(safeGet(farmer, 'farmingTypes', {})
               .filter(([_, value]) => value)
               .map(([key]) => getFarmingTypeDisplay(key))
-              .join(', '),
+              .join(', ')),
             주작물: (() => {
               const mainCrop = safeGet(farmer, 'mainCrop', {});
               return Object.entries(mainCrop)
@@ -369,16 +338,14 @@ export default function Dashboard() {
               .map(eq => `${getKoreanEquipmentType(eq.type)}(${getKoreanManufacturer(eq.manufacturer)})`)
               .filter(Boolean)
               .join('; '),
-            생성일: formatTimestamp(farmer.createdAt),
-            수정일: formatTimestamp(farmer.updatedAt)
+            생성일: safeGet(farmer, 'createdAt', ''),
+            수정일: safeGet(farmer, 'updatedAt', '')
           };
         } catch (error) {
           console.error(`농민 데이터 처리 오류 (${farmer.name}):`, error);
           return null;
         }
-      }).filter(Boolean); // null 값 제거
-
-      console.log('엑셀 데이터 생성 완료:', excelData.length);
+      }).filter(Boolean));
 
       const ws = XLSX.utils.json_to_sheet(excelData);
       const wb = XLSX.utils.book_new();
@@ -407,7 +374,6 @@ export default function Dashboard() {
       ws['!cols'] = colWidths;
 
       XLSX.writeFile(wb, "농민목록.xlsx");
-      console.log('엑셀 파일 저장 완료');
       toast.success('엑셀 다운로드가 완료되었습니다.');
     } catch (error) {
       console.error('엑셀 다운로드 오류:', error);
@@ -436,8 +402,6 @@ export default function Dashboard() {
           header: 0,  // 첫 번째 행을 헤더로 사용
           blankrows: false  // 빈 행 제외
         });
-
-        console.log('Parsed Excel Data:', jsonData);
 
         let successCount = 0;
         let updateCount = 0;
@@ -778,8 +742,6 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     if (!farmers.length) return;
 
     try {
-      console.log('전체 농민 데이터:', farmers.length, '명');
-      console.log('첫 번째 농민 데이터 구조:', JSON.stringify(farmers[0], null, 2));
       const locationData = new Map<string, { customers: number; equipments: number }>();
 
       // 전체 지역일 때는 모든 시/군을 초기화
@@ -793,7 +755,6 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
       farmers.forEach(farmer => {
         const address = farmer.roadAddress || farmer.jibunAddress;
         if (!address) {
-          console.log('주소 없음:', farmer.name);
           return;
         }
 
@@ -815,18 +776,10 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         }
 
         if (!foundCity) {
-          console.log('지역 매칭 실패:', address);
           return;
         }
 
         const equipmentCount = farmer.equipments?.length || 0;
-        console.log('농민 데이터 처리:', {
-          name: farmer.name,
-          city: foundCity,
-          town: foundTown,
-          address: address,
-          equipments: equipmentCount
-        });
 
         // 전체 보기일 때는 시/군별 통계
         if (selectedCity === '전체') {

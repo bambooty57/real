@@ -494,11 +494,14 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        // 즉시 URL 객체 해제
         URL.revokeObjectURL(downloadUrl);
         
         // 다운로드 간 약간의 딜레이를 줘서 브라우저 부하 방지
         await new Promise(resolve => setTimeout(resolve, 500));
       }
+      
       // 다운로드 완료 후 상태 초기화
       setSelectedImages([]);
       setDownloadModalOpen(false);

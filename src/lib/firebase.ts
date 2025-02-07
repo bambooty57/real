@@ -40,10 +40,8 @@ export async function testFirebaseConnection() {
     const q = query(testRef, limit(1));
     await getDocs(q);
     
-    console.log('Firebase connection test successful');
     return true;
   } catch (error) {
-    console.error('Firebase connection test failed:', error);
     return false;
   }
 } 
