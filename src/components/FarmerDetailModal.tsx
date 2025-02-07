@@ -1,6 +1,6 @@
 import { Farmer, MainCrop } from '@/types/farmer';
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useState, useRef } from 'react';
+import { Fragment, useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { MAIN_CROPS } from '@/constants';
 import { useRouter } from 'next/navigation';
@@ -39,14 +39,33 @@ interface ImageDownloadModalProps {
 }
 
 const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title }: ImageDownloadModalProps) => {
+  const [downloadURL, setDownloadURL] = useState<string>('');
+
+  useEffect(() => {
+    const getImageUrl = async () => {
+      try {
+        const imageRef = ref(storage, imageUrl);
+        const url = await getDownloadURL(imageRef);
+        setDownloadURL(url);
+      } catch (error) {
+        console.error('이미지 URL 가져오기 실패:', error);
+      }
+    };
+    
+    if (imageUrl) {
+      getImageUrl();
+    }
+  }, [imageUrl]);
+
   const handleDownload = async () => {
     try {
-      // Firebase Storage 경로에서 다운로드 URL 가져오기
-      const imageRef = ref(storage, imageUrl);
-      const downloadURL = await getDownloadURL(imageRef);
-
-      // 새 창에서 다운로드 URL 열기
-      window.open(downloadURL, '_blank');
+      if (!downloadURL) {
+        const imageRef = ref(storage, imageUrl);
+        const url = await getDownloadURL(imageRef);
+        window.open(url, '_blank');
+      } else {
+        window.open(downloadURL, '_blank');
+      }
       onClose();
     } catch (error) {
       console.error('이미지 다운로드 중 오류 발생:', error);
@@ -73,14 +92,20 @@ const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title }: ImageDownloadM
               </button>
             </div>
             <div className="relative aspect-[4/3] w-full mb-4">
-              <Image
-                src={imageUrl}
-                alt={title}
-                fill
-                className="object-contain rounded-lg"
-                unoptimized={true}
-                priority={true}
-              />
+              {downloadURL ? (
+                <Image
+                  src={downloadURL}
+                  alt={title}
+                  fill
+                  className="object-contain rounded-lg"
+                  unoptimized={true}
+                  priority={true}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                  <span className="text-gray-400">이미지 로딩중...</span>
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <button
@@ -112,6 +137,58 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedImageTitle, setSelectedImageTitle] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
+  const [imageURLs, setImageURLs] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    const loadImages = async () => {
+      if (!farmer) return;
+
+      const urls: { [key: string]: string } = {};
+
+      // 농민 이미지 URL 가져오기
+      for (const image of farmer.farmerImages || []) {
+        try {
+          const imageRef = ref(storage, image.toString());
+          const url = await getDownloadURL(imageRef);
+          urls[image.toString()] = url;
+        } catch (error) {
+          console.error('이미지 URL 가져오기 실패:', error);
+        }
+      }
+
+      // 장비 이미지 URL 가져오기
+      for (const equipment of farmer.equipments || []) {
+        for (const image of equipment.images || []) {
+          try {
+            const imageRef = ref(storage, image.toString());
+            const url = await getDownloadURL(imageRef);
+            urls[image.toString()] = url;
+          } catch (error) {
+            console.error('이미지 URL 가져오기 실패:', error);
+          }
+        }
+
+        // 부착장비 이미지 URL 가져오기
+        for (const attachment of equipment.attachments || []) {
+          for (const image of attachment.images || []) {
+            try {
+              const imageRef = ref(storage, image.toString());
+              const url = await getDownloadURL(imageRef);
+              urls[image.toString()] = url;
+            } catch (error) {
+              console.error('이미지 URL 가져오기 실패:', error);
+            }
+          }
+        }
+      }
+
+      setImageURLs(urls);
+    };
+
+    if (isOpen && farmer) {
+      loadImages();
+    }
+  }, [isOpen, farmer]);
 
   // PDF 다운로드 함수 수정
   const handlePDFDownload = async () => {
@@ -538,17 +615,22 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                             `농민 이미지 ${index + 1}`
                           )}
                         >
-                          <Image
-                            src={image.toString()}
-                            alt={`농민 이미지 ${index + 1}`}
-                            width={400}
-                            height={300}
-                            className="rounded-lg object-cover w-full h-full"
-                            unoptimized={true}
-                            priority={true}
-                            loading="eager"
-                            crossOrigin="anonymous"
-                          />
+                          {imageURLs[image.toString()] ? (
+                            <Image
+                              src={imageURLs[image.toString()]}
+                              alt={`농민 이미지 ${index + 1}`}
+                              width={400}
+                              height={300}
+                              className="rounded-lg object-cover w-full h-full"
+                              unoptimized={true}
+                              priority={true}
+                              loading="eager"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                              <span className="text-gray-400">이미지 로딩중...</span>
+                            </div>
+                          )}
                           <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
                           <p className="text-sm text-gray-600 mt-1">농민 이미지 {index + 1}</p>
                         </div>
@@ -566,17 +648,22 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                 `${getKoreanManufacturer(equipment.manufacturer)} ${equipment.model} ${getKoreanEquipmentType(equipment.type)}`
                               )}
                             >
-                              <Image
-                                src={image.toString()}
-                                alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
-                                width={400}
-                                height={300}
-                                className="rounded-lg object-cover w-full h-full"
-                                unoptimized={true}
-                                priority={true}
-                                loading="eager"
-                                crossOrigin="anonymous"
-                              />
+                              {imageURLs[image.toString()] ? (
+                                <Image
+                                  src={imageURLs[image.toString()]}
+                                  alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
+                                  width={400}
+                                  height={300}
+                                  className="rounded-lg object-cover w-full h-full"
+                                  unoptimized={true}
+                                  priority={true}
+                                  loading="eager"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                                  <span className="text-gray-400">이미지 로딩중...</span>
+                                </div>
+                              )}
                               <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
                               <p className="text-sm text-gray-600 mt-1">
                                 {getKoreanManufacturer(equipment.manufacturer)} {equipment.model} {getKoreanEquipmentType(equipment.type)}
@@ -601,17 +688,22 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                   }`
                                 )}
                               >
-                                <Image
-                                  src={image.toString()}
-                                  alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
-                                  width={400}
-                                  height={300}
-                                  className="rounded-lg object-cover w-full h-full"
-                                  unoptimized={true}
-                                  priority={true}
-                                  loading="eager"
-                                  crossOrigin="anonymous"
-                                />
+                                {imageURLs[image.toString()] ? (
+                                  <Image
+                                    src={imageURLs[image.toString()]}
+                                    alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
+                                    width={400}
+                                    height={300}
+                                    className="rounded-lg object-cover w-full h-full"
+                                    unoptimized={true}
+                                    priority={true}
+                                    loading="eager"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                                    <span className="text-gray-400">이미지 로딩중...</span>
+                                  </div>
+                                )}
                                 <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
                                 <p className="text-sm text-gray-600 mt-1">
                                   {getKoreanEquipmentType(equipment.type)}의 
