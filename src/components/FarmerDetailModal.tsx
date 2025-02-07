@@ -42,6 +42,21 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
     );
   };
 
+  // 전체 이미지 선택/해제 토글
+  const toggleAllImages = () => {
+    const allImages = [
+      ...(farmer.farmerImages || []),
+      ...(farmer.equipments?.flatMap(eq => [
+        ...(eq.images || []),
+        ...(eq.attachments?.flatMap(att => att.images || []) || [])
+      ]) || [])
+    ].map(img => img.toString());
+
+    setSelectedImages(prev => 
+      prev.length === allImages.length ? [] : allImages
+    );
+  };
+
   // 선택된 이미지 일괄 다운로드
   const handleBulkDownload = async () => {
     if (selectedImages.length === 0) {
@@ -49,22 +64,33 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
       return;
     }
 
-    selectedImages.forEach(async (imageUrl, index) => {
-      try {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${farmer.name}_이미지_${index + 1}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error('이미지 다운로드 중 오류 발생:', error);
-      }
-    });
+    try {
+      // 모든 이미지를 동시에 다운로드
+      await Promise.all(
+        selectedImages.map(async (imageUrl, index) => {
+          try {
+            const response = await fetch(imageUrl);
+            if (!response.ok) throw new Error('이미지 다운로드 실패');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${farmer.name}_이미지_${index + 1}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          } catch (error) {
+            console.error('이미지 다운로드 중 오류 발생:', error);
+            throw error;
+          }
+        })
+      );
+      alert('선택한 이미지 다운로드가 완료되었습니다.');
+    } catch (error) {
+      alert('일부 이미지 다운로드에 실패했습니다.');
+    }
   };
 
   const handleEdit = () => {
@@ -379,6 +405,12 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold">이미지 갤러리</h2>
                     <div className="flex items-center gap-2 print:hidden">
+                      <button
+                        onClick={toggleAllImages}
+                        className="text-gray-600 hover:text-gray-800 text-sm px-3 py-1 border rounded"
+                      >
+                        {selectedImages.length === 0 ? '전체 선택' : '전체 해제'}
+                      </button>
                       <button
                         onClick={() => setSelectedImages([])}
                         className="text-gray-600 hover:text-gray-800 text-sm"
