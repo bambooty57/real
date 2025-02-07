@@ -28,7 +28,7 @@ const getRatingStars = (rating: number) => {
   );
 };
 
-// ImageDownloadModal 컴포넌트 추가
+// ImageDownloadModal 컴포넌트 수정
 interface ImageDownloadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,13 +37,23 @@ interface ImageDownloadModalProps {
 }
 
 const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title }: ImageDownloadModalProps) => {
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `${title}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${title}.jpg`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      onClose(); // 다운로드 후 모달 닫기
+    } catch (error) {
+      console.error('이미지 다운로드 중 오류 발생:', error);
+      alert('이미지 다운로드에 실패했습니다.');
+    }
   };
 
   return (
