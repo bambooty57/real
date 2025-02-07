@@ -179,6 +179,7 @@ export const cropDisplayNames: Record<string, string> = {
 
 export const getFarmingTypeDisplay = (key: string): string => {
   const farmingTypeMap: { [key: string]: string } = {
+    waterPaddy: '수도작',
     paddyFarming: '논농사',
     fieldFarming: '밭농사',
     orchard: '과수원',

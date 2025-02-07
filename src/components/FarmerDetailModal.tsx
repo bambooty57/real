@@ -49,7 +49,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
       return;
     }
 
-    for (const [index, imageUrl] of selectedImages.entries()) {
+    selectedImages.forEach(async (imageUrl, index) => {
       try {
         const response = await fetch(imageUrl);
         const blob = await response.blob();
@@ -64,7 +64,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
       } catch (error) {
         console.error('이미지 다운로드 중 오류 발생:', error);
       }
-    }
+    });
   };
 
   const handleEdit = () => {
