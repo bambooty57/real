@@ -10,6 +10,8 @@ import React from 'react';
 import { FaDownload } from 'react-icons/fa';
 import { cropDisplayNames } from '@/utils/mappings';
 import html2pdf from 'html2pdf.js';
+import { storage } from '@/lib/firebase';
+import { ref, getDownloadURL } from 'firebase/storage';
 
 interface FarmerDetailModalProps {
   farmer: Farmer | null;
@@ -39,17 +41,13 @@ interface ImageDownloadModalProps {
 const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title }: ImageDownloadModalProps) => {
   const handleDownload = async () => {
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${title}.jpg`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      onClose(); // 다운로드 후 모달 닫기
+      // Firebase Storage 경로에서 다운로드 URL 가져오기
+      const imageRef = ref(storage, imageUrl);
+      const downloadURL = await getDownloadURL(imageRef);
+
+      // 새 창에서 다운로드 URL 열기
+      window.open(downloadURL, '_blank');
+      onClose();
     } catch (error) {
       console.error('이미지 다운로드 중 오류 발생:', error);
       alert('이미지 다운로드에 실패했습니다.');
