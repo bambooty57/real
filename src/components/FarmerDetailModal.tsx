@@ -36,9 +36,10 @@ interface ImageDownloadModalProps {
   onClose: () => void;
   imageUrl: string;
   title: string;
+  handleImageDownload: (imageUrl: string, fileName: string) => Promise<void>;
 }
 
-const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title }: ImageDownloadModalProps) => {
+const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title, handleImageDownload }: ImageDownloadModalProps) => {
   const [downloadURL, setDownloadURL] = useState<string>('');
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -792,6 +793,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
           onClose={() => setDownloadModalOpen(false)}
           imageUrl={selectedImage}
           title={selectedImageTitle}
+          handleImageDownload={handleImageDownload}
         />
       )}
     </>
