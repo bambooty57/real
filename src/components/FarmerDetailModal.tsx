@@ -65,31 +65,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
     }
 
     try {
-      // 모든 이미지를 동시에 다운로드
-      await Promise.all(
-        selectedImages.map(async (imageUrl, index) => {
-          try {
-            const response = await fetch(imageUrl);
-            if (!response.ok) throw new Error('이미지 다운로드 실패');
-            
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${farmer.name}_이미지_${index + 1}.jpg`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-          } catch (error) {
-            console.error('이미지 다운로드 중 오류 발생:', error);
-            throw error;
-          }
-        })
-      );
-      alert('선택한 이미지 다운로드가 완료되었습니다.');
+      // 각 이미지를 새 창에서 열기
+      selectedImages.forEach((imageUrl, index) => {
+        window.open(imageUrl, '_blank');
+      });
+      
+      alert('선택한 이미지들이 새 창에서 열렸습니다. 각 이미지를 우클릭하여 저장하실 수 있습니다.');
     } catch (error) {
-      alert('일부 이미지 다운로드에 실패했습니다.');
+      console.error('이미지 다운로드 중 오류 발생:', error);
+      alert('이미지 다운로드에 실패했습니다.');
     }
   };
 
