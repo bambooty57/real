@@ -70,7 +70,8 @@ export const MAIN_CROPS = {
       { value: 'chicken', label: '닭' },
       { value: 'duck', label: '오리' },
       { value: 'goat', label: '염소' },
-      { value: 'sheep', label: '양' }
+      { value: 'dairy', label: '젖소' },
+      { value: 'other', label: '기타' }
     ]
   }
 }; 

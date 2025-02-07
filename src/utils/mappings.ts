@@ -170,10 +170,11 @@ export const cropDisplayNames: Record<string, string> = {
   chicken: '닭',
   duck: '오리',
   goat: '염소',
+  dairy: '젖소',
+  other: '기타',
   persimmon: '감',
   plum: '자두',
   sorghum: '수수',
-  other: '기타'
 };
 
 export const getFarmingTypeDisplay = (key: string): string => {
