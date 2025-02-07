@@ -118,18 +118,38 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
     if (!contentRef.current) return;
 
     try {
-      // 모든 이미지 URL을 Firebase Storage 다운로드 URL로 변환
+      // 모든 이미지 URL을 Firebase Storage 다운로드 URL로 변환하고 로드 완료를 기다림
       const images = contentRef.current.getElementsByTagName('img');
+      const imageLoadPromises = [];
+
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
         const src = img.getAttribute('src');
         if (src && src.includes('firebase')) {
-          const imageRef = ref(storage, src);
-          const downloadURL = await getDownloadURL(imageRef);
-          img.setAttribute('src', downloadURL);
-          img.setAttribute('crossOrigin', 'anonymous');
+          try {
+            const imageRef = ref(storage, src);
+            const downloadURL = await getDownloadURL(imageRef);
+            
+            // 이미지 로드 완료를 기다리는 Promise 생성
+            const loadPromise = new Promise((resolve, reject) => {
+              const tempImg = new Image();
+              tempImg.crossOrigin = 'anonymous';
+              tempImg.onload = () => {
+                img.src = downloadURL;
+                resolve(null);
+              };
+              tempImg.onerror = reject;
+              tempImg.src = downloadURL;
+            });
+            imageLoadPromises.push(loadPromise);
+          } catch (error) {
+            console.error('이미지 URL 변환 중 오류:', error);
+          }
         }
       }
+
+      // 모든 이미지 로드 완료 대기
+      await Promise.all(imageLoadPromises);
 
       const element = contentRef.current;
       const opt = {
@@ -139,9 +159,16 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
         html2canvas: { 
           scale: 2,
           useCORS: true,
-          logging: true,
           allowTaint: true,
-          foreignObjectRendering: true
+          foreignObjectRendering: true,
+          imageTimeout: 0,
+          onclone: function(clonedDoc) {
+            const images = clonedDoc.getElementsByTagName('img');
+            for (let i = 0; i < images.length; i++) {
+              images[i].style.maxWidth = '100%';
+              images[i].style.height = 'auto';
+            }
+          }
         },
         jsPDF: { 
           unit: 'mm', 
