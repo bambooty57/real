@@ -195,39 +195,6 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
     if (!contentRef.current) return;
 
     try {
-      // 모든 이미지 URL을 Firebase Storage 다운로드 URL로 변환하고 로드 완료를 기다림
-      const images = contentRef.current.getElementsByTagName('img');
-      const imageLoadPromises = [];
-
-      for (let i = 0; i < images.length; i++) {
-        const img = images[i];
-        const src = img.getAttribute('src');
-        if (src && src.includes('firebase')) {
-          try {
-            const imageRef = ref(storage, src);
-            const downloadURL = await getDownloadURL(imageRef);
-            
-            // 이미지 로드 완료를 기다리는 Promise 생성
-            const loadPromise = new Promise((resolve, reject) => {
-              const tempImg = new window.Image();
-              tempImg.crossOrigin = 'anonymous';
-              tempImg.onload = () => {
-                img.src = downloadURL;
-                resolve(null);
-              };
-              tempImg.onerror = reject;
-              tempImg.src = downloadURL;
-            });
-            imageLoadPromises.push(loadPromise);
-          } catch (error) {
-            console.error('이미지 URL 변환 중 오류:', error);
-          }
-        }
-      }
-
-      // 모든 이미지 로드 완료 대기
-      await Promise.all(imageLoadPromises);
-
       const element = contentRef.current;
       const opt = {
         margin: 10,
@@ -237,13 +204,20 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
           scale: 2,
           useCORS: true,
           allowTaint: true,
-          foreignObjectRendering: true,
+          logging: true,
           imageTimeout: 0,
           onclone: function(clonedDoc: Document) {
+            // 복제된 문서의 이미지들을 이미 변환된 URL로 교체
             const images = clonedDoc.getElementsByTagName('img');
             for (let i = 0; i < images.length; i++) {
-              images[i].style.maxWidth = '100%';
-              images[i].style.height = 'auto';
+              const img = images[i];
+              const originalSrc = img.getAttribute('data-original-src') || img.getAttribute('src');
+              if (originalSrc && imageURLs[originalSrc]) {
+                img.src = imageURLs[originalSrc];
+              }
+              img.style.maxWidth = '100%';
+              img.style.height = 'auto';
+              img.crossOrigin = 'anonymous';
             }
           }
         },
@@ -258,6 +232,16 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
         }
       };
 
+      // 원본 이미지 URL을 data-original-src 속성으로 저장
+      const originalImages = element.getElementsByTagName('img');
+      for (let i = 0; i < originalImages.length; i++) {
+        const img = originalImages[i];
+        const src = img.getAttribute('src');
+        if (src) {
+          img.setAttribute('data-original-src', src);
+        }
+      }
+
       // 인쇄용 스타일을 적용
       element.classList.add('print-mode');
 
@@ -265,6 +249,11 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
       
       // PDF 생성 후 인쇄용 스타일 제거
       element.classList.remove('print-mode');
+
+      // data-original-src 속성 제거
+      for (let i = 0; i < originalImages.length; i++) {
+        originalImages[i].removeAttribute('data-original-src');
+      }
     } catch (error) {
       console.error('PDF 생성 중 오류 발생:', error);
       alert('PDF 생성에 실패했습니다.');
