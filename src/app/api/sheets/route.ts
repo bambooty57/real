@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer, cropDisplayNames } from '@/utils/mappings';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300; // 5분으로 증가
+export const maxDuration = 60;
 
 // 농기계 타입 정의
 interface Equipment {
