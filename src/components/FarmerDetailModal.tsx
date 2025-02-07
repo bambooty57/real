@@ -552,7 +552,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                 </div>
               </div>
             </div>
-          </div>
+          </Dialog.Panel>
         </div>
       </Dialog>
 
