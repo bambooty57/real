@@ -39,6 +39,24 @@ const getFarmingTypeDisplay = (type: keyof FarmingTypes) => {
 };
 
 export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail }: FarmerCardProps) {
+  const handleDownload = async (imageUrl: string, fileName: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('이미지 다운로드 중 오류 발생:', error);
+      alert('이미지 다운로드에 실패했습니다.');
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow relative">
       <div className="absolute top-2 left-2 z-10">
@@ -71,8 +89,17 @@ export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail 
                         e.target.src = '/placeholder-image.jpg';
                       }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm flex justify-between items-center">
                       <span>농민 사진 {index + 1}/{farmer.farmerImages.length}</span>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDownload(image.toString(), `${farmer.name}_사진_${index + 1}.jpg`);
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                      >
+                        다운로드
+                      </button>
                     </div>
                   </div>
                 </SwiperSlide>
@@ -100,11 +127,23 @@ export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail 
                         e.target.src = '/placeholder-image.jpg';
                       }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm flex justify-between items-center">
                       <span>
                         {equipment.manufacturer} {equipment.model} {getKoreanEquipmentType(equipment.type)}
                         {' '}({imgIndex + 1}/{equipment.images?.filter(Boolean).length})
                       </span>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDownload(
+                            image.toString(),
+                            `${farmer.name}_${getKoreanEquipmentType(equipment.type)}_${imgIndex + 1}.jpg`
+                          );
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                      >
+                        다운로드
+                      </button>
                     </div>
                   </div>
                 </SwiperSlide>
@@ -123,7 +162,7 @@ export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail 
                           e.target.src = '/placeholder-image.jpg';
                         }}
                       />
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm flex justify-between items-center">
                         <span>
                           {getKoreanEquipmentType(equipment.type)}의 
                           {attachment.type === 'loader' ? ' 로더' :
@@ -133,6 +172,18 @@ export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail 
                            ` ${attachment.type}`}
                           {' '}({imgIndex + 1}/{attachment.images?.filter(Boolean).length})
                         </span>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDownload(
+                              image.toString(),
+                              `${farmer.name}_${getKoreanEquipmentType(equipment.type)}_${attachment.type}_${imgIndex + 1}.jpg`
+                            );
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                        >
+                          다운로드
+                        </button>
                       </div>
                     </div>
                   </SwiperSlide>

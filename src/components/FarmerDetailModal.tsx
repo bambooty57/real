@@ -247,7 +247,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           </div>
                           <div>
                             <dt className="text-gray-600">제조사</dt>
-                            <dd className="font-medium">{equipment.manufacturer}</dd>
+                            <dd className="font-medium">{getKoreanManufacturer(equipment.manufacturer)}</dd>
                           </div>
                           <div>
                             <dt className="text-gray-600">모델명</dt>
@@ -309,7 +309,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                     <div className="space-y-1 text-sm">
                                       <div>
                                         <span className="text-gray-600">제조사:</span>{' '}
-                                        {attachment.manufacturer}
+                                        {getKoreanManufacturer(attachment.manufacturer)}
                                       </div>
                                       <div>
                                         <span className="text-gray-600">모델명:</span>{' '}
@@ -376,7 +376,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                               loading="eager"
                             />
                             <p className="text-sm text-gray-600 mt-1">
-                              {equipment.manufacturer} {equipment.model} {getKoreanEquipmentType(equipment.type)}
+                              {getKoreanManufacturer(equipment.manufacturer)} {equipment.model} {getKoreanEquipmentType(equipment.type)}
                             </p>
                           </div>
                         ))}
