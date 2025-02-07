@@ -1,7 +1,12 @@
 [
   {
-    "origin": ["*"],
-    "method": ["GET"],
-    "maxAgeSeconds": 3600
+    "origin": [
+      "https://real-bambooty57.vercel.app",
+      "http://localhost:3000",
+      "http://localhost"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Access-Control-Allow-Origin"]
   }
 ] 
