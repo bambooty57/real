@@ -307,10 +307,10 @@ export default function Dashboard() {
             이름: safeGet(farmer, 'name', ''),
             전화번호: safeGet(farmer, 'phone', ''),
             상호: safeGet(farmer, 'businessName', ''),
-            영농형태: Object.entries(safeGet(farmer, 'farmingTypes', {})
-              .filter(([_, value]) => value)
-              .map(([key]) => getFarmingTypeDisplay(key))
-              .join(', ')),
+            영농형태: Object.entries(safeGet(farmer, 'farmingTypes', {}) as Record<string, boolean>)
+              .filter(([_, value]: [string, boolean]) => value)
+              .map(([key]: [string, boolean]) => getFarmingTypeDisplay(key))
+              .join(', '),
             주작물: (() => {
               const mainCrop = safeGet(farmer, 'mainCrop', {});
               return Object.entries(mainCrop)
