@@ -132,7 +132,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
             
             // 이미지 로드 완료를 기다리는 Promise 생성
             const loadPromise = new Promise((resolve, reject) => {
-              const tempImg = new Image();
+              const tempImg = new window.Image();
               tempImg.crossOrigin = 'anonymous';
               tempImg.onload = () => {
                 img.src = downloadURL;
