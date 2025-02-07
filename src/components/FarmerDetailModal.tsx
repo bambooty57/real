@@ -40,6 +40,7 @@ interface ImageDownloadModalProps {
 
 const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title }: ImageDownloadModalProps) => {
   const [downloadURL, setDownloadURL] = useState<string>('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     const getImageUrl = async () => {
@@ -59,17 +60,20 @@ const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title }: ImageDownloadM
 
   const handleDownload = async () => {
     try {
+      setIsDownloading(true);
       if (!downloadURL) {
         const imageRef = ref(storage, imageUrl);
         const url = await getDownloadURL(imageRef);
-        window.open(url, '_blank');
+        await handleImageDownload(url, title);
       } else {
-        window.open(downloadURL, '_blank');
+        await handleImageDownload(downloadURL, title);
       }
       onClose();
     } catch (error) {
       console.error('이미지 다운로드 중 오류 발생:', error);
       alert('이미지 다운로드에 실패했습니다.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -110,10 +114,13 @@ const ImageDownloadModal = ({ isOpen, onClose, imageUrl, title }: ImageDownloadM
             <div className="flex justify-end gap-2">
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                disabled={isDownloading}
+                className={`flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 ${
+                  isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 <FaDownload className="w-4 h-4" />
-                <span>다운로드</span>
+                <span>{isDownloading ? '다운로드 중...' : '다운로드'}</span>
               </button>
               <button
                 onClick={onClose}
@@ -139,76 +146,110 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   const contentRef = useRef<HTMLDivElement>(null);
   const [imageURLs, setImageURLs] = useState<{ [key: string]: string }>({});
   const [base64Images, setBase64Images] = useState<{ [key: string]: string }>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 이미지 프리로딩 함수
+  const preloadImage = async (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = reject;
+      img.src = url;
+    });
+  };
+
+  // Base64로 이미지 변환
+  const convertToBase64 = async (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        try {
+          const base64 = canvas.toDataURL('image/jpeg', 0.95);
+          resolve(base64);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      img.onerror = () => reject(new Error('Image loading failed'));
+      img.src = url;
+    });
+  };
 
   useEffect(() => {
     const loadImages = async () => {
       if (!farmer) return;
+      setIsLoading(true);
 
-      const urls: { [key: string]: string } = {};
-      const base64s: { [key: string]: string } = {};
+      try {
+        const urls: { [key: string]: string } = {};
+        const base64s: { [key: string]: string } = {};
+        const loadPromises: Promise<void>[] = [];
 
-      // 이미지를 Base64로 변환하는 함수
-      const convertToBase64 = async (url: string): Promise<string> => {
-        try {
-          const response = await fetch(url);
-          const blob = await response.blob();
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-        } catch (error) {
-          console.error('Base64 변환 실패:', error);
-          return '';
-        }
-      };
-
-      // 농민 이미지 URL 가져오기
-      for (const image of farmer.farmerImages || []) {
-        try {
-          const imageRef = ref(storage, image.toString());
-          const url = await getDownloadURL(imageRef);
-          urls[image.toString()] = url;
-          // URL을 키로 사용하여 Base64 데이터 저장
-          base64s[url] = await convertToBase64(url);
-        } catch (error) {
-          console.error('이미지 URL 가져오기 실패:', error);
-        }
-      }
-
-      // 장비 이미지 URL 가져오기
-      for (const equipment of farmer.equipments || []) {
-        for (const image of equipment.images || []) {
+        // 이미지 URL과 Base64 데이터 로딩 함수
+        const loadImageData = async (image: string) => {
           try {
             const imageRef = ref(storage, image.toString());
             const url = await getDownloadURL(imageRef);
             urls[image.toString()] = url;
-            // URL을 키로 사용하여 Base64 데이터 저장
-            base64s[url] = await convertToBase64(url);
+            
+            // 이미지 프리로딩 및 Base64 변환
+            await preloadImage(url);
+            const base64 = await convertToBase64(url);
+            base64s[url] = base64;
           } catch (error) {
-            console.error('이미지 URL 가져오기 실패:', error);
+            console.error('이미지 로딩 실패:', error);
           }
+        };
+
+        // 농민 이미지 로딩
+        if (farmer.farmerImages) {
+          farmer.farmerImages.forEach(image => {
+            loadPromises.push(loadImageData(image.toString()));
+          });
         }
 
-        // 부착장비 이미지 URL 가져오기
-        for (const attachment of equipment.attachments || []) {
-          for (const image of attachment.images || []) {
-            try {
-              const imageRef = ref(storage, image.toString());
-              const url = await getDownloadURL(imageRef);
-              urls[image.toString()] = url;
-              // URL을 키로 사용하여 Base64 데이터 저장
-              base64s[url] = await convertToBase64(url);
-            } catch (error) {
-              console.error('이미지 URL 가져오기 실패:', error);
+        // 장비 이미지 로딩
+        if (farmer.equipments) {
+          farmer.equipments.forEach(equipment => {
+            if (equipment.images) {
+              equipment.images.forEach(image => {
+                loadPromises.push(loadImageData(image.toString()));
+              });
             }
-          }
-        }
-      }
 
-      setImageURLs(urls);
-      setBase64Images(base64s);
+            // 부착장비 이미지 로딩
+            if (equipment.attachments) {
+              equipment.attachments.forEach(attachment => {
+                if (attachment.images) {
+                  attachment.images.forEach(image => {
+                    loadPromises.push(loadImageData(image.toString()));
+                  });
+                }
+              });
+            }
+          });
+        }
+
+        // 모든 이미지 로딩 완료 대기
+        await Promise.all(loadPromises);
+        
+        setImageURLs(urls);
+        setBase64Images(base64s);
+      } catch (error) {
+        console.error('이미지 로딩 중 오류 발생:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     if (isOpen && farmer) {
@@ -230,10 +271,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
           scale: 2,
           useCORS: true,
           allowTaint: true,
-          logging: true,
-          imageTimeout: 0,
+          logging: false,
+          imageTimeout: 15000,
           onclone: function(clonedDoc: Document) {
-            // 복제된 문서의 이미지들을 Base64로 교체
             const images = clonedDoc.getElementsByTagName('img');
             for (let i = 0; i < images.length; i++) {
               const img = images[i];
@@ -243,8 +283,6 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                 img.style.maxWidth = '100%';
                 img.style.height = 'auto';
                 img.removeAttribute('crossorigin');
-              } else {
-                console.warn('Base64 이미지를 찾을 수 없음:', src);
               }
             }
           }
@@ -252,7 +290,8 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
-          orientation: 'portrait'
+          orientation: 'portrait',
+          compress: true
         },
         pagebreak: { 
           mode: ['css', 'legacy'],
@@ -260,31 +299,63 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
         }
       };
 
-      // 원본 이미지 URL을 data-original-src 속성으로 저장
-      const originalImages = element.getElementsByTagName('img');
-      for (let i = 0; i < originalImages.length; i++) {
-        const img = originalImages[i];
-        const src = img.getAttribute('src');
-        if (src) {
-          img.setAttribute('data-original-src', src);
-        }
-      }
-
-      // 인쇄용 스타일을 적용
-      element.classList.add('print-mode');
-
       await html2pdf().set(opt).from(element).save();
-      
-      // PDF 생성 후 인쇄용 스타일 제거
-      element.classList.remove('print-mode');
 
-      // data-original-src 속성 제거
-      for (let i = 0; i < originalImages.length; i++) {
-        originalImages[i].removeAttribute('data-original-src');
-      }
     } catch (error) {
       console.error('PDF 생성 중 오류 발생:', error);
-      alert('PDF 생성에 실패했습니다.');
+      alert('PDF 생성에 실패했습니다. 이미지 로딩이 완료된 후 다시 시도해주세요.');
+    }
+  };
+
+  // 이미지를 JPG로 변환하는 함수
+  const convertToJPG = async (url: string): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Blob conversion failed'));
+            }
+          },
+          'image/jpeg',
+          0.95
+        );
+      };
+      img.onerror = () => reject(new Error('Image loading failed'));
+      img.src = url;
+    });
+  };
+
+  // 이미지 다운로드 핸들러
+  const handleImageDownload = async (imageUrl: string, fileName: string) => {
+    try {
+      const url = imageURLs[imageUrl] || imageUrl;
+      const jpgBlob = await convertToJPG(url);
+      const downloadUrl = URL.createObjectURL(jpgBlob);
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${fileName}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('이미지 다운로드 중 오류 발생:', error);
+      alert('이미지 다운로드에 실패했습니다.');
     }
   };
 
