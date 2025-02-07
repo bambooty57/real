@@ -138,11 +138,11 @@ function formatFarmerData(farmers: any[]) {
 export async function POST(req: Request) {
   try {
     // 1. 환경변수 검증
-    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_SHEET_ID } = process.env;
-    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_SHEET_ID) {
+    const { GOOGLE_CLIENT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, GOOGLE_SHEET_ID } = process.env;
+    if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_SERVICE_ACCOUNT_KEY || !GOOGLE_SHEET_ID) {
       console.error('Missing required environment variables:', {
-        hasClientId: !!GOOGLE_CLIENT_ID,
-        hasClientSecret: !!GOOGLE_CLIENT_SECRET,
+        hasClientEmail: !!GOOGLE_CLIENT_EMAIL,
+        hasServiceKey: !!GOOGLE_SERVICE_ACCOUNT_KEY,
         hasSheetId: !!GOOGLE_SHEET_ID
       });
       return NextResponse.json({
@@ -161,25 +161,22 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // 3. OAuth2 클라이언트 설정
-    const oauth2Client = new google.auth.OAuth2(
-      GOOGLE_CLIENT_ID,
-      GOOGLE_CLIENT_SECRET,
-      'https://real-kappa-wheat.vercel.app/api/auth/callback/google'
-    );
-
-    // 액세스 토큰 설정
-    oauth2Client.setCredentials({
-      access_token: req.headers.get('Authorization')?.replace('Bearer ', '')
+    // 3. 서비스 계정 인증 설정
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: GOOGLE_CLIENT_EMAIL,
+        private_key: GOOGLE_SERVICE_ACCOUNT_KEY.replace(/\\n/g, '\n'),
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+    const sheets = google.sheets({ version: 'v4', auth });
 
     // 4. 데이터 포맷팅
     const values = formatFarmerData(farmers);
 
     // 5. API 호출 작업을 청크로 나누어 처리
-    const CHUNK_SIZE = 500; // 청크 크기를 500으로 줄임
+    const CHUNK_SIZE = 500;
     const totalChunks = Math.ceil(values.length / CHUNK_SIZE);
     
     try {
@@ -198,7 +195,7 @@ export async function POST(req: Request) {
         
         // 각 청크마다 타임아웃 설정
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('청크 처리 시간 초과')), 55000); // 55초 타임아웃
+          setTimeout(() => reject(new Error('청크 처리 시간 초과')), 55000);
         });
 
         try {

@@ -719,8 +719,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache'
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify(chunks[i])
           });
