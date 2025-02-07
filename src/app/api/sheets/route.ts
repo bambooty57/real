@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer, cropDisplayNames } from '@/utils/mappings';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 1분으로 수정
+export const maxDuration = 300; // 5분으로 증가
 
 // 농기계 타입 정의
 interface Equipment {
@@ -175,83 +175,61 @@ export async function POST(req: Request) {
     // 4. 데이터 포맷팅
     const values = formatFarmerData(farmers);
 
-    // 5. API 호출 작업을 청크로 나누어 처리
-    const CHUNK_SIZE = 500;
-    const totalChunks = Math.ceil(values.length / CHUNK_SIZE);
-    
+    // 5. 시트 초기화
     try {
-      // 기존 데이터 삭제
       await sheets.spreadsheets.values.clear({
         spreadsheetId: GOOGLE_SHEET_ID,
         range: '시트1!A1:Q10000',
       });
+    } catch (error: any) {
+      console.error('시트 초기화 중 오류:', error);
+      if (error.code === 403) {
+        return NextResponse.json({
+          success: false,
+          error: '구글 시트 접근 권한이 없습니다. 권한을 확인해주세요.',
+          details: error.message
+        }, { status: 403 });
+      }
+      throw error;
+    }
 
-      // 청크 단위로 데이터 업로드
-      for (let i = 0; i < values.length; i += CHUNK_SIZE) {
-        const chunk = values.slice(i, i + CHUNK_SIZE);
-        const currentChunk = Math.floor(i / CHUNK_SIZE) + 1;
-        
-        console.log(`청크 처리 중: ${currentChunk}/${totalChunks}`);
-        
-        // 각 청크마다 타임아웃 설정
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('청크 처리 시간 초과')), 55000);
+    // 6. 데이터 업로드
+    const CHUNK_SIZE = 500;
+    const totalChunks = Math.ceil(values.length / CHUNK_SIZE);
+    
+    for (let i = 0; i < values.length; i += CHUNK_SIZE) {
+      const chunk = values.slice(i, i + CHUNK_SIZE);
+      const currentChunk = Math.floor(i / CHUNK_SIZE) + 1;
+      
+      console.log(`청크 처리 중: ${currentChunk}/${totalChunks}`);
+      
+      try {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: GOOGLE_SHEET_ID,
+          range: `시트1!A${i + 1}`,
+          valueInputOption: 'RAW',
+          requestBody: { values: chunk },
         });
 
-        try {
-          await Promise.race([
-            sheets.spreadsheets.values.update({
-              spreadsheetId: GOOGLE_SHEET_ID,
-              range: `시트1!A${i + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: { values: chunk },
-            }),
-            timeoutPromise
-          ]);
-        } catch (error: any) {
-          if (error.message === '청크 처리 시간 초과') {
-            return NextResponse.json({
-              success: false,
-              error: '데이터 처리 시간이 초과되었습니다. 더 작은 데이터로 나누어 시도해주세요.',
-              processedChunks: currentChunk - 1,
-              totalChunks
-            }, { status: 408 });
-          }
-          throw error;
-        }
+        // 청크 처리 후 잠시 대기
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+      } catch (error: any) {
+        console.error('청크 처리 중 오류:', error);
+        return NextResponse.json({
+          success: false,
+          error: '데이터 업로드 중 오류가 발생했습니다.',
+          details: error.message,
+          processedChunks: currentChunk - 1,
+          totalChunks
+        }, { status: error.code || 500 });
       }
-
-      return NextResponse.json({
-        success: true,
-        message: `${values.length - 1}개의 데이터가 성공적으로 동기화되었습니다.`,
-      });
-
-    } catch (error: any) {
-      console.error('Google Sheets API 호출 중 오류:', error);
-      
-      let errorMessage = '구글 시트 API 호출 중 오류가 발생했습니다.';
-      let statusCode = 500;
-
-      if (error.code === 401) {
-        errorMessage = '인증이 만료되었습니다. 다시 로그인해주세요.';
-        statusCode = 401;
-      } else if (error.code === 403) {
-        errorMessage = '구글 시트 접근 권한이 없습니다. 권한을 확인해주세요.';
-        statusCode = 403;
-      } else if (error.code === 404) {
-        errorMessage = '구글 시트를 찾을 수 없습니다. 시트 ID를 확인해주세요.';
-        statusCode = 404;
-      } else if (error.code === 429) {
-        errorMessage = 'API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
-        statusCode = 429;
-      }
-
-      return NextResponse.json({
-        success: false,
-        error: errorMessage,
-        details: error.message
-      }, { status: statusCode });
     }
+
+    return NextResponse.json({
+      success: true,
+      message: `${values.length - 1}개의 데이터가 성공적으로 동기화되었습니다.`,
+    });
 
   } catch (error: any) {
     console.error('예상치 못한 오류:', error);

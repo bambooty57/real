@@ -695,6 +695,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     let retryCount = 0;
     const MAX_RETRIES = 3;
     const CHUNK_SIZE = 500;
+    const RETRY_DELAY = 2000; // 2초 대기
 
     const attemptSync = async () => {
       try {
@@ -719,28 +720,30 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache'
             },
             body: JSON.stringify(chunks[i])
           });
 
           if (!response.ok) {
             const errorData = await response.json();
+            console.error('API 응답 에러:', {
+              status: response.status,
+              statusText: response.statusText,
+              errorData
+            });
             
-            // 타임아웃 에러 처리
             if (response.status === 408) {
-              setUploadStatus({
-                status: 'error',
-                message: `${errorData.processedChunks}/${errorData.totalChunks} 청크까지 처리 완료. 나머지는 재시도 필요.`
-              });
-              
-              // 3초 후 다음 청크부터 재시도
-              await new Promise(resolve => setTimeout(resolve, 3000));
+              await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
               continue;
             }
-            
-            throw new Error(errorData.error || '동기화 실패');
+
+            throw new Error(errorData.error || `동기화 실패 (${response.status}: ${response.statusText})`);
           }
+
+          // 청크 처리 후 잠시 대기
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         setUploadStatus({ 
@@ -751,39 +754,35 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         return true;
 
       } catch (error: any) {
-        if (retryCount < MAX_RETRIES) {
-          console.log(`동기화 시도 ${retryCount + 1}/${MAX_RETRIES} 실패, 재시도 중...`);
-          retryCount++;
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
-          return attemptSync();
-        }
-        
         console.error('구글 시트 동기화 오류:', error);
-        let errorMessage = '구글 시트 동기화 중 오류가 발생했습니다.';
         
-        if (error.message.includes('timeout') || error.message.includes('시간 초과')) {
-          errorMessage = '구글 시트 동기화 시간이 초과되었습니다. 다시 시도해주세요.';
+        if (retryCount < MAX_RETRIES) {
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          return attemptSync();
         }
         
         setUploadStatus({ 
           status: 'error', 
-          message: errorMessage 
+          message: error.message || '구글 시트 동기화 중 오류가 발생했습니다.' 
         });
-        toast.error(errorMessage);
+        toast.error(error.message || '구글 시트 동기화 중 오류가 발생했습니다.');
         return false;
       }
     };
 
     const success = await attemptSync();
-
-    if (success || retryCount >= MAX_RETRIES) {
-      setTimeout(() => {
-        setUploadStatus({ 
-          status: 'idle', 
-          message: '' 
-        });
-      }, 3000);
+    
+    if (!success) {
+      console.error('모든 재시도 실패');
     }
+
+    setTimeout(() => {
+      setUploadStatus({ 
+        status: 'idle', 
+        message: '' 
+      });
+    }, 3000);
   }, [farmers]);
 
   // 차트 데이터 업데이트
