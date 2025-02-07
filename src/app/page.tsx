@@ -694,7 +694,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
   const handleGoogleSheetSync = useCallback(async () => {
     let retryCount = 0;
     const MAX_RETRIES = 3;
-    const TIMEOUT = 65000; // 65초
+    const CHUNK_SIZE = 500;
 
     const attemptSync = async () => {
       try {
@@ -702,40 +702,55 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           status: 'processing', 
           message: retryCount > 0 ? `구글 시트 동기화 중... (재시도 ${retryCount}/${MAX_RETRIES})` : '구글 시트 동기화 중...' 
         });
-        
-        // AbortController 설정
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
 
-        const response = await fetch('/api/sheets', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache'
-          },
-          body: JSON.stringify(farmers),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || '동기화 실패');
+        // 데이터를 청크로 나누기
+        const chunks = [];
+        for (let i = 0; i < farmers.length; i += CHUNK_SIZE) {
+          chunks.push(farmers.slice(i, i + CHUNK_SIZE));
         }
 
-        const result = await response.json();
-
-        if (result.success) {
-          setUploadStatus({ 
-            status: 'success', 
-            message: '구글 시트 동기화가 완료되었습니다.' 
+        // 각 청크별 처리
+        for (let i = 0; i < chunks.length; i++) {
+          setUploadStatus({
+            status: 'processing',
+            message: `데이터 동기화 중... (${i + 1}/${chunks.length} 청크)`
           });
-          toast.success('구글 시트 동기화가 완료되었습니다.');
-          return true;
-        } else {
-          throw new Error(result.error || '동기화 실패');
+
+          const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache'
+            },
+            body: JSON.stringify(chunks[i])
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            
+            // 타임아웃 에러 처리
+            if (response.status === 408) {
+              setUploadStatus({
+                status: 'error',
+                message: `${errorData.processedChunks}/${errorData.totalChunks} 청크까지 처리 완료. 나머지는 재시도 필요.`
+              });
+              
+              // 3초 후 다음 청크부터 재시도
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              continue;
+            }
+            
+            throw new Error(errorData.error || '동기화 실패');
+          }
         }
+
+        setUploadStatus({ 
+          status: 'success', 
+          message: '구글 시트 동기화가 완료되었습니다.' 
+        });
+        toast.success('구글 시트 동기화가 완료되었습니다.');
+        return true;
+
       } catch (error: any) {
         if (retryCount < MAX_RETRIES) {
           console.log(`동기화 시도 ${retryCount + 1}/${MAX_RETRIES} 실패, 재시도 중...`);
@@ -747,7 +762,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
         console.error('구글 시트 동기화 오류:', error);
         let errorMessage = '구글 시트 동기화 중 오류가 발생했습니다.';
         
-        if (error.name === 'AbortError') {
+        if (error.message.includes('timeout') || error.message.includes('시간 초과')) {
           errorMessage = '구글 시트 동기화 시간이 초과되었습니다. 다시 시도해주세요.';
         }
         

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer, cropDisplayNames } from '@/utils/mappings';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300; // 타임아웃을 5분으로 설정
+export const maxDuration = 60; // 1분으로 수정
 
 // 농기계 타입 정의
 interface Equipment {
@@ -179,7 +179,7 @@ export async function POST(req: Request) {
     const values = formatFarmerData(farmers);
 
     // 5. API 호출 작업을 청크로 나누어 처리
-    const CHUNK_SIZE = 1000;
+    const CHUNK_SIZE = 500; // 청크 크기를 500으로 줄임
     const totalChunks = Math.ceil(values.length / CHUNK_SIZE);
     
     try {
@@ -196,12 +196,32 @@ export async function POST(req: Request) {
         
         console.log(`청크 처리 중: ${currentChunk}/${totalChunks}`);
         
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: GOOGLE_SHEET_ID,
-          range: `시트1!A${i + 1}`,
-          valueInputOption: 'RAW',
-          requestBody: { values: chunk },
+        // 각 청크마다 타임아웃 설정
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('청크 처리 시간 초과')), 55000); // 55초 타임아웃
         });
+
+        try {
+          await Promise.race([
+            sheets.spreadsheets.values.update({
+              spreadsheetId: GOOGLE_SHEET_ID,
+              range: `시트1!A${i + 1}`,
+              valueInputOption: 'RAW',
+              requestBody: { values: chunk },
+            }),
+            timeoutPromise
+          ]);
+        } catch (error: any) {
+          if (error.message === '청크 처리 시간 초과') {
+            return NextResponse.json({
+              success: false,
+              error: '데이터 처리 시간이 초과되었습니다. 더 작은 데이터로 나누어 시도해주세요.',
+              processedChunks: currentChunk - 1,
+              totalChunks
+            }, { status: 408 });
+          }
+          throw error;
+        }
       }
 
       return NextResponse.json({
