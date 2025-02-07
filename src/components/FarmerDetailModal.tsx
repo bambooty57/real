@@ -138,12 +138,31 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   const [selectedImageTitle, setSelectedImageTitle] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
   const [imageURLs, setImageURLs] = useState<{ [key: string]: string }>({});
+  const [base64Images, setBase64Images] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const loadImages = async () => {
       if (!farmer) return;
 
       const urls: { [key: string]: string } = {};
+      const base64s: { [key: string]: string } = {};
+
+      // 이미지를 Base64로 변환하는 함수
+      const convertToBase64 = async (url: string): Promise<string> => {
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error('Base64 변환 실패:', error);
+          return '';
+        }
+      };
 
       // 농민 이미지 URL 가져오기
       for (const image of farmer.farmerImages || []) {
@@ -151,6 +170,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
           const imageRef = ref(storage, image.toString());
           const url = await getDownloadURL(imageRef);
           urls[image.toString()] = url;
+          base64s[image.toString()] = await convertToBase64(url);
         } catch (error) {
           console.error('이미지 URL 가져오기 실패:', error);
         }
@@ -163,6 +183,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
             const imageRef = ref(storage, image.toString());
             const url = await getDownloadURL(imageRef);
             urls[image.toString()] = url;
+            base64s[image.toString()] = await convertToBase64(url);
           } catch (error) {
             console.error('이미지 URL 가져오기 실패:', error);
           }
@@ -175,6 +196,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               const imageRef = ref(storage, image.toString());
               const url = await getDownloadURL(imageRef);
               urls[image.toString()] = url;
+              base64s[image.toString()] = await convertToBase64(url);
             } catch (error) {
               console.error('이미지 URL 가져오기 실패:', error);
             }
@@ -183,6 +205,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
       }
 
       setImageURLs(urls);
+      setBase64Images(base64s);
     };
 
     if (isOpen && farmer) {
@@ -207,17 +230,17 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
           logging: true,
           imageTimeout: 0,
           onclone: function(clonedDoc: Document) {
-            // 복제된 문서의 이미지들을 이미 변환된 URL로 교체
+            // 복제된 문서의 이미지들을 Base64로 교체
             const images = clonedDoc.getElementsByTagName('img');
             for (let i = 0; i < images.length; i++) {
               const img = images[i];
               const originalSrc = img.getAttribute('data-original-src') || img.getAttribute('src');
-              if (originalSrc && imageURLs[originalSrc]) {
-                img.src = imageURLs[originalSrc];
+              if (originalSrc && base64Images[originalSrc]) {
+                img.src = base64Images[originalSrc];
               }
               img.style.maxWidth = '100%';
               img.style.height = 'auto';
-              img.crossOrigin = 'anonymous';
+              img.removeAttribute('crossorigin');
             }
           }
         },
@@ -593,34 +616,26 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-lg font-semibold">이미지 갤러리</h2>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:grid-cols-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:block print:space-y-4">
                       {/* 농민 이미지 */}
                       {farmer.farmerImages?.map((image, index) => (
                         <div 
                           key={`farmer-${index}`} 
-                          className="farmer-image aspect-[4/3] relative group cursor-pointer"
-                          onClick={() => handleImageClick(
-                            image.toString(),
-                            `농민 이미지 ${index + 1}`
-                          )}
+                          className="farmer-image print:mb-4"
                         >
-                          {imageURLs[image.toString()] ? (
-                            <Image
-                              src={imageURLs[image.toString()]}
-                              alt={`농민 이미지 ${index + 1}`}
-                              width={400}
-                              height={300}
-                              className="rounded-lg object-cover w-full h-full"
-                              unoptimized={true}
-                              priority={true}
-                              loading="eager"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                              <span className="text-gray-400">이미지 로딩중...</span>
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
+                          <div className="aspect-[4/3] relative">
+                            {imageURLs[image.toString()] ? (
+                              <img
+                                src={imageURLs[image.toString()]}
+                                alt={`농민 이미지 ${index + 1}`}
+                                className="rounded-lg object-cover w-full h-full"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                                <span className="text-gray-400">이미지 로딩중...</span>
+                              </div>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600 mt-1">농민 이미지 {index + 1}</p>
                         </div>
                       ))}
@@ -631,29 +646,21 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           {equipment.images?.map((image, imgIndex) => (
                             <div 
                               key={`eq-${eqIndex}-${imgIndex}`} 
-                              className="farmer-image aspect-[4/3] relative group cursor-pointer"
-                              onClick={() => handleImageClick(
-                                image.toString(),
-                                `${getKoreanManufacturer(equipment.manufacturer)} ${equipment.model} ${getKoreanEquipmentType(equipment.type)}`
-                              )}
+                              className="farmer-image print:mb-4"
                             >
-                              {imageURLs[image.toString()] ? (
-                                <Image
-                                  src={imageURLs[image.toString()]}
-                                  alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
-                                  width={400}
-                                  height={300}
-                                  className="rounded-lg object-cover w-full h-full"
-                                  unoptimized={true}
-                                  priority={true}
-                                  loading="eager"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                                  <span className="text-gray-400">이미지 로딩중...</span>
-                                </div>
-                              )}
-                              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
+                              <div className="aspect-[4/3] relative">
+                                {imageURLs[image.toString()] ? (
+                                  <img
+                                    src={imageURLs[image.toString()]}
+                                    alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
+                                    className="rounded-lg object-cover w-full h-full"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                                    <span className="text-gray-400">이미지 로딩중...</span>
+                                  </div>
+                                )}
+                              </div>
                               <p className="text-sm text-gray-600 mt-1">
                                 {getKoreanManufacturer(equipment.manufacturer)} {equipment.model} {getKoreanEquipmentType(equipment.type)}
                               </p>
@@ -665,35 +672,21 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                             attachment.images?.map((image, imgIndex) => (
                               <div 
                                 key={`att-${eqIndex}-${attIndex}-${imgIndex}`} 
-                                className="farmer-image aspect-[4/3] relative group cursor-pointer"
-                                onClick={() => handleImageClick(
-                                  image.toString(),
-                                  `${getKoreanEquipmentType(equipment.type)}의 ${
-                                    attachment.type === 'loader' ? '로더' :
-                                    attachment.type === 'rotary' ? '로터리' :
-                                    attachment.type === 'frontWheel' ? '전륜' :
-                                    attachment.type === 'rearWheel' ? '후륜' : 
-                                    attachment.type
-                                  }`
-                                )}
+                                className="farmer-image print:mb-4"
                               >
-                                {imageURLs[image.toString()] ? (
-                                  <Image
-                                    src={imageURLs[image.toString()]}
-                                    alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
-                                    width={400}
-                                    height={300}
-                                    className="rounded-lg object-cover w-full h-full"
-                                    unoptimized={true}
-                                    priority={true}
-                                    loading="eager"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                                    <span className="text-gray-400">이미지 로딩중...</span>
-                                  </div>
-                                )}
-                                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
+                                <div className="aspect-[4/3] relative">
+                                  {imageURLs[image.toString()] ? (
+                                    <img
+                                      src={imageURLs[image.toString()]}
+                                      alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
+                                      className="rounded-lg object-cover w-full h-full"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                                      <span className="text-gray-400">이미지 로딩중...</span>
+                                    </div>
+                                  )}
+                                </div>
                                 <p className="text-sm text-gray-600 mt-1">
                                   {getKoreanEquipmentType(equipment.type)}의 
                                   {attachment.type === 'loader' ? ' 로더' :
