@@ -31,50 +31,26 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   if (!farmer) return null;
 
   const router = useRouter();
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // 이미지 선택 토글 함수
-  const toggleImageSelection = (imageUrl: string) => {
-    setSelectedImages(prev => 
-      prev.includes(imageUrl) 
-        ? prev.filter(url => url !== imageUrl)
-        : [...prev, imageUrl]
-    );
+  // 이미지 선택 함수
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
   };
 
-  // 전체 이미지 선택/해제 토글
-  const toggleAllImages = () => {
-    const allImages = [
-      ...(farmer.farmerImages || []),
-      ...(farmer.equipments?.flatMap(eq => [
-        ...(eq.images || []),
-        ...(eq.attachments?.flatMap(att => att.images || []) || [])
-      ]) || [])
-    ].map(img => img.toString());
-
-    setSelectedImages(prev => 
-      prev.length === allImages.length ? [] : allImages
-    );
-  };
-
-  // 선택된 이미지 일괄 다운로드
-  const handleBulkDownload = async () => {
-    if (selectedImages.length === 0) {
+  // 이미지 다운로드 함수
+  const handleDownload = async () => {
+    if (!selectedImage) {
       alert('다운로드할 이미지를 선택해주세요.');
       return;
     }
 
-    try {
-      // 각 이미지를 새 창에서 열기
-      selectedImages.forEach((imageUrl, index) => {
-        window.open(imageUrl, '_blank');
-      });
-      
-      alert('선택한 이미지들이 새 창에서 열렸습니다. 각 이미지를 우클릭하여 저장하실 수 있습니다.');
-    } catch (error) {
-      console.error('이미지 다운로드 중 오류 발생:', error);
-      alert('이미지 다운로드에 실패했습니다.');
-    }
+    const link = document.createElement('a');
+    link.href = selectedImage;
+    link.download = 'image.jpg';  // 브라우저가 자동으로 "다른 이름으로 저장" 대화상자를 표시합니다
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleEdit = () => {
@@ -388,32 +364,18 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                 <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold">이미지 갤러리</h2>
-                    <div className="flex items-center gap-2 print:hidden">
-                      <button
-                        onClick={toggleAllImages}
-                        className="text-gray-600 hover:text-gray-800 text-sm px-3 py-1 border rounded"
-                      >
-                        {selectedImages.length === 0 ? '전체 선택' : '전체 해제'}
-                      </button>
-                      <button
-                        onClick={() => setSelectedImages([])}
-                        className="text-gray-600 hover:text-gray-800 text-sm"
-                      >
-                        선택 해제
-                      </button>
-                      <button
-                        onClick={handleBulkDownload}
-                        disabled={selectedImages.length === 0}
-                        className={`flex items-center gap-2 px-4 py-2 rounded ${
-                          selectedImages.length > 0
-                            ? 'bg-blue-500 text-white hover:bg-blue-600'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
-                      >
-                        <FaDownload />
-                        선택 이미지 다운로드 ({selectedImages.length})
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleDownload}
+                      disabled={!selectedImage}
+                      className={`flex items-center gap-2 px-4 py-2 rounded ${
+                        selectedImage
+                          ? 'bg-blue-500 text-white hover:bg-blue-600'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      <FaDownload className="w-4 h-4" />
+                      <span>이미지 저장</span>
+                    </button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:grid-cols-4">
                     {/* 농민 이미지 */}
@@ -421,9 +383,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                       <div 
                         key={`farmer-${index}`} 
                         className={`farmer-image aspect-[4/3] relative group cursor-pointer ${
-                          selectedImages.includes(image.toString()) ? 'ring-2 ring-blue-500' : ''
+                          selectedImage === image.toString() ? 'ring-2 ring-blue-500' : ''
                         }`}
-                        onClick={() => toggleImageSelection(image.toString())}
+                        onClick={() => handleImageClick(image.toString())}
                       >
                         <Image
                           src={image.toString()}
@@ -436,15 +398,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           loading="eager"
                         />
                         <div className={`absolute inset-0 bg-black bg-opacity-50 transition-opacity ${
-                          selectedImages.includes(image.toString()) ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
+                          selectedImage === image.toString() ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
                         }`}>
                           <div className="absolute top-2 right-2">
                             <div className={`w-6 h-6 border-2 rounded ${
-                              selectedImages.includes(image.toString())
+                              selectedImage === image.toString()
                                 ? 'border-blue-500 bg-blue-500'
                                 : 'border-white'
                             }`}>
-                              {selectedImages.includes(image.toString()) && (
+                              {selectedImage === image.toString() && (
                                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>
@@ -463,9 +425,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           <div 
                             key={`eq-${eqIndex}-${imgIndex}`} 
                             className={`farmer-image aspect-[4/3] relative group cursor-pointer ${
-                              selectedImages.includes(image.toString()) ? 'ring-2 ring-blue-500' : ''
+                              selectedImage === image.toString() ? 'ring-2 ring-blue-500' : ''
                             }`}
-                            onClick={() => toggleImageSelection(image.toString())}
+                            onClick={() => handleImageClick(image.toString())}
                           >
                             <Image
                               src={image.toString()}
@@ -478,15 +440,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                               loading="eager"
                             />
                             <div className={`absolute inset-0 bg-black bg-opacity-50 transition-opacity ${
-                              selectedImages.includes(image.toString()) ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
+                              selectedImage === image.toString() ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
                             }`}>
                               <div className="absolute top-2 right-2">
                                 <div className={`w-6 h-6 border-2 rounded ${
-                                  selectedImages.includes(image.toString())
+                                  selectedImage === image.toString()
                                     ? 'border-blue-500 bg-blue-500'
                                     : 'border-white'
                                 }`}>
-                                  {selectedImages.includes(image.toString()) && (
+                                  {selectedImage === image.toString() && (
                                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                     </svg>
@@ -506,9 +468,9 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                             <div 
                               key={`att-${eqIndex}-${attIndex}-${imgIndex}`} 
                               className={`farmer-image aspect-[4/3] relative group cursor-pointer ${
-                                selectedImages.includes(image.toString()) ? 'ring-2 ring-blue-500' : ''
+                                selectedImage === image.toString() ? 'ring-2 ring-blue-500' : ''
                               }`}
-                              onClick={() => toggleImageSelection(image.toString())}
+                              onClick={() => handleImageClick(image.toString())}
                             >
                               <Image
                                 src={image.toString()}
@@ -521,15 +483,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                                 loading="eager"
                               />
                               <div className={`absolute inset-0 bg-black bg-opacity-50 transition-opacity ${
-                                selectedImages.includes(image.toString()) ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
+                                selectedImage === image.toString() ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
                               }`}>
                                 <div className="absolute top-2 right-2">
                                   <div className={`w-6 h-6 border-2 rounded ${
-                                    selectedImages.includes(image.toString())
+                                    selectedImage === image.toString()
                                       ? 'border-blue-500 bg-blue-500'
                                       : 'border-white'
                                   }`}>
-                                    {selectedImages.includes(image.toString()) && (
+                                    {selectedImage === image.toString() && (
                                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                       </svg>
