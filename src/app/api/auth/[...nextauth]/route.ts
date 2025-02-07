@@ -12,6 +12,20 @@ const handler = NextAuth({
     signIn: '/login',
     error: '/login',
   },
+  session: {
+    strategy: 'jwt',
+  },
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      return true;
+    },
+    async session({ session, token }) {
+      return session;
+    },
+    async jwt({ token, user, account, profile }) {
+      return token;
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
 });
 
