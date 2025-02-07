@@ -360,12 +360,107 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
     }
   };
 
-  // 이미지 선택 함수
+  // 이미지 클릭 핸들러 수정
   const handleImageClick = (imageUrl: string, title: string) => {
-    setSelectedImage(imageUrl);
-    setSelectedImageTitle(title);
-    setDownloadModalOpen(true);
+    const width = 800;
+    const height = 600;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+
+    // 팝업 창 열기
+    const popup = window.open('', '_blank', 
+      `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`
+    );
+
+    if (popup) {
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${title}</title>
+            <style>
+              body {
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                background: #f3f4f6;
+                font-family: Arial, sans-serif;
+              }
+              .image-container {
+                max-width: 100%;
+                margin-bottom: 20px;
+                background: white;
+                padding: 10px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 4px;
+              }
+              .download-button {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 16px;
+              }
+              .download-button:hover {
+                background: #2563eb;
+              }
+              .download-button:disabled {
+                background: #93c5fd;
+                cursor: not-allowed;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="image-container">
+              <img src="${imageURLs[imageUrl] || imageUrl}" alt="${title}" />
+            </div>
+            <button 
+              class="download-button" 
+              onclick="window.opener.postMessage({ type: 'downloadImage', imageUrl: '${imageUrl}', title: '${title}' }, '*')"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 12l-4-4h2.5V3h3v5H12L8 12z"/>
+                <path d="M14 13v1H2v-1h12z"/>
+              </svg>
+              다운로드
+            </button>
+          </body>
+        </html>
+      `);
+      popup.document.close();
+    }
   };
+
+  // 팝업 창에서의 메시지 수신 처리
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data.type === 'downloadImage') {
+        const { imageUrl, title } = event.data;
+        try {
+          const url = imageURLs[imageUrl] || imageUrl;
+          await handleImageDownload(url, title);
+        } catch (error) {
+          console.error('이미지 다운로드 중 오류 발생:', error);
+          alert('이미지 다운로드에 실패했습니다.');
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [imageURLs, handleImageDownload]);
 
   const handleEdit = () => {
     router.push(`/farmers/${farmer.id}/edit`);
@@ -698,14 +793,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                       {farmer.farmerImages?.map((image, index) => (
                         <div 
                           key={`farmer-${index}`} 
-                          className="farmer-image print:mb-4"
+                          className="farmer-image print:mb-4 cursor-pointer"
+                          onClick={() => handleImageClick(image.toString(), `농민 이미지 ${index + 1}`)}
                         >
                           <div className="aspect-[4/3] relative">
                             {imageURLs[image.toString()] ? (
                               <img
                                 src={imageURLs[image.toString()]}
                                 alt={`농민 이미지 ${index + 1}`}
-                                className="rounded-lg object-cover w-full h-full"
+                                className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
@@ -723,14 +819,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           {equipment.images?.map((image, imgIndex) => (
                             <div 
                               key={`eq-${eqIndex}-${imgIndex}`} 
-                              className="farmer-image print:mb-4"
+                              className="farmer-image print:mb-4 cursor-pointer"
+                              onClick={() => handleImageClick(image.toString(), `${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`)}
                             >
                               <div className="aspect-[4/3] relative">
                                 {imageURLs[image.toString()] ? (
                                   <img
                                     src={imageURLs[image.toString()]}
                                     alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
-                                    className="rounded-lg object-cover w-full h-full"
+                                    className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity"
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
@@ -749,14 +846,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                             attachment.images?.map((image, imgIndex) => (
                               <div 
                                 key={`att-${eqIndex}-${attIndex}-${imgIndex}`} 
-                                className="farmer-image print:mb-4"
+                                className="farmer-image print:mb-4 cursor-pointer"
+                                onClick={() => handleImageClick(image.toString(), `${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`)}
                               >
                                 <div className="aspect-[4/3] relative">
                                   {imageURLs[image.toString()] ? (
                                     <img
                                       src={imageURLs[image.toString()]}
                                       alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
-                                      className="rounded-lg object-cover w-full h-full"
+                                      className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity"
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
