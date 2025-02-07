@@ -170,7 +170,8 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
           const imageRef = ref(storage, image.toString());
           const url = await getDownloadURL(imageRef);
           urls[image.toString()] = url;
-          base64s[image.toString()] = await convertToBase64(url);
+          // URL을 키로 사용하여 Base64 데이터 저장
+          base64s[url] = await convertToBase64(url);
         } catch (error) {
           console.error('이미지 URL 가져오기 실패:', error);
         }
@@ -183,7 +184,8 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
             const imageRef = ref(storage, image.toString());
             const url = await getDownloadURL(imageRef);
             urls[image.toString()] = url;
-            base64s[image.toString()] = await convertToBase64(url);
+            // URL을 키로 사용하여 Base64 데이터 저장
+            base64s[url] = await convertToBase64(url);
           } catch (error) {
             console.error('이미지 URL 가져오기 실패:', error);
           }
@@ -196,7 +198,8 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
               const imageRef = ref(storage, image.toString());
               const url = await getDownloadURL(imageRef);
               urls[image.toString()] = url;
-              base64s[image.toString()] = await convertToBase64(url);
+              // URL을 키로 사용하여 Base64 데이터 저장
+              base64s[url] = await convertToBase64(url);
             } catch (error) {
               console.error('이미지 URL 가져오기 실패:', error);
             }
@@ -234,13 +237,15 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
             const images = clonedDoc.getElementsByTagName('img');
             for (let i = 0; i < images.length; i++) {
               const img = images[i];
-              const originalSrc = img.getAttribute('data-original-src') || img.getAttribute('src');
-              if (originalSrc && base64Images[originalSrc]) {
-                img.src = base64Images[originalSrc];
+              const src = img.getAttribute('src');
+              if (src && base64Images[src]) {
+                img.src = base64Images[src];
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                img.removeAttribute('crossorigin');
+              } else {
+                console.warn('Base64 이미지를 찾을 수 없음:', src);
               }
-              img.style.maxWidth = '100%';
-              img.style.height = 'auto';
-              img.removeAttribute('crossorigin');
             }
           }
         },
