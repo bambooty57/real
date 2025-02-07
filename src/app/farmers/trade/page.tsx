@@ -10,6 +10,7 @@ import { Equipment as BaseEquipment } from '@/types/farmer'
 import { MainCrop, FarmingTypes } from '@/types/farmer'
 import { MANUFACTURERS } from '@/constants/manufacturers'
 import FarmerDetailModal from '@/components/FarmerDetailModal'
+import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
 
 interface Equipment extends BaseEquipment {
   tradeStatus?: string;
@@ -520,7 +521,7 @@ export default function TradePage() {
           {Array.isArray(filteredEquipments) && filteredEquipments.map(({ farmer, equipment }, index) => {
             if (!farmer || !equipment) return null;
             
-            const equipmentType = Object.entries(equipmentTypeMap).find(([code, _]) => code === equipment.type)?.[1] || equipment.type;
+            const equipmentType = getKoreanEquipmentType(equipment.type);
             const manufacturer = getKoreanManufacturer(equipment.manufacturer || '');
             
             return (
