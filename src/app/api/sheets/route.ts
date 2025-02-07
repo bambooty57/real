@@ -162,10 +162,11 @@ export async function POST(req: Request) {
     }
 
     // 3. 서비스 계정 인증 설정
+    const serviceAccountKey = JSON.parse(GOOGLE_SERVICE_ACCOUNT_KEY);
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: GOOGLE_CLIENT_EMAIL,
-        private_key: GOOGLE_SERVICE_ACCOUNT_KEY.replace(/\\n/g, '\n'),
+        private_key: serviceAccountKey.private_key,
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
@@ -211,7 +212,7 @@ export async function POST(req: Request) {
           requestBody: { values: chunk },
         });
 
-        // 청크 처리 후 잠시 대기
+        // 청크 처리 후 대기 시간 복구
         await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error: any) {
