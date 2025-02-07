@@ -185,7 +185,6 @@ export default function TradePage() {
       const farmersData = querySnapshot.docs
         .map(doc => {
           const data = doc.data();
-          console.log('Farmer raw data:', data); // 원본 데이터 로깅
           
           const farmer = {
             id: doc.id,
@@ -215,8 +214,6 @@ export default function TradePage() {
             }
           } as Farmer;
           
-          console.log('Processed farmer:', farmer); // 가공된 데이터 로깅
-          
           farmer.equipments?.forEach(eq => {
             if (eq.manufacturer) {
               manufacturers.add(eq.manufacturer);
@@ -224,9 +221,8 @@ export default function TradePage() {
           });
           return farmer;
         })
-        .filter(farmer => farmer.equipments?.some(eq => eq.tradeType === 'sale' || eq.tradeType === 'purchase'))
-      
-      console.log('\n=== 농민 데이터 ===\n', farmersData);
+        .filter(farmer => farmer.equipments?.some(eq => eq.tradeType === 'sale' || eq.tradeType === 'purchase'));
+
       setFarmers(farmersData)
     } catch (error) {
       console.error('Error fetching farmers:', error)

@@ -141,6 +141,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   if (!farmer) return null;
 
   const router = useRouter();
+  const [selectedImages, setSelectedImages] = useState<{ url: string; title: string }[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedImageTitle, setSelectedImageTitle] = useState('');
@@ -354,6 +355,11 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
+
+      // 다운로드 완료 후 상태 초기화
+      setDownloadModalOpen(false);
+      setSelectedImage(null);
+      setSelectedImageTitle('');
     } catch (error) {
       console.error('이미지 다운로드 중 오류 발생:', error);
       alert('이미지 다운로드에 실패했습니다.');
@@ -461,6 +467,48 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [imageURLs, handleImageDownload]);
+
+  // 이미지 선택 핸들러 추가
+  const handleImageSelect = (imageUrl: string, title: string) => {
+    setSelectedImages(prev => {
+      const isSelected = prev.some(img => img.url === imageUrl);
+      if (isSelected) {
+        return prev.filter(img => img.url !== imageUrl);
+      } else {
+        return [...prev, { url: imageUrl, title }];
+      }
+    });
+  };
+
+  // 선택된 이미지 일괄 다운로드
+  const handleBulkDownload = async () => {
+    try {
+      for (const image of selectedImages) {
+        const url = imageURLs[image.url] || image.url;
+        const jpgBlob = await convertToJPG(url);
+        const downloadUrl = URL.createObjectURL(jpgBlob);
+        
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${image.title}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+        
+        // 다운로드 간 약간의 딜레이를 줘서 브라우저 부하 방지
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      // 다운로드 완료 후 상태 초기화
+      setSelectedImages([]);
+      setDownloadModalOpen(false);
+      setSelectedImage(null);
+      setSelectedImageTitle('');
+    } catch (error) {
+      console.error('이미지 다운로드 중 오류 발생:', error);
+      alert('이미지 다운로드에 실패했습니다.');
+    }
+  };
 
   const handleEdit = () => {
     router.push(`/farmers/${farmer.id}/edit`);
@@ -787,22 +835,41 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                   <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none">
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-lg font-semibold">이미지 갤러리</h2>
+                      {selectedImages.length > 0 && (
+                        <button
+                          onClick={handleBulkDownload}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                        >
+                          <FaDownload className="w-4 h-4" />
+                          선택한 이미지 다운로드 ({selectedImages.length}개)
+                        </button>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:block print:space-y-4">
                       {/* 농민 이미지 */}
                       {farmer.farmerImages?.map((image, index) => (
                         <div 
                           key={`farmer-${index}`} 
-                          className="farmer-image print:mb-4 cursor-pointer"
-                          onClick={() => handleImageClick(image.toString(), `농민 이미지 ${index + 1}`)}
+                          className="farmer-image print:mb-4 relative group"
                         >
                           <div className="aspect-[4/3] relative">
                             {imageURLs[image.toString()] ? (
-                              <img
-                                src={imageURLs[image.toString()]}
-                                alt={`농민 이미지 ${index + 1}`}
-                                className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity"
-                              />
+                              <>
+                                <div className="absolute top-2 left-2 z-10">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedImages.some(img => img.url === image.toString())}
+                                    onChange={() => handleImageSelect(image.toString(), `농민 이미지 ${index + 1}`)}
+                                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                </div>
+                                <img
+                                  src={imageURLs[image.toString()]}
+                                  alt={`농민 이미지 ${index + 1}`}
+                                  className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity cursor-pointer"
+                                  onClick={() => handleImageClick(image.toString(), `농민 이미지 ${index + 1}`)}
+                                />
+                              </>
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
                                 <span className="text-gray-400">이미지 로딩중...</span>
@@ -819,16 +886,32 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                           {equipment.images?.map((image, imgIndex) => (
                             <div 
                               key={`eq-${eqIndex}-${imgIndex}`} 
-                              className="farmer-image print:mb-4 cursor-pointer"
-                              onClick={() => handleImageClick(image.toString(), `${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`)}
+                              className="farmer-image print:mb-4 relative group"
                             >
                               <div className="aspect-[4/3] relative">
                                 {imageURLs[image.toString()] ? (
-                                  <img
-                                    src={imageURLs[image.toString()]}
-                                    alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
-                                    className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity"
-                                  />
+                                  <>
+                                    <div className="absolute top-2 left-2 z-10">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedImages.some(img => img.url === image.toString())}
+                                        onChange={() => handleImageSelect(
+                                          image.toString(),
+                                          `${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`
+                                        )}
+                                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                      />
+                                    </div>
+                                    <img
+                                      src={imageURLs[image.toString()]}
+                                      alt={`${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`}
+                                      className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity cursor-pointer"
+                                      onClick={() => handleImageClick(
+                                        image.toString(),
+                                        `${getKoreanEquipmentType(equipment.type)} 이미지 ${imgIndex + 1}`
+                                      )}
+                                    />
+                                  </>
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
                                     <span className="text-gray-400">이미지 로딩중...</span>
@@ -846,16 +929,32 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                             attachment.images?.map((image, imgIndex) => (
                               <div 
                                 key={`att-${eqIndex}-${attIndex}-${imgIndex}`} 
-                                className="farmer-image print:mb-4 cursor-pointer"
-                                onClick={() => handleImageClick(image.toString(), `${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`)}
+                                className="farmer-image print:mb-4 relative group"
                               >
                                 <div className="aspect-[4/3] relative">
                                   {imageURLs[image.toString()] ? (
-                                    <img
-                                      src={imageURLs[image.toString()]}
-                                      alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
-                                      className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity"
-                                    />
+                                    <>
+                                      <div className="absolute top-2 left-2 z-10">
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedImages.some(img => img.url === image.toString())}
+                                          onChange={() => handleImageSelect(
+                                            image.toString(),
+                                            `${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`
+                                          )}
+                                          className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                      </div>
+                                      <img
+                                        src={imageURLs[image.toString()]}
+                                        alt={`${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`}
+                                        className="rounded-lg object-cover w-full h-full hover:opacity-90 transition-opacity cursor-pointer"
+                                        onClick={() => handleImageClick(
+                                          image.toString(),
+                                          `${getKoreanEquipmentType(equipment.type)}의 ${attachment.type} 이미지 ${imgIndex + 1}`
+                                        )}
+                                      />
+                                    </>
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
                                       <span className="text-gray-400">이미지 로딩중...</span>
