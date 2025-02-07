@@ -61,7 +61,7 @@ export default function ForkliftInfo({ equipment, onEquipmentChange }: ForkliftI
 
       {/* 마스트 타입 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">마스트 타입 *</label>
+        <label className="block text-sm font-medium text-gray-700">마스트 타입</label>
         <select
           value={equipment.mastType || ''}
           onChange={(e) => {
@@ -71,7 +71,6 @@ export default function ForkliftInfo({ equipment, onEquipmentChange }: ForkliftI
             });
           }}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          required
         >
           <option value="">선택하세요</option>
           {FORKLIFT_MAST_TYPES.map(({ value, label }) => (
@@ -84,7 +83,7 @@ export default function ForkliftInfo({ equipment, onEquipmentChange }: ForkliftI
 
       {/* 타이어 타입 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">타이어 타입 *</label>
+        <label className="block text-sm font-medium text-gray-700">타이어 타입</label>
         <select
           value={equipment.tireType || ''}
           onChange={(e) => {
@@ -94,7 +93,6 @@ export default function ForkliftInfo({ equipment, onEquipmentChange }: ForkliftI
             });
           }}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          required
         >
           <option value="">선택하세요</option>
           {FORKLIFT_TIRE_TYPES.map(({ value, label }) => (

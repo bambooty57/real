@@ -25,8 +25,6 @@ export interface Equipment {
 
   // 콤바인 관련
   cuttingType?: 'binding' | 'spreading';
-  threshingType?: 'axial' | 'mixed';
-  grainTankCapacity?: string;
 
   // 지게차 관련
   maxLiftHeight?: string;

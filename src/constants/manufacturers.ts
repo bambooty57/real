@@ -130,11 +130,6 @@ export const COMBINE_CUTTING_TYPES = [
   { value: 'spreading', label: '산취형' }
 ] as const;
 
-export const COMBINE_THRESHING_TYPES = [
-  { value: 'axial', label: '축류식' },
-  { value: 'mixed', label: '혼합식' }
-] as const;
-
 export const TRANSPLANTER_TYPES = [
   { value: 'riding', label: '승용' },
   { value: 'walking', label: '보행' }
