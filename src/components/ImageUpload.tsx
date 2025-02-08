@@ -46,7 +46,7 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
     if (!file) return
 
     const auth = getAuth();
-    // 인증 상태 체크
+    // 인증 상태 체크 및 토큰 갱신
     if (!auth.currentUser) {
       console.log('Auth Check Failed:', {
         currentUser: auth.currentUser,
@@ -63,6 +63,10 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
     }
 
     try {
+      // 토큰 갱신
+      const token = await auth.currentUser.getIdToken(true);
+      console.log('Token refreshed:', !!token);
+
       setUploading(true)
       
       // 미리보기 생성
@@ -86,17 +90,19 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
         authState: {
           uid: auth.currentUser?.uid,
           email: auth.currentUser?.email,
-          token: await auth.currentUser?.getIdToken()
+          emailVerified: auth.currentUser?.emailVerified,
+          token: token.substring(0, 10) + '...'
         }
       })
       
       const snapshot = await uploadBytes(storageRef, file)
+      const downloadURL = await getDownloadURL(snapshot.ref)
+      
       console.log('Upload Success:', {
         path: snapshot.ref.fullPath,
-        downloadUrl: await getDownloadURL(snapshot.ref)
+        downloadUrl: downloadURL
       })
       
-      const downloadURL = await getDownloadURL(snapshot.ref)
       onUploadComplete(downloadURL)
       toast.success('이미지가 업로드되었습니다.')
       
@@ -107,7 +113,11 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
         serverResponse: error.serverResponse,
         name: error.name
       })
-      toast.error(error?.message || '이미지 업로드 중 오류가 발생했습니다.')
+      if (error.code === 'storage/unauthorized') {
+        toast.error('이메일 인증이 필요합니다. 이메일을 확인해주세요.')
+      } else {
+        toast.error(error?.message || '이미지 업로드 중 오류가 발생했습니다.')
+      }
     } finally {
       setUploading(false)
     }
