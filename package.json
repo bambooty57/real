@@ -43,8 +43,8 @@
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
-    "@types/node": "^20.17.14",
-    "@types/react": "^18",
+    "@types/node": "^20.17.16",
+    "@types/react": "^18.3.18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
     "postcss": "^8",

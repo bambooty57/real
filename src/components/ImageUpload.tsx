@@ -5,7 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage, auth } from '@/lib/firebase'
 import Image from 'next/image'
 import { toast } from 'react-hot-toast'
-import { onAuthStateChanged } from 'firebase/auth'
+import { onAuthStateChanged, getAuth } from 'firebase/auth'
 
 interface ImageUploadProps {
   farmerId: string
@@ -21,29 +21,39 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
+    // 인증 상태 변경 감지
+    const auth = getAuth();
+    console.log('Current Auth State:', {
+      currentUser: auth.currentUser,
+      uid: auth.currentUser?.uid,
+      isAuthenticated: !!auth.currentUser
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user)
+      setIsAuthenticated(!!user);
       console.log('Auth State Changed:', {
-        isAuthenticated: !!user,
-        userId: user?.uid,
+        user: !!user,
+        uid: user?.uid,
         email: user?.email
-      })
-    })
-    return () => unsubscribe()
-  }, [])
+      });
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    const auth = getAuth();
     // 인증 상태 체크
-    if (!isAuthenticated || !auth.currentUser) {
+    if (!auth.currentUser) {
       console.log('Auth Check Failed:', {
-        isAuthenticated,
-        currentUser: auth.currentUser?.uid
-      })
-      toast.error('로그인이 필요합니다.')
-      return
+        currentUser: auth.currentUser,
+        isAuthenticated
+      });
+      toast.error('로그인이 필요합니다.');
+      return;
     }
 
     // 파일 크기 체크
@@ -76,7 +86,7 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
         authState: {
           uid: auth.currentUser?.uid,
           email: auth.currentUser?.email,
-          isAuthenticated
+          token: await auth.currentUser?.getIdToken()
         }
       })
       

@@ -82,10 +82,10 @@ importers:
         specifier: ^2.0.7
         version: 2.0.7
       '@types/node':
-        specifier: ^20.17.14
+        specifier: ^20.17.16
         version: 20.17.16
       '@types/react':
-        specifier: ^18
+        specifier: ^18.3.18
         version: 18.3.18
       '@types/react-dom':
         specifier: ^18
