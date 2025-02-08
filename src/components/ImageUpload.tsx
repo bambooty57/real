@@ -5,7 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage, auth } from '@/lib/firebase'
 import Image from 'next/image'
 import { toast } from 'react-hot-toast'
-import { onAuthStateChanged, getAuth } from 'firebase/auth'
+import { onAuthStateChanged, getAuth, sendEmailVerification } from 'firebase/auth'
 
 interface ImageUploadProps {
   farmerId: string
@@ -21,21 +21,35 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    // 인증 상태 변경 감지
     const auth = getAuth();
-    console.log('Current Auth State:', {
-      currentUser: auth.currentUser,
+    console.log('[Auth Debug] Initial State:', {
+      currentUser: auth.currentUser?.email,
+      isAuthenticated: !!auth.currentUser,
+      emailVerified: auth.currentUser?.emailVerified,
       uid: auth.currentUser?.uid,
-      isAuthenticated: !!auth.currentUser
+      providerData: auth.currentUser?.providerData
     });
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setIsAuthenticated(!!user);
-      console.log('Auth State Changed:', {
-        user: !!user,
+      console.log('[Auth Debug] State Changed:', {
+        user: user?.email,
+        isAuthenticated: !!user,
+        emailVerified: user?.emailVerified,
         uid: user?.uid,
-        email: user?.email
+        providerData: user?.providerData
       });
+
+      if (user && !user.emailVerified) {
+        console.log('[Auth Debug] Email not verified, sending verification email');
+        toast.error('이메일 인증이 필요합니다. 인증 메일을 확인해주세요.');
+        try {
+          await sendEmailVerification(user);
+          toast.success('인증 메일이 재전송되었습니다.');
+        } catch (error) {
+          console.error('[Auth Debug] Verification email failed:', error);
+        }
+      }
     });
 
     return () => unsubscribe();
@@ -46,13 +60,31 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
     if (!file) return
 
     const auth = getAuth();
-    // 인증 상태 체크 및 토큰 갱신
-    if (!auth.currentUser) {
-      console.log('Auth Check Failed:', {
-        currentUser: auth.currentUser,
-        isAuthenticated
-      });
+    const user = auth.currentUser;
+    
+    console.log('[Upload Debug] Starting upload:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      user: user?.email,
+      emailVerified: user?.emailVerified
+    });
+    
+    if (!user) {
+      console.log('[Auth Debug] No user found');
       toast.error('로그인이 필요합니다.');
+      return;
+    }
+
+    if (!user.emailVerified) {
+      console.log('[Auth Debug] Email not verified');
+      toast.error('이메일 인증이 필요합니다. 인증 메일을 확인해주세요.');
+      try {
+        await sendEmailVerification(user);
+        toast.success('인증 메일이 재전송되었습니다.');
+      } catch (error) {
+        console.error('[Auth Debug] Verification email failed:', error);
+      }
       return;
     }
 
@@ -64,7 +96,7 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
 
     try {
       // 토큰 갱신
-      const token = await auth.currentUser.getIdToken(true);
+      const token = await user.getIdToken(true);
       console.log('Token refreshed:', !!token);
 
       setUploading(true)
@@ -88,9 +120,9 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
         category,
         fileName: cleanFileName,
         authState: {
-          uid: auth.currentUser?.uid,
-          email: auth.currentUser?.email,
-          emailVerified: auth.currentUser?.emailVerified,
+          uid: user.uid,
+          email: user.email,
+          emailVerified: user.emailVerified,
           token: token.substring(0, 10) + '...'
         }
       })
