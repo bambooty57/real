@@ -8,14 +8,20 @@ import { GoogleAuthProvider } from 'firebase/auth';
 
 // Firebase 설정
 const firebaseConfig = {
-  apiKey: "AIzaSyBeyOizoucfFuq5LBnqAjglByPisZrhotk",
-  authDomain: "real-81ba6.firebaseapp.com",
-  projectId: "real-81ba6",
-  storageBucket: "real-81ba6.firebasestorage.app",
-  messagingSenderId: "858648154763",
-  appId: "1:858648154763:web:22b17451a05339ccfafa8e",
-  measurementId: "G-QTHG8GX6EE"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
+
+console.log('Firebase Config:', {
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  storageBucket: firebaseConfig.storageBucket
+});
 
 // Firebase 초기화를 한 번만 수행
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
@@ -25,6 +31,12 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
+
+console.log('Firebase Initialized:', {
+  isAuthInitialized: !!auth,
+  isStorageInitialized: !!storage,
+  currentUser: auth.currentUser?.uid
+});
 
 export { db, storage, auth, googleProvider };
 

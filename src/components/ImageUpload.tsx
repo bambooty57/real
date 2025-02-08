@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage, auth } from '@/lib/firebase'
 import Image from 'next/image'
 import { toast } from 'react-hot-toast'
+import { onAuthStateChanged } from 'firebase/auth'
 
 interface ImageUploadProps {
   farmerId: string
@@ -17,13 +18,30 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 export default function ImageUpload({ farmerId, category, onUploadComplete }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user)
+      console.log('Auth State Changed:', {
+        isAuthenticated: !!user,
+        userId: user?.uid,
+        email: user?.email
+      })
+    })
+    return () => unsubscribe()
+  }, [])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     // 인증 상태 체크
-    if (!auth.currentUser) {
+    if (!isAuthenticated || !auth.currentUser) {
+      console.log('Auth Check Failed:', {
+        isAuthenticated,
+        currentUser: auth.currentUser?.uid
+      })
       toast.error('로그인이 필요합니다.')
       return
     }
@@ -47,17 +65,39 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
       // Firebase Storage에 직접 업로드
       const timestamp = Date.now()
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
-      const storageRef = ref(storage, `farmers/${farmerId}/${category}/${timestamp}-${cleanFileName}`)
+      const path = `farmers/${farmerId}/${category}/${timestamp}-${cleanFileName}`
+      const storageRef = ref(storage, path)
+      
+      console.log('Upload Attempt:', {
+        path,
+        farmerId,
+        category,
+        fileName: cleanFileName,
+        authState: {
+          uid: auth.currentUser?.uid,
+          email: auth.currentUser?.email,
+          isAuthenticated
+        }
+      })
       
       const snapshot = await uploadBytes(storageRef, file)
-      const downloadURL = await getDownloadURL(snapshot.ref)
+      console.log('Upload Success:', {
+        path: snapshot.ref.fullPath,
+        downloadUrl: await getDownloadURL(snapshot.ref)
+      })
       
+      const downloadURL = await getDownloadURL(snapshot.ref)
       onUploadComplete(downloadURL)
       toast.success('이미지가 업로드되었습니다.')
       
-    } catch (error) {
-      console.error('Error uploading image:', error)
-      toast.error('이미지 업로드 중 오류가 발생했습니다.')
+    } catch (error: any) {
+      console.error('Upload Error:', {
+        code: error.code,
+        message: error.message,
+        serverResponse: error.serverResponse,
+        name: error.name
+      })
+      toast.error(error?.message || '이미지 업로드 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
     }
@@ -72,7 +112,7 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
             type="file"
             accept="image/*"
             onChange={handleFileChange}
-            disabled={uploading}
+            disabled={uploading || !isAuthenticated}
             className="hidden"
           />
         </label>
