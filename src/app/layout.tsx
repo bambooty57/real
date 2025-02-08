@@ -7,6 +7,7 @@ import SessionProvider from './components/SessionProvider'
 import { authOptions } from '@/auth'
 import { Toaster } from 'react-hot-toast'
 import { SearchFilterProvider } from '@/contexts/SearchFilterContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -33,12 +34,14 @@ export default async function RootLayout({
       </head>
       <body className={`${inter.className} bg-white`}>
         <SessionProvider session={session}>
-          <SearchFilterProvider>
-            <Navigation />
-            <main className="container mx-auto px-4 py-8">
-              {children}
-            </main>
-          </SearchFilterProvider>
+          <AuthProvider>
+            <SearchFilterProvider>
+              <Navigation />
+              <main className="container mx-auto px-4 py-8">
+                {children}
+              </main>
+            </SearchFilterProvider>
+          </AuthProvider>
         </SessionProvider>
         <Toaster />
       </body>

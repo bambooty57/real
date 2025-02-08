@@ -7,17 +7,18 @@ const BUCKET_NAME = 'real-81ba6.firebasestorage.app';
 // Firebase Admin SDK 초기화
 if (!admin.apps.length) {
   try {
-    const base64Credentials = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!base64Credentials) {
+    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountKey) {
       throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set');
     }
 
     let serviceAccount;
     try {
-      const decodedCredentials = Buffer.from(base64Credentials, 'base64').toString();
-      serviceAccount = JSON.parse(decodedCredentials);
+      // base64로 인코딩된 문자열을 디코딩
+      const decodedKey = Buffer.from(serviceAccountKey, 'base64').toString('utf-8');
+      serviceAccount = JSON.parse(decodedKey);
     } catch (error) {
-      throw new Error('Failed to decode or parse service account credentials: ' + (error instanceof Error ? error.message : String(error)));
+      throw new Error('Failed to parse service account credentials: ' + (error instanceof Error ? error.message : String(error)));
     }
 
     if (!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {

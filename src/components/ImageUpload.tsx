@@ -6,6 +6,7 @@ import { storage, auth } from '@/lib/firebase'
 import Image from 'next/image'
 import { toast } from 'react-hot-toast'
 import { onAuthStateChanged, getAuth, sendEmailVerification } from 'firebase/auth'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface ImageUploadProps {
   farmerId: string
@@ -18,49 +19,32 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 export default function ImageUpload({ farmerId, category, onUploadComplete }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { user } = useAuth();
 
   useEffect(() => {
-    const auth = getAuth();
-    console.log('[Auth Debug] Initial State:', {
-      currentUser: auth.currentUser?.email,
-      isAuthenticated: !!auth.currentUser,
-      emailVerified: auth.currentUser?.emailVerified,
-      uid: auth.currentUser?.uid,
-      providerData: auth.currentUser?.providerData
+    console.log('[Auth Debug] Component Mount:', {
+      user: user?.email,
+      isAuthenticated: !!user,
+      emailVerified: user?.emailVerified,
+      uid: user?.uid
     });
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setIsAuthenticated(!!user);
-      console.log('[Auth Debug] State Changed:', {
-        user: user?.email,
-        isAuthenticated: !!user,
-        emailVerified: user?.emailVerified,
-        uid: user?.uid,
-        providerData: user?.providerData
-      });
-
-      if (user && !user.emailVerified) {
-        console.log('[Auth Debug] Email not verified, sending verification email');
-        toast.error('이메일 인증이 필요합니다. 인증 메일을 확인해주세요.');
-        try {
-          await sendEmailVerification(user);
-          toast.success('인증 메일이 재전송되었습니다.');
-        } catch (error) {
-          console.error('[Auth Debug] Verification email failed:', error);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+    if (user) {
+      user.getIdToken(true)
+        .then(token => {
+          console.log('[Auth Debug] Token refreshed successfully:', {
+            tokenLength: token.length,
+            tokenPrefix: token.substring(0, 10),
+            user: user.email,
+            emailVerified: user.emailVerified
+          });
+        });
+    }
+  }, [user]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    const auth = getAuth();
-    const user = auth.currentUser;
     
     console.log('[Upload Debug] Starting upload:', {
       fileName: file.name,
@@ -164,7 +148,7 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
             type="file"
             accept="image/*"
             onChange={handleFileChange}
-            disabled={uploading || !isAuthenticated}
+            disabled={uploading || !user}
             className="hidden"
           />
         </label>

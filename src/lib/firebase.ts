@@ -32,6 +32,16 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
+// 인증 상태 초기화 대기
+auth.onAuthStateChanged((user) => {
+  console.log('Firebase Auth State Changed:', {
+    isAuthenticated: !!user,
+    email: user?.email,
+    emailVerified: user?.emailVerified,
+    uid: user?.uid
+  });
+});
+
 console.log('Firebase Initialized:', {
   isAuthInitialized: !!auth,
   isStorageInitialized: !!storage,

@@ -162,11 +162,10 @@ export async function POST(req: Request) {
     }
 
     // 3. 서비스 계정 인증 설정
-    const serviceAccountKey = JSON.parse(GOOGLE_SERVICE_ACCOUNT_KEY);
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: GOOGLE_CLIENT_EMAIL,
-        private_key: serviceAccountKey.private_key,
+        private_key: GOOGLE_SERVICE_ACCOUNT_KEY,
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
