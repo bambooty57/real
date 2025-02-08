@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { storage } from '@/lib/firebase'
+import { storage, auth } from '@/lib/firebase'
 import Image from 'next/image'
+import { toast } from 'react-hot-toast'
 
 interface ImageUploadProps {
   farmerId: string
@@ -21,9 +22,15 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
     const file = e.target.files?.[0]
     if (!file) return
 
+    // 인증 상태 체크
+    if (!auth.currentUser) {
+      toast.error('로그인이 필요합니다.')
+      return
+    }
+
     // 파일 크기 체크
     if (file.size > MAX_FILE_SIZE) {
-      alert('파일 크기는 10MB를 초과할 수 없습니다.')
+      toast.error('파일 크기는 10MB를 초과할 수 없습니다.')
       return
     }
 
@@ -46,10 +53,11 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
       const downloadURL = await getDownloadURL(snapshot.ref)
       
       onUploadComplete(downloadURL)
+      toast.success('이미지가 업로드되었습니다.')
       
     } catch (error) {
       console.error('Error uploading image:', error)
-      alert('이미지 업로드 중 오류가 발생했습니다.')
+      toast.error('이미지 업로드 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
     }
