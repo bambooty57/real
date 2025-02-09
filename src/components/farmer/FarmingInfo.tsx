@@ -141,8 +141,8 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
                             type="checkbox"
                             checked={isChecked}
                             onChange={(e) => setFormData((prev: FormData) => {
-                              const currentArray = Array.isArray(prev.mainCrop?.[detailsKey]) 
-                                ? prev.mainCrop[detailsKey] 
+                              const currentArray = Array.isArray(prev.mainCrop?.[detailsKey])
+                                ? prev.mainCrop?.[detailsKey] ?? []
                                 : [];
                               
                               const newArray = e.target.checked
@@ -152,7 +152,7 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
                               return {
                                 ...prev,
                                 mainCrop: {
-                                  ...(prev.mainCrop || {}),
+                                  ...(prev.mainCrop ?? {}),
                                   [detailsKey]: newArray
                                 }
                               };
