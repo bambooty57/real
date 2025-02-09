@@ -13,7 +13,7 @@ if (!admin.apps.length) {
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     });
-    console.log('Firebase Admin SDK initialized successfully');
+    console.log('Firebase Admin SDK initialized successfully with bucket:', process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
     throw error;
