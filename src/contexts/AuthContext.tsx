@@ -65,11 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsAuthenticating(true);
           authAttempts.current += 1;
           
-          const response = await fetch('/api/auth/firebase-token');
-          if (!response.ok) {
+          const token = await getFirebaseToken();
+          if (!token) {
             throw new Error('Failed to get Firebase token');
           }
-          const { token } = await response.json();
           await signInWithCustomToken(auth, token);
           
           // 성공하면 시도 횟수 초기화
@@ -77,21 +76,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error('Firebase auth error:', error);
           if (authAttempts.current >= maxAuthAttempts) {
-            console.log('Max auth attempts reached');
+            console.warn('Max auth attempts reached');
           }
         } finally {
           setIsAuthenticating(false);
         }
       }
 
-      console.log('Auth Context State Changed:', {
-        isAuthenticated: !!firebaseUser,
-        email: firebaseUser?.email,
-        emailVerified: firebaseUser?.emailVerified,
-        uid: firebaseUser?.uid,
-        session: !!session,
-        sessionStatus: status
-      });
+      // 상태가 실제로 변경된 경우에만 로그 출력
+      if (user?.uid !== firebaseUser?.uid || user?.email !== firebaseUser?.email) {
+        console.log('Auth State Changed:', {
+          isAuthenticated: !!firebaseUser,
+          email: firebaseUser?.email,
+          emailVerified: firebaseUser?.emailVerified,
+          uid: firebaseUser?.uid
+        });
+      }
       
       setUser(firebaseUser);
       setLoading(false);
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsubscribe();
       authAttempts.current = 0;
     };
-  }, [session, status, isAuthenticating]);
+  }, [session, status, isAuthenticating, user]);
 
   if (loading) {
     return null;
