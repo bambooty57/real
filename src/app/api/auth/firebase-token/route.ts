@@ -9,6 +9,7 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
+      console.error('No session or email found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -18,11 +19,25 @@ export async function GET() {
       .digest('hex')
       .substring(0, 28); // Firebase UID는 최대 128바이트
 
+    console.log('Creating token for user:', {
+      email: session.user.email,
+      uid: uid
+    });
+
     const token = await adminAuth.createCustomToken(uid);
     
+    if (!token) {
+      console.error('Failed to create token');
+      return NextResponse.json({ error: 'Token creation failed' }, { status: 500 });
+    }
+
+    console.log('Token created successfully');
     return NextResponse.json({ token });
   } catch (error) {
     console.error('Firebase token generation error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Internal Server Error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 } 

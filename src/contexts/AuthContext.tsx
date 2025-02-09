@@ -22,39 +22,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const authAttempts = useRef(0);
   const maxAuthAttempts = 3;
+  const lastTokenRefresh = useRef<number>(0);
+  const tokenRefreshInterval = 5 * 60 * 1000; // 5분
 
   const getFirebaseToken = async () => {
     try {
+      const now = Date.now();
+      if (now - lastTokenRefresh.current < tokenRefreshInterval) {
+        return null;
+      }
+      
       const response = await fetch('/api/auth/firebase-token');
       if (!response.ok) {
         console.error('Firebase token fetch failed:', response.status);
-        return null;  // 실패 시 null 반환하고 재시도하지 않음
+        return null;
       }
       const data = await response.json();
+      lastTokenRefresh.current = now;
       return data.token;
     } catch (error) {
       console.error('Firebase token error:', error);
-      return null;  // 에러 발생 시 null 반환하고 재시도하지 않음
+      return null;
     }
   };
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      if (session?.user) {
-        const token = await getFirebaseToken();
-        if (token) {
-          try {
-            await signInWithCustomToken(auth, token);
-          } catch (error) {
-            console.error('Firebase sign in error:', error);
-            // 로그인 실패 시 조용히 실패하고 재시도하지 않음
-          }
-        }
-      }
-    };
-
-    initializeAuth();
-  }, [session]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -71,7 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           await signInWithCustomToken(auth, token);
           
-          // 성공하면 시도 횟수 초기화
           authAttempts.current = 0;
         } catch (error) {
           console.error('Firebase auth error:', error);
