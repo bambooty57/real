@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverActions: {
-      bodySizeLimit: '10mb'
-    }
+    serverActions: true
   },
   transpilePackages: ['@firebase/auth', 'firebase', 'firebase-admin'],
   compiler: {
@@ -13,7 +11,7 @@ const nextConfig = {
     domains: ['firebasestorage.googleapis.com', 't1.daumcdn.net', 'dapi.kakao.com']
   },
   env: {
-    NEXT_PUBLIC_KAKAO_API_KEY: process.env.NEXT_PUBLIC_KAKAO_API_KEY,
+    NEXT_PUBLIC_KAKAO_API_KEY: process.env.NEXT_PUBLIC_KAKAO_API_KEY || '',
   },
   headers: async () => {
     return [

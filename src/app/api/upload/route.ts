@@ -1,43 +1,8 @@
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { getStorage } from 'firebase-admin/storage';
+import { adminStorage } from '@/lib/firebase-admin';
 
 const BUCKET_NAME = 'real-81ba6.firebasestorage.app';
-
-// Firebase Admin SDK 초기화
-if (!admin.apps.length) {
-  try {
-    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccountKey) {
-      throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set');
-    }
-
-    let serviceAccount;
-    try {
-      // base64로 인코딩된 문자열을 디코딩
-      const decodedKey = Buffer.from(serviceAccountKey, 'base64').toString('utf-8');
-      serviceAccount = JSON.parse(decodedKey);
-    } catch (error) {
-      throw new Error('Failed to parse service account credentials: ' + (error instanceof Error ? error.message : String(error)));
-    }
-
-    if (!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
-      throw new Error('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET environment variable is not set');
-    }
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    });
-    console.log('Firebase initialized successfully');
-  } catch (error) {
-    console.error('Firebase Admin initialization error:', error);
-    throw error;
-  }
-}
-
-const storage = getStorage();
-const bucket = storage.bucket();
+const bucket = adminStorage.bucket(BUCKET_NAME);
 
 export async function POST(request: Request) {
   try {
