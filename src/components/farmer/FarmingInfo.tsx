@@ -140,19 +140,23 @@ export default function FarmingInfo({ formData, setFormData }: Props) {
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            onChange={(e) => setFormData((prev: FormData) => ({
-                              ...prev,
-                              mainCrop: {
-                                ...(prev.mainCrop || {}),
-                                [detailsKey]: e.target.checked
-                                  ? [...(Array.isArray(prev.mainCrop?.[detailsKey]) 
-                                      ? prev.mainCrop[detailsKey] 
-                                      : []), value]
-                                  : (Array.isArray(prev.mainCrop?.[detailsKey])
-                                      ? prev.mainCrop[detailsKey].filter(v => v !== value)
-                                      : [])
-                              }
-                            }))}
+                            onChange={(e) => setFormData((prev: FormData) => {
+                              const currentArray = Array.isArray(prev.mainCrop?.[detailsKey]) 
+                                ? prev.mainCrop[detailsKey] 
+                                : [];
+                              
+                              const newArray = e.target.checked
+                                ? [...currentArray, value]
+                                : currentArray.filter(v => v !== value);
+
+                              return {
+                                ...prev,
+                                mainCrop: {
+                                  ...(prev.mainCrop || {}),
+                                  [detailsKey]: newArray
+                                }
+                              };
+                            })}
                             className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                           />
                           <span className="ml-2 text-sm text-gray-700">{subLabel}</span>
