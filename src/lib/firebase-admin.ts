@@ -9,11 +9,16 @@ if (!admin.apps.length) {
       ).toString('utf-8')
     );
 
+    const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    if (!storageBucket) {
+      throw new Error('Storage bucket is not configured');
+    }
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+      storageBucket: storageBucket
     });
-    console.log('Firebase Admin SDK initialized successfully with bucket:', process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
+    console.log('Firebase Admin SDK initialized successfully with bucket:', storageBucket);
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
     throw error;
