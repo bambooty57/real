@@ -697,7 +697,7 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
     const CHUNK_SIZE = 500;
     const RETRY_DELAY = 2000; // 2초 대기
 
-    const attemptSync = async () => {
+    const attemptSync = async (): Promise<void> => {
       try {
         setUploadStatus({ 
           status: 'processing', 
@@ -751,8 +751,6 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           message: '구글 시트 동기화가 완료되었습니다.' 
         });
         toast.success('구글 시트 동기화가 완료되었습니다.');
-        return true;
-
       } catch (error: any) {
         console.error('구글 시트 동기화 오류:', error);
         
@@ -767,7 +765,6 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           message: error.message || '구글 시트 동기화 중 오류가 발생했습니다.' 
         });
         toast.error(error.message || '구글 시트 동기화 중 오류가 발생했습니다.');
-        return false;
       }
     };
 
