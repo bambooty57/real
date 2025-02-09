@@ -8,7 +8,7 @@ import { FaGoogle } from 'react-icons/fa';
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
-  const error = searchParams.get('error');
+  const error = searchParams?.get('error');
 
   const handleGoogleLogin = async () => {
     try {
