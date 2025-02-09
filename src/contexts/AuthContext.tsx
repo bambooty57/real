@@ -23,6 +23,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const authAttempts = useRef(0);
   const maxAuthAttempts = 3;
 
+  const getFirebaseToken = async () => {
+    try {
+      const response = await fetch('/api/auth/firebase-token');
+      if (!response.ok) {
+        console.error('Firebase token fetch failed:', response.status);
+        return null;  // 실패 시 null 반환하고 재시도하지 않음
+      }
+      const data = await response.json();
+      return data.token;
+    } catch (error) {
+      console.error('Firebase token error:', error);
+      return null;  // 에러 발생 시 null 반환하고 재시도하지 않음
+    }
+  };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      if (session?.user) {
+        const token = await getFirebaseToken();
+        if (token) {
+          try {
+            await signInWithCustomToken(auth, token);
+          } catch (error) {
+            console.error('Firebase sign in error:', error);
+            // 로그인 실패 시 조용히 실패하고 재시도하지 않음
+          }
+        }
+      }
+    };
+
+    initializeAuth();
+  }, [session]);
+
   useEffect(() => {
     if (status === 'loading') return;
 

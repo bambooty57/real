@@ -81,9 +81,6 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
     try {
       setUploading(true)
       
-      // 강제로 토큰 갱신
-      await user.getIdToken(true);
-      
       // 미리보기 생성
       const reader = new FileReader()
       reader.onloadend = () => {
@@ -91,52 +88,29 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
       }
       reader.readAsDataURL(file)
 
-      // Firebase Storage에 직접 업로드
-      const timestamp = Date.now()
-      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
-      const path = `farmers/${farmerId}/${category}/${timestamp}-${cleanFileName}`
-      const storageRef = ref(storage, path)
+      // 서버 API를 통한 업로드
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('farmerId', farmerId)
+      formData.append('category', category)
       
-      // 업로드 시도
-      const snapshot = await uploadBytes(storageRef, file)
-      const downloadURL = await getDownloadURL(snapshot.ref)
-      
-      console.log('Upload Success:', {
-        path: snapshot.ref.fullPath,
-        downloadUrl: downloadURL
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
       })
       
-      onUploadComplete(downloadURL)
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+      
+      const { url } = await response.json()
+      console.log('Upload Success:', { url })
+      
+      onUploadComplete(url)
       toast.success('이미지가 업로드되었습니다.')
       
     } catch (error: any) {
-      console.error('Upload Error:', {
-        code: error.code,
-        message: error.message,
-        serverResponse: error.serverResponse,
-        name: error.name
-      })
-      
-      if (error.code === 'storage/unauthorized') {
-        // 토큰 갱신 후 재시도
-        try {
-          await user.getIdToken(true);
-          const timestamp = Date.now()
-          const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
-          const path = `farmers/${farmerId}/${category}/${timestamp}-${cleanFileName}`
-          const storageRef = ref(storage, path)
-          
-          const snapshot = await uploadBytes(storageRef, file)
-          const downloadURL = await getDownloadURL(snapshot.ref)
-          
-          onUploadComplete(downloadURL)
-          toast.success('이미지가 업로드되었습니다.')
-          return;
-        } catch (retryError) {
-          console.error('Retry Upload Error:', retryError);
-        }
-      }
-      
+      console.error('Upload Error:', error)
       toast.error('이미지 업로드에 실패했습니다. 다시 시도해주세요.')
     } finally {
       setUploading(false)

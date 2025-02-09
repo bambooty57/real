@@ -21,11 +21,27 @@ if (!admin.apps.length) {
       throw new Error('Storage bucket is not configured');
     }
 
-    admin.initializeApp({
+    console.log('Using storage bucket:', storageBucket);
+
+    const config = {
       credential: admin.credential.cert(serviceAccount),
       storageBucket: storageBucket
+    };
+
+    console.log('Firebase Admin config:', {
+      storageBucket: config.storageBucket,
+      hasCredential: !!config.credential
     });
-    console.log('Firebase Admin SDK initialized successfully with bucket:', storageBucket);
+
+    admin.initializeApp(config);
+    console.log('Firebase Admin SDK initialized successfully');
+
+    // 빌드 시에는 버킷 접근 테스트를 건너뜁니다
+    if (process.env.NODE_ENV === 'production') {
+      const bucket = admin.storage().bucket();
+      console.log('Storage bucket initialized:', bucket.name);
+    }
+
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
     throw error;
