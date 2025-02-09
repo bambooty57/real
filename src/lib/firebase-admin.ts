@@ -2,12 +2,19 @@ import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
   try {
-    const serviceAccount = JSON.parse(
-      Buffer.from(
-        process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '', 
-        'base64'
-      ).toString('utf-8')
-    );
+    const serviceAccountStr = Buffer.from(
+      process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '', 
+      'base64'
+    ).toString('utf-8');
+    
+    console.log('Service Account String:', serviceAccountStr.substring(0, 100) + '...');
+    
+    const serviceAccount = JSON.parse(serviceAccountStr);
+    
+    console.log('Parsed Service Account:', {
+      projectId: serviceAccount.project_id,
+      clientEmail: serviceAccount.client_email
+    });
 
     const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
     if (!storageBucket) {
