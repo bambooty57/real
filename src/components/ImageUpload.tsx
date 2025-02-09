@@ -88,26 +88,20 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
       }
       reader.readAsDataURL(file)
 
-      // 서버 API를 통한 업로드
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('farmerId', farmerId)
-      formData.append('category', category)
+      // Firebase Storage에 직접 업로드
+      const timestamp = Date.now();
+      const fileName = `${farmerId}/${category}/${timestamp}_${file.name}`;
+      const storageRef = ref(storage, fileName);
       
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      // 파일 업로드
+      await uploadBytes(storageRef, file);
       
-      if (!response.ok) {
-        throw new Error('Upload failed')
-      }
+      // 다운로드 URL 가져오기
+      const downloadURL = await getDownloadURL(storageRef);
       
-      const { url } = await response.json()
-      console.log('Upload Success:', { url })
-      
-      onUploadComplete(url)
-      toast.success('이미지가 업로드되었습니다.')
+      console.log('Upload Success:', { downloadURL });
+      onUploadComplete(downloadURL);
+      toast.success('이미지가 업로드되었습니다.');
       
     } catch (error: any) {
       console.error('Upload Error:', error)

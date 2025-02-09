@@ -11,11 +11,16 @@ const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: 'real-81ba6.firebasestorage.app',  // 하드코딩된 올바른 값
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
+
+// Firebase 초기화 전에 필수 설정 확인
+if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId || !firebaseConfig.storageBucket) {
+  throw new Error('Firebase configuration is incomplete. Check your environment variables.');
+}
 
 console.log('Firebase Config:', {
   authDomain: firebaseConfig.authDomain,
@@ -32,15 +37,26 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
-// 인증 상태 초기화 대기
-auth.onAuthStateChanged((user) => {
-  console.log('Firebase Auth State Changed:', {
-    isAuthenticated: !!user,
-    email: user?.email,
-    emailVerified: user?.emailVerified,
-    uid: user?.uid
+// 인증 상태 변경 이벤트 최적화
+let unsubscribe: (() => void) | null = null;
+
+if (typeof window !== 'undefined') {
+  unsubscribe = auth.onAuthStateChanged((user) => {
+    console.log('Firebase Auth State Changed:', {
+      isAuthenticated: !!user,
+      email: user?.email,
+      emailVerified: user?.emailVerified,
+      uid: user?.uid
+    });
   });
-});
+}
+
+// 컴포넌트 언마운트 시 구독 해제
+export const cleanup = () => {
+  if (unsubscribe) {
+    unsubscribe();
+  }
+};
 
 console.log('Firebase Initialized:', {
   isAuthInitialized: !!auth,
