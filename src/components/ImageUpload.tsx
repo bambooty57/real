@@ -79,11 +79,10 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
     }
 
     try {
-      // 토큰 갱신
-      const token = await user.getIdToken(true);
-      console.log('Token refreshed:', !!token);
-
       setUploading(true)
+      
+      // 강제로 토큰 갱신
+      await user.getIdToken(true);
       
       // 미리보기 생성
       const reader = new FileReader()
@@ -98,19 +97,7 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
       const path = `farmers/${farmerId}/${category}/${timestamp}-${cleanFileName}`
       const storageRef = ref(storage, path)
       
-      console.log('Upload Attempt:', {
-        path,
-        farmerId,
-        category,
-        fileName: cleanFileName,
-        authState: {
-          uid: user.uid,
-          email: user.email,
-          emailVerified: user.emailVerified,
-          token: token.substring(0, 10) + '...'
-        }
-      })
-      
+      // 업로드 시도
       const snapshot = await uploadBytes(storageRef, file)
       const downloadURL = await getDownloadURL(snapshot.ref)
       
@@ -129,11 +116,28 @@ export default function ImageUpload({ farmerId, category, onUploadComplete }: Im
         serverResponse: error.serverResponse,
         name: error.name
       })
+      
       if (error.code === 'storage/unauthorized') {
-        toast.error('이메일 인증이 필요합니다. 이메일을 확인해주세요.')
-      } else {
-        toast.error(error?.message || '이미지 업로드 중 오류가 발생했습니다.')
+        // 토큰 갱신 후 재시도
+        try {
+          await user.getIdToken(true);
+          const timestamp = Date.now()
+          const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
+          const path = `farmers/${farmerId}/${category}/${timestamp}-${cleanFileName}`
+          const storageRef = ref(storage, path)
+          
+          const snapshot = await uploadBytes(storageRef, file)
+          const downloadURL = await getDownloadURL(snapshot.ref)
+          
+          onUploadComplete(downloadURL)
+          toast.success('이미지가 업로드되었습니다.')
+          return;
+        } catch (retryError) {
+          console.error('Retry Upload Error:', retryError);
+        }
       }
+      
+      toast.error('이미지 업로드에 실패했습니다. 다시 시도해주세요.')
     } finally {
       setUploading(false)
     }

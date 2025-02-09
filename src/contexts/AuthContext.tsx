@@ -19,37 +19,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { data: session, status } = useSession();
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (session && !user) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (session?.user?.email && !firebaseUser && !isAuthenticating) {
         try {
-          // 세션이 있지만 Firebase 사용자가 없는 경우
+          setIsAuthenticating(true);
           const response = await fetch('/api/auth/firebase-token');
+          if (!response.ok) {
+            throw new Error('Failed to get Firebase token');
+          }
           const { token } = await response.json();
           await signInWithCustomToken(auth, token);
         } catch (error) {
           console.error('Firebase auth error:', error);
+        } finally {
+          setIsAuthenticating(false);
         }
       }
 
       console.log('Auth Context State Changed:', {
-        isAuthenticated: !!user,
-        email: user?.email,
-        emailVerified: user?.emailVerified,
-        uid: user?.uid,
+        isAuthenticated: !!firebaseUser,
+        email: firebaseUser?.email,
+        emailVerified: firebaseUser?.emailVerified,
+        uid: firebaseUser?.uid,
         session: !!session,
         sessionStatus: status
       });
       
-      setUser(user);
+      setUser(firebaseUser);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [session, status]);
+  }, [session, status, isAuthenticating]);
 
   if (loading) {
     return null;
