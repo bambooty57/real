@@ -765,12 +765,13 @@ ${errorCount > 0 ? '실패한 항목들의 상세 내역은 아래에서 확인�
           message: error.message || '구글 시트 동기화 중 오류가 발생했습니다.' 
         });
         toast.error(error.message || '구글 시트 동기화 중 오류가 발생했습니다.');
+        throw error; // 오류를 상위로 전파
       }
     };
 
-    const success = await attemptSync();
-    
-    if (!success) {
+    try {
+      await attemptSync();
+    } catch (error) {
       console.error('모든 재시도 실패');
     }
 
