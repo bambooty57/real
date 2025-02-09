@@ -19,17 +19,23 @@ const firebaseConfig = {
 
 // Firebase 초기화 전에 필수 설정 확인
 if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId || !firebaseConfig.storageBucket) {
+  console.error('Firebase configuration:', firebaseConfig);
   throw new Error('Firebase configuration is incomplete. Check your environment variables.');
 }
 
-console.log('Firebase Config:', {
-  authDomain: firebaseConfig.authDomain,
-  projectId: firebaseConfig.projectId,
-  storageBucket: firebaseConfig.storageBucket
-});
-
 // Firebase 초기화를 한 번만 수행
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+let app;
+if (!getApps().length) {
+  try {
+    app = initializeApp(firebaseConfig);
+    console.log('Firebase initialized successfully');
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
+    throw error;
+  }
+} else {
+  app = getApps()[0];
+}
 
 // Firebase 서비스 초기화
 const auth = getAuth(app);
@@ -41,20 +47,26 @@ const googleProvider = new GoogleAuthProvider();
 let unsubscribe: (() => void) | null = null;
 
 if (typeof window !== 'undefined') {
-  unsubscribe = auth.onAuthStateChanged((user) => {
-    console.log('Firebase Auth State Changed:', {
-      isAuthenticated: !!user,
-      email: user?.email,
-      emailVerified: user?.emailVerified,
-      uid: user?.uid
+  try {
+    unsubscribe = auth.onAuthStateChanged((user) => {
+      console.log('Auth state changed:', user ? 'User logged in' : 'User logged out');
+    }, (error) => {
+      console.error('Auth state change error:', error);
     });
-  });
+  } catch (error) {
+    console.error('Failed to set up auth state listener:', error);
+  }
 }
 
 // 컴포넌트 언마운트 시 구독 해제
 export const cleanup = () => {
   if (unsubscribe) {
-    unsubscribe();
+    try {
+      unsubscribe();
+      console.log('Auth state listener cleaned up');
+    } catch (error) {
+      console.error('Failed to cleanup auth state listener:', error);
+    }
   }
 };
 
@@ -77,9 +89,10 @@ export async function testFirebaseConnection() {
     const testRef = collection(db, 'farmers');
     const q = query(testRef, limit(1));
     await getDocs(q);
-    
+    console.log('Firebase connection test successful');
     return true;
   } catch (error) {
+    console.error('Firebase connection test failed:', error);
     return false;
   }
 } 
