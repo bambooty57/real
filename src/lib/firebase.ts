@@ -43,6 +43,11 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
+// Google 로그인 설정 추가
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 // 인증 상태 변경 이벤트 최적화
 let unsubscribe: (() => void) | null = null;
 

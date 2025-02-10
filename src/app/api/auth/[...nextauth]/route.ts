@@ -1,5 +1,7 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const handler = NextAuth({
   providers: [
@@ -22,9 +24,16 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
-      if (account?.provider === 'google') {
-        return true;
+    async signIn({ user, account }) {
+      if (account?.provider === 'google' && account.id_token) {
+        try {
+          const credential = GoogleAuthProvider.credential(account.id_token);
+          await signInWithCredential(auth, credential);
+          return true;
+        } catch (error) {
+          console.error('Firebase sign in error:', error);
+          return false;
+        }
       }
       return false;
     },
