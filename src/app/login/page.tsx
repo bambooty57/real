@@ -1,24 +1,26 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FaGoogle } from 'react-icons/fa';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const searchParams = useSearchParams();
-  const error = searchParams?.get('error');
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
-      await signIn('google', { 
-        callbackUrl: '/',
-        redirect: true,
-      });
+      setError(null);
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('Login successful:', result.user);
+      router.push('/');
     } catch (error) {
       console.error('Login error:', error);
+      setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }
@@ -34,7 +36,7 @@ export default function LoginPage() {
         </div>
         {error && (
           <div className="bg-red-50 text-red-500 p-4 rounded-md text-center">
-            로그인 중 오류가 발생했습니다. 다시 시도해주세요.
+            {error}
           </div>
         )}
         <div className="mt-8 space-y-6">
