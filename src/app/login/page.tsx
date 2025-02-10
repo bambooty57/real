@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { FaGoogle } from 'react-icons/fa';
 import { signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
@@ -9,15 +8,13 @@ import { auth, googleProvider } from '@/lib/firebase';
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     // 인증 상태 변경 감지
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         console.log('User is signed in:', user);
-        router.push('/');
-        router.refresh();
+        window.location.href = '/';
       }
     });
 
@@ -27,8 +24,7 @@ export default function LoginPage() {
         const result = await getRedirectResult(auth);
         if (result) {
           console.log('Login successful:', result.user);
-          router.push('/');
-          router.refresh();
+          window.location.href = '/';
         }
       } catch (error) {
         console.error('Login error:', error);
@@ -42,7 +38,7 @@ export default function LoginPage() {
 
     // 컴포넌트 언마운트 시 구독 해제
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   const handleGoogleLogin = async () => {
     try {
