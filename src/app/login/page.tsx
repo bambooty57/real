@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaGoogle } from 'react-icons/fa';
-import { signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 
 export default function LoginPage() {
@@ -12,20 +12,36 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // 인증 상태 변경 감지
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('User is signed in:', user);
+        router.push('/');
+        router.refresh();
+      }
+    });
+
+    // 리다이렉트 결과 확인
     const checkRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
           console.log('Login successful:', result.user);
           router.push('/');
+          router.refresh();
         }
       } catch (error) {
         console.error('Login error:', error);
         setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkRedirectResult();
+
+    // 컴포넌트 언마운트 시 구독 해제
+    return () => unsubscribe();
   }, [router]);
 
   const handleGoogleLogin = async () => {
