@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaGoogle } from 'react-icons/fa';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 
 export default function LoginPage() {
@@ -11,17 +11,31 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log('Login successful:', result.user);
+          router.push('/');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    };
+
+    checkRedirectResult();
+  }, [router]);
+
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('Login successful:', result.user);
-      router.push('/');
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       console.error('Login error:', error);
       setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
-    } finally {
       setIsLoading(false);
     }
   };
