@@ -5,18 +5,25 @@ import { FaGoogle } from 'react-icons/fa';
 import { signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    if (user) {
+      router.replace('/');
+      return;
+    }
+
+    const checkRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-          router.push('/');
+          router.replace('/');
         }
       } catch (error) {
         console.error('Login error:', error);
@@ -26,12 +33,10 @@ export default function LoginPage() {
       }
     };
 
-    if (auth.currentUser) {
-      router.push('/');
-    } else {
-      checkAuth();
+    if (!loading) {
+      checkRedirectResult();
     }
-  }, [router]);
+  }, [user, loading, router]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -44,6 +49,11 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  // 로딩 중이거나 이미 로그인된 경우 빈 화면 표시
+  if (loading || user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
