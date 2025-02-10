@@ -1,10 +1,11 @@
 'use client';
 
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collection, query, limit, getDocs } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import { GoogleAuthProvider } from 'firebase/auth';
+import { getAnalytics } from 'firebase/analytics';
 
 // Firebase 설정
 const firebaseConfig = {
@@ -17,17 +18,16 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Firebase 초기화 전에 필수 설정 확인
-if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId || !firebaseConfig.storageBucket) {
-  console.error('Firebase configuration:', firebaseConfig);
-  throw new Error('Firebase configuration is incomplete. Check your environment variables.');
-}
-
 // Firebase 초기화를 한 번만 수행
 let app;
+let analytics;
+
 if (!getApps().length) {
   try {
     app = initializeApp(firebaseConfig);
+    if (typeof window !== 'undefined') {
+      analytics = getAnalytics(app);
+    }
     console.log('Firebase initialized successfully');
   } catch (error) {
     console.error('Firebase initialization error:', error);
@@ -49,7 +49,15 @@ let unsubscribe: (() => void) | null = null;
 if (typeof window !== 'undefined') {
   try {
     unsubscribe = auth.onAuthStateChanged((user) => {
-      console.log('Auth state changed:', user ? 'User logged in' : 'User logged out');
+      if (user) {
+        console.log('Auth state changed: User logged in', {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName
+        });
+      } else {
+        console.log('Auth state changed: User logged out');
+      }
     }, (error) => {
       console.error('Auth state change error:', error);
     });
@@ -76,7 +84,7 @@ console.log('Firebase Initialized:', {
   currentUser: auth.currentUser?.uid
 });
 
-export { db, storage, auth, googleProvider };
+export { db, storage, auth, googleProvider, analytics };
 
 // Firebase 연결 테스트 함수
 export async function testFirebaseConnection() {
