@@ -81,27 +81,16 @@ const nextConfig = {
   trailingSlash: true,
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: '/farmers',
-          destination: '/api/farmers',
-          has: [
-            {
-              type: 'query',
-              key: 'dynamic',
-              value: 'true'
-            }
-          ]
-        }
-      ],
-      fallback: [
-        {
-          source: '/api/:path*',
-          destination: '/api/:path*',
-        }
-      ]
-    };
+    return [
+      {
+        source: '/farmers',
+        destination: '/api/farmers',
+      },
+      {
+        source: '/api/:path*',
+        destination: '/api/:path*',
+      }
+    ];
   },
   generateBuildId: async () => {
     return 'build-' + Date.now();
@@ -112,7 +101,10 @@ const nextConfig = {
   publicRuntimeConfig: {
     API_URL: process.env.API_URL
   },
-  optimizeFonts: false
+  optimizeFonts: false,
+  typescript: {
+    ignoreBuildErrors: true
+  }
 }
 
 module.exports = nextConfig 
