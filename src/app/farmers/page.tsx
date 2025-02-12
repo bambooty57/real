@@ -1,16 +1,17 @@
-'use client';
-
 import { Suspense } from 'react';
-import dynamicImport from 'next/dynamic';
+import dynamic from 'next/dynamic';
 
-const FarmersClient = dynamicImport(() => import('./FarmersClient'), {
+const FarmersClient = dynamic(() => import('./FarmersClient'), {
   loading: () => (
     <div className="flex items-center justify-center min-h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
     </div>
   ),
-  ssr: true
+  ssr: false
 });
+
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export default function FarmersPage() {
   return (
