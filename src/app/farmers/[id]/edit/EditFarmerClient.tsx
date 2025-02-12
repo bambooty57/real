@@ -60,15 +60,10 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
       onUpdate()
       onClose()
       
-      // 라우팅 방식 수정
-      router.push({
-        pathname: '/farmers',
-        query: { updated: 'true' }
-      }, undefined, { shallow: true })
+      router.push('/farmers')
     } catch (error) {
       console.error('Error updating farmer:', error)
       toast.error('농민 정보 수정 중 오류가 발생했습니다.')
-      // 에러 발생 시 이전 페이지로 복귀하지 않고 현재 페이지 유지
     }
   }
 
