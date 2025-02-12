@@ -1,14 +1,8 @@
 import { Suspense } from 'react';
-import { lazy } from 'next/dynamic';
-
-// 페이지 설정
-export const config = {
-  dynamic: 'force-dynamic',
-  fetchCache: 'force-no-store'
-};
+import dynamic from 'next/dynamic';
 
 // 컴포넌트 동적 임포트
-const FarmersClient = lazy(() => import('./FarmersClient'), {
+const FarmersClient = dynamic(() => import('./FarmersClient'), {
   loading: () => (
     <div className="flex items-center justify-center min-h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
@@ -16,6 +10,10 @@ const FarmersClient = lazy(() => import('./FarmersClient'), {
   ),
   ssr: false
 });
+
+// Next.js 13 페이지 설정
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export default function FarmersPage() {
   return (
