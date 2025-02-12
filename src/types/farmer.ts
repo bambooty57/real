@@ -43,7 +43,6 @@ export interface Equipment {
   }>;
   
   memo?: string;
-  tradeStatus?: 'available' | 'reserved' | 'completed';
 }
 
 export interface AttachmentImages {
