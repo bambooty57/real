@@ -8,12 +8,11 @@ import { signOut as firebaseSignOut } from 'firebase/auth';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, showLoginModal } = useAuth();
 
   const handleSignOut = async () => {
     try {
       await firebaseSignOut(auth);
-      window.location.href = '/login';
     } catch (error) {
       console.error('로그아웃 중 오류 발생:', error);
     }
@@ -71,12 +70,12 @@ export default function Navigation() {
                 </button>
               </div>
             ) : (
-              <Link
-                href="/login"
+              <button
+                onClick={showLoginModal}
                 className="px-3 py-2 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700"
               >
                 로그인
-              </Link>
+              </button>
             )}
           </div>
         </div>

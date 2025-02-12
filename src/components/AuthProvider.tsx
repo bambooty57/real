@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
+import LoginModal from './LoginModal';
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -16,15 +16,24 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         const token = await user.getIdToken();
         // 토큰을 쿠키에 저장 (7일 유효)
         Cookies.set('firebase-token', token, { expires: 7 });
+        setIsLoginModalOpen(false);
       } else {
         // 사용자가 로그아웃한 경우
         Cookies.remove('firebase-token');
-        router.push('/login');
+        setIsLoginModalOpen(true);
       }
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+      />
+    </>
+  );
 } 
