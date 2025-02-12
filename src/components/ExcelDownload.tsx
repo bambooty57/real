@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
+import { useState } from 'react'
 import { Equipment, Farmer } from '@/types/farmer'
 
 interface ExcelDownloadProps {
@@ -11,22 +12,8 @@ interface ExcelDownloadProps {
   }>;
 }
 
-export default function ExcelDownload({ farmers, filteredEquipments }: ExcelDownloadProps) {
-  const [excelModule, setExcelModule] = useState<{ Workbook: typeof import('exceljs').Workbook }>();
-  const [fileSaver, setFileSaver] = useState<{ saveAs: typeof import('file-saver').saveAs }>();
-
-  useEffect(() => {
-    // ExcelJS와 FileSaver를 동적으로 로드
-    const loadModules = async () => {
-      const [{ Workbook }, { saveAs }] = await Promise.all([
-        import('exceljs'),
-        import('file-saver')
-      ]);
-      setExcelModule({ Workbook });
-      setFileSaver({ saveAs });
-    };
-    loadModules();
-  }, []);
+const ExcelDownload = ({ farmers, filteredEquipments }: ExcelDownloadProps) => {
+  const [isLoading, setIsLoading] = useState(false);
 
   const getAttachmentText = (attachments: Array<{
     type: 'loader' | 'rotary' | 'frontWheel' | 'rearWheel';
@@ -59,14 +46,15 @@ export default function ExcelDownload({ farmers, filteredEquipments }: ExcelDown
     return texts.join(', ');
   };
 
-  const generateExcel = async () => {
-    if (!excelModule || !fileSaver) {
-      console.error('Required modules not loaded');
-      return;
-    }
-
+  const handleExcelDownload = async () => {
+    setIsLoading(true);
     try {
-      const workbook = new excelModule.Workbook();
+      const [{ Workbook }, { saveAs }] = await Promise.all([
+        import('exceljs'),
+        import('file-saver')
+      ]);
+
+      const workbook = new Workbook();
       const worksheet = workbook.addWorksheet('농기계 매매');
 
       worksheet.columns = [
@@ -105,21 +93,28 @@ export default function ExcelDownload({ farmers, filteredEquipments }: ExcelDown
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      fileSaver.saveAs(blob, '농기계_거래_목록.xlsx');
+      saveAs(blob, '농기계_거래_목록.xlsx');
     } catch (error) {
       console.error('Error generating Excel:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <button
-      onClick={generateExcel}
-      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+      onClick={handleExcelDownload}
+      disabled={isLoading}
+      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
       </svg>
-      엑셀 다운로드
+      {isLoading ? '다운로드 중...' : '엑셀 다운로드'}
     </button>
   );
-} 
+};
+
+export default dynamic(() => Promise.resolve(ExcelDownload), {
+  ssr: false
+}); 
