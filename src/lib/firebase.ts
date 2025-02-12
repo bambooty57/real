@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBeyOizoucfFuq5LBnqAjglByPisZrhotk",
   authDomain: "real-81ba6.firebaseapp.com",
   projectId: "real-81ba6",
-  storageBucket: "real-81ba6.appspot.com",
+  storageBucket: "real-81ba6.firebasestorage.app",
   messagingSenderId: "858648154763",
   appId: "1:858648154763:web:22b17451a05339ccfafa8e",
   measurementId: "G-B0PZ5GL0EQ"
@@ -28,7 +28,7 @@ function initializeFirebase() {
     const auth = getAuth(app);
     auth.useDeviceLanguage();
     const db = getFirestore(app);
-    const storage = getStorage(app, 'gs://real-81ba6.firestorage.app');
+    const storage = getStorage(app, 'real-81ba6.firebasestorage.app');
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({
       prompt: 'select_account'
