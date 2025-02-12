@@ -12,7 +12,13 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
+
+// Firebase 초기화 전에 환경 변수 확인
+if (!firebaseConfig.apiKey) {
+  throw new Error('Firebase API Key is missing. Please check your environment variables.');
+}
 
 // Firebase 초기화
 let firebaseInstance: any = null;
@@ -23,6 +29,11 @@ function initializeFirebase() {
   }
 
   try {
+    console.log('Initializing Firebase with config:', {
+      ...firebaseConfig,
+      apiKey: firebaseConfig.apiKey?.substring(0, 8) + '...' // API 키의 일부만 로그
+    });
+
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const auth = getAuth(app);
     auth.useDeviceLanguage(); // 브라우저 언어 설정 사용
