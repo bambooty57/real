@@ -1,6 +1,6 @@
 'use client'
 
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -10,7 +10,7 @@ import { MainCrop, FarmingTypes } from '@/types/farmer'
 import { MANUFACTURERS } from '@/constants/manufacturers'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
 
-const FarmerDetailModal = dynamic(() => import('@/components/FarmerDetailModal'), {
+const FarmerDetailModal = dynamicImport(() => import('@/components/FarmerDetailModal'), {
   ssr: false
 })
 
@@ -621,7 +621,7 @@ function TradePage() {
   )
 }
 
-const DynamicTradePage = dynamic(() => Promise.resolve(TradePage), {
+const DynamicTradePage = dynamicImport(() => Promise.resolve(TradePage), {
   ssr: false
 })
 
