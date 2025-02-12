@@ -8,10 +8,11 @@ import { Equipment as BaseEquipment } from '@/types/farmer'
 import { MainCrop, FarmingTypes } from '@/types/farmer'
 import { MANUFACTURERS } from '@/constants/manufacturers'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
-import dynamicImport from 'next/dynamic'
+import dynamic from 'next/dynamic'
 
-const FarmerDetailModal = dynamicImport(() => import('@/components/FarmerDetailModal'), {
-  ssr: false
+const FarmerDetailModal = dynamic(() => import('@/components/FarmerDetailModal'), {
+  ssr: false,
+  loading: () => <div>로딩중...</div>
 })
 
 interface Equipment extends BaseEquipment {
