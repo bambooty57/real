@@ -53,11 +53,7 @@ function isAttachmentInfo(value: any): value is AttachmentInfo {
          Array.isArray(value.images);
 }
 
-export const dynamicConfig = 'force-dynamic';
-
-export default dynamic(() => Promise.resolve(TradePage), {
-  ssr: false
-});
+export const dynamic = 'force-dynamic'
 
 function TradePage() {
   const [farmers, setFarmers] = useState<Farmer[]>([])
@@ -624,3 +620,9 @@ function TradePage() {
     </div>
   )
 }
+
+const DynamicTradePage = dynamic(() => Promise.resolve(TradePage), {
+  ssr: false
+})
+
+export default DynamicTradePage
