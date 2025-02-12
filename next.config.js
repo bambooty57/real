@@ -39,8 +39,7 @@ const nextConfig = {
     return config;
   },
   experimental: {
-    optimizeCss: false,
-    scrollRestoration: false,
+    serverActions: true,
   },
   transpilePackages: ['@firebase/auth', 'firebase', 'firebase-admin'],
   compiler: {
@@ -63,20 +62,24 @@ const nextConfig = {
     ];
   },
   output: 'standalone',
-  trailingSlash: true,
+  trailingSlash: false,
   async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: '/api/:path*',
-          destination: '/api/:path*/',
-        },
-      ],
-    };
+    return [
+      {
+        source: '/api/:path*',
+        destination: '/api/:path*',
+      },
+    ];
   },
   generateBuildId: async () => {
     return 'build-' + Date.now();
   },
+  serverRuntimeConfig: {
+    PROJECT_ROOT: __dirname
+  },
+  publicRuntimeConfig: {
+    API_URL: process.env.API_URL
+  }
 }
 
 module.exports = nextConfig 
