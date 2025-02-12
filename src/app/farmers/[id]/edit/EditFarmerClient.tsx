@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { toast } from 'react-hot-toast'
-import NewFarmer from '@/components/NewFarmer'
+import NewFarmer from '@/app/farmers/new/NewFarmer'
 import { FormData } from '@/types/farmer'
 
 interface EditFarmerClientProps {
