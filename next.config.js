@@ -67,16 +67,20 @@ const nextConfig = {
   output: 'standalone',
   trailingSlash: true,
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: '/api/:path*',
-      },
-      {
-        source: '/farmers',
-        destination: '/api/farmers',
-      }
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: '/farmers',
+          destination: '/api/farmers',
+        }
+      ],
+      afterFiles: [
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*',
+        }
+      ]
+    };
   },
   generateBuildId: async () => {
     return 'build-' + Date.now();
