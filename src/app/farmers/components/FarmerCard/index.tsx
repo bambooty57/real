@@ -15,6 +15,7 @@ interface FarmerCardProps {
   onSelect: (id: string, checked: boolean) => void;
   isSelected: boolean;
   onViewDetail: (farmer: Farmer) => void;
+  onDelete: (farmerId: string) => Promise<void>;
 }
 
 const formatPhoneNumber = (phone: string) => {
@@ -38,7 +39,13 @@ const getFarmingTypeDisplay = (type: keyof FarmingTypes) => {
   return displayMap[type] || type;
 };
 
-export default function FarmerCard({ farmer, onSelect, isSelected, onViewDetail }: FarmerCardProps) {
+export default function FarmerCard({ 
+  farmer, 
+  onSelect, 
+  isSelected, 
+  onViewDetail,
+  onDelete 
+}: FarmerCardProps) {
   const handleDownload = async (imageUrl: string, fileName: string) => {
     try {
       const response = await fetch(imageUrl);

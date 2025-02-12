@@ -16,6 +16,7 @@ import FarmerFilter from './components/FarmerFilter'
 import Pagination from './components/Pagination'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer, cropDisplayNames } from '@/utils/displayNames'
 import { BiRefresh } from 'react-icons/bi'
+import { Farmer } from '@/types/farmer'
 
 export default function FarmersClient() {
   const { filterState, setFilterState } = useSearchFilter()

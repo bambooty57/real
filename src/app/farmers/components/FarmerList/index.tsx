@@ -7,15 +7,26 @@ import FarmerDetailModal from '@/components/FarmerDetailModal';
 
 interface FarmerListProps {
   farmers: Farmer[];
-  onSelect: (id: string, checked: boolean) => void;
   selectedFarmers: string[];
+  onSelectAll: (checked: boolean) => void;
+  onSelectFarmer: (farmerId: string, checked: boolean) => void;
+  onDelete: (farmerId: string) => Promise<void>;
+  onView: (farmer: Farmer) => void;
 }
 
-export default function FarmerList({ farmers, onSelect, selectedFarmers }: FarmerListProps) {
+export default function FarmerList({ 
+  farmers, 
+  selectedFarmers, 
+  onSelectAll,
+  onSelectFarmer,
+  onDelete,
+  onView 
+}: FarmerListProps) {
   const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleViewDetail = (farmer: Farmer) => {
+    onView(farmer);
     setSelectedFarmer(farmer);
     setIsModalOpen(true);
   };
@@ -27,9 +38,10 @@ export default function FarmerList({ farmers, onSelect, selectedFarmers }: Farme
           <FarmerCard
             key={farmer.id}
             farmer={farmer}
-            onSelect={onSelect}
+            onSelect={onSelectFarmer}
             isSelected={selectedFarmers.includes(farmer.id)}
             onViewDetail={handleViewDetail}
+            onDelete={onDelete}
           />
         ))}
       </div>
