@@ -64,8 +64,6 @@ export default function TradePage() {
   })
   const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [excelModule, setExcelModule] = useState<{ Workbook: typeof import('exceljs').Workbook }>();
-  const [fileSaver, setFileSaver] = useState<{ saveAs: typeof import('file-saver').saveAs }>();
 
   // 농기계 종류 매핑
   const equipmentTypeMap = {
@@ -176,19 +174,6 @@ export default function TradePage() {
   useEffect(() => {
     fetchFarmers()
   }, [])
-
-  useEffect(() => {
-    // ExcelJS와 FileSaver를 동적으로 로드
-    const loadModules = async () => {
-      const [{ Workbook }, { saveAs }] = await Promise.all([
-        import('exceljs'),
-        import('file-saver')
-      ]);
-      setExcelModule({ Workbook });
-      setFileSaver({ saveAs });
-    };
-    loadModules();
-  }, []);
 
   const fetchFarmers = async () => {
     try {
@@ -324,61 +309,6 @@ export default function TradePage() {
       texts.push(`후륜: ${rearWheel.manufacturer} ${rearWheel.model}`);
     }
     return texts.join(', ');
-  };
-
-  const generateExcel = async () => {
-    if (!excelModule || !fileSaver) {
-      console.error('Required modules not loaded');
-      return;
-    }
-
-    try {
-      const workbook = new excelModule.Workbook();
-      const worksheet = workbook.addWorksheet('농기계 매매');
-
-      worksheet.columns = [
-        { header: '이름', key: 'name', width: 10 },
-        { header: '연락처', key: 'phone', width: 15 },
-        { header: '주소', key: 'address', width: 30 },
-        { header: '기종', key: 'type', width: 10 },
-        { header: '제조사', key: 'manufacturer', width: 10 },
-        { header: '모델명', key: 'model', width: 15 },
-        { header: '마력', key: 'horsepower', width: 10 },
-        { header: '연식', key: 'year', width: 10 },
-        { header: '사용시간', key: 'usageHours', width: 10 },
-        { header: '부착물', key: 'attachments', width: 30 },
-        { header: '매매유형', key: 'tradeType', width: 10 },
-        { header: '희망가격', key: 'desiredPrice', width: 15 },
-        { header: '상태', key: 'saleStatus', width: 10 },
-      ];
-
-      farmers.forEach((farmer) => {
-        farmer.equipments.forEach((eq) => {
-          worksheet.addRow({
-            name: farmer.name,
-            phone: farmer.phone,
-            address: farmer.address,
-            type: eq.type,
-            manufacturer: eq.manufacturer,
-            model: eq.model,
-            horsepower: eq.horsepower,
-            year: eq.year,
-            usageHours: eq.usageHours,
-            attachments: getAttachmentText(eq.attachments),
-            tradeType: eq.tradeType,
-            desiredPrice: eq.desiredPrice,
-            saleStatus: eq.saleStatus,
-          });
-        });
-      });
-
-      // 엑셀 파일 생성 및 다운로드
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      fileSaver.saveAs(blob, '농기계_거래_목록.xlsx');
-    } catch (error) {
-      console.error('Error generating Excel:', error);
-    }
   };
 
   // 별점 표시 함수 추가
