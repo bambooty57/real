@@ -39,8 +39,8 @@ const nextConfig = {
     return config;
   },
   experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
+    optimizeCss: false,
+    scrollRestoration: false,
   },
   transpilePackages: ['@firebase/auth', 'firebase', 'firebase-admin'],
   compiler: {
@@ -62,6 +62,7 @@ const nextConfig = {
       },
     ];
   },
+  output: 'standalone',
 }
 
 module.exports = nextConfig 
