@@ -41,7 +41,8 @@ const nextConfig = {
   experimental: {
     serverActions: true,
     serverComponentsExternalPackages: ['firebase-admin'],
-    esmExternals: 'loose'
+    esmExternals: 'loose',
+    forceSwcTransforms: true
   },
   transpilePackages: ['@firebase/auth', 'firebase', 'firebase-admin'],
   compiler: {
@@ -66,15 +67,14 @@ const nextConfig = {
   },
   output: 'standalone',
   trailingSlash: true,
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   async rewrites() {
     return {
-      beforeFiles: [
+      fallback: [
         {
           source: '/farmers',
           destination: '/api/farmers',
-        }
-      ],
-      afterFiles: [
+        },
         {
           source: '/api/:path*',
           destination: '/api/:path*',
