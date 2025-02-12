@@ -9,7 +9,6 @@ import { MainCrop, FarmingTypes } from '@/types/farmer'
 import { MANUFACTURERS } from '@/constants/manufacturers'
 import FarmerDetailModal from '@/components/FarmerDetailModal'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
-import ExcelDownload from '@/components/ExcelDownload'
 
 interface Equipment extends BaseEquipment {
 }
@@ -338,10 +337,6 @@ export default function TradePage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">농기계 거래 관리</h1>
-        <ExcelDownload 
-          farmers={farmers} 
-          filteredEquipments={filteredEquipments} 
-        />
       </div>
 
       {/* 필터 섹션 */}
