@@ -39,7 +39,6 @@ const nextConfig = {
     return config;
   },
   experimental: {
-    appDir: true,
     serverActions: true,
     serverComponentsExternalPackages: ['firebase-admin'],
     esmExternals: 'loose',
