@@ -53,7 +53,7 @@ function isAttachmentInfo(value: any): value is AttachmentInfo {
          Array.isArray(value.images);
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamicConfig = 'force-dynamic';
 
 export default dynamic(() => Promise.resolve(TradePage), {
   ssr: false
