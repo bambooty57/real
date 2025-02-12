@@ -81,16 +81,20 @@ const nextConfig = {
   trailingSlash: true,
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   async rewrites() {
-    return [
-      {
-        source: '/farmers',
-        destination: '/api/farmers',
-      },
-      {
-        source: '/api/:path*',
-        destination: '/api/:path*',
-      }
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*',
+        }
+      ],
+      afterFiles: [
+        {
+          source: '/farmers',
+          destination: '/farmers/index',
+        }
+      ]
+    }
   },
   generateBuildId: async () => {
     return 'build-' + Date.now();
