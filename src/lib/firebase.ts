@@ -28,7 +28,7 @@ function initializeFirebase() {
     const auth = getAuth(app);
     auth.useDeviceLanguage();
     const db = getFirestore(app);
-    const storage = getStorage(app, firebaseConfig.storageBucket);
+    const storage = getStorage(app, 'gs://real-81ba6.firestorage.app');
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({
       prompt: 'select_account'
