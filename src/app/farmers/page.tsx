@@ -1,14 +1,14 @@
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import { lazy } from 'react';
 
 // 클라이언트 컴포넌트 동적 임포트
-const FarmersClient = dynamic(() => import('./FarmersClient'), {
-  ssr: true
-});
+const FarmersClient = lazy(() => import('./FarmersClient'));
 
 // Next.js 13 페이지 설정
-export const revalidate = 0;
-export const dynamic = 'force-dynamic';
+export const config = {
+  runtime: 'edge',
+  regions: ['iad1'],
+};
 
 export default async function FarmersPage() {
   return (
