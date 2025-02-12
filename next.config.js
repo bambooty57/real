@@ -42,7 +42,10 @@ const nextConfig = {
     serverActions: true,
     serverComponentsExternalPackages: ['firebase-admin'],
     esmExternals: 'loose',
-    forceSwcTransforms: true
+    forceSwcTransforms: true,
+    isrMemoryCacheSize: 0,
+    workerThreads: false,
+    cpus: 1
   },
   transpilePackages: ['@firebase/auth', 'firebase', 'firebase-admin'],
   compiler: {
@@ -79,11 +82,20 @@ const nextConfig = {
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   async rewrites() {
     return {
-      fallback: [
+      beforeFiles: [
         {
           source: '/farmers',
           destination: '/api/farmers',
-        },
+          has: [
+            {
+              type: 'query',
+              key: 'dynamic',
+              value: 'true'
+            }
+          ]
+        }
+      ],
+      fallback: [
         {
           source: '/api/:path*',
           destination: '/api/:path*',
