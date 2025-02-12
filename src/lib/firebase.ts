@@ -25,9 +25,13 @@ function initializeFirebase() {
   try {
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const auth = getAuth(app);
+    auth.useDeviceLanguage(); // 브라우저 언어 설정 사용
     const db = getFirestore(app);
     const storage = getStorage(app);
     const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
 
     firebaseInstance = { app, auth, db, storage, googleProvider };
     console.log('Firebase initialized successfully');

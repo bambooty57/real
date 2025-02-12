@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
-import { signOut as firebaseSignOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -12,14 +12,28 @@ export default function Navigation() {
 
   const handleSignOut = async () => {
     try {
-      await firebaseSignOut(auth);
+      await signOut(auth);
     } catch (error) {
       console.error('로그아웃 중 오류 발생:', error);
     }
   };
 
-  // 로딩 중이면 아무것도 표시하지 않음
-  if (loading) return null;
+  // 로딩 중일 때는 기본 네비게이션만 표시
+  if (loading) {
+    return (
+      <nav className="bg-gray-800 text-white">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <Link href="/" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">
+                홈
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="bg-gray-800 text-white">
@@ -63,17 +77,26 @@ export default function Navigation() {
               </>
             )}
           </div>
-          {user && (
-            <div className="flex items-center space-x-4">
-              <span className="text-sm">{user.displayName || user.email}</span>
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <span className="text-sm">{user.displayName || user.email}</span>
+                <button
+                  onClick={handleSignOut}
+                  className="px-3 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700"
+                >
+                  로그아웃
+                </button>
+              </>
+            ) : (
               <button
-                onClick={handleSignOut}
-                className="px-3 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700"
+                onClick={() => window.location.reload()}
+                className="px-3 py-2 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700"
               >
-                로그아웃
+                로그인
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </nav>

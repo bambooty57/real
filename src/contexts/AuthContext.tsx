@@ -25,19 +25,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-      
-      // 비로그인 상태이고 public path가 아닌 경우 로그인 모달 표시
-      if (!user && !PUBLIC_PATHS.includes(pathname || '')) {
-        setIsLoginModalOpen(true);
-      } else {
-        setIsLoginModalOpen(false);
+    let unsubscribe: () => void;
+    
+    const initAuth = async () => {
+      try {
+        unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          setUser(currentUser);
+          setLoading(false);
+          
+          // 비로그인 상태이고 public path가 아닌 경우 로그인 모달 표시
+          if (!currentUser && !PUBLIC_PATHS.includes(pathname || '')) {
+            setIsLoginModalOpen(true);
+          } else {
+            setIsLoginModalOpen(false);
+          }
+        });
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        setLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    initAuth();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [pathname]);
 
   const showLoginModal = () => setIsLoginModalOpen(true);
@@ -67,16 +82,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const value = {
+    user,
+    loading,
+    isLoginModalOpen,
+    showLoginModal,
+    hideLoginModal
+  };
+
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        loading,
-        isLoginModalOpen,
-        showLoginModal,
-        hideLoginModal
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
       <LoginModal isOpen={isLoginModalOpen} onClose={hideLoginModal} />
     </AuthContext.Provider>
