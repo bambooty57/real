@@ -3,17 +3,14 @@ import dynamic from 'next/dynamic';
 
 // 클라이언트 컴포넌트 동적 임포트
 const FarmersClient = dynamic(() => import('./FarmersClient'), {
-  loading: () => null,
-  ssr: false
+  ssr: true
 });
 
 // Next.js 13 페이지 설정
-export const metadata = {
-  dynamic: 'force-dynamic',
-  fetchCache: 'force-no-store'
-};
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
-export default function FarmersPage() {
+export default async function FarmersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <Suspense fallback={
