@@ -40,11 +40,12 @@ const nextConfig = {
   },
   experimental: {
     serverActions: true,
-    serverComponentsExternalPackages: ['firebase-admin']
+    serverComponentsExternalPackages: ['firebase-admin'],
+    esmExternals: 'loose'
   },
   transpilePackages: ['@firebase/auth', 'firebase', 'firebase-admin'],
   compiler: {
-    removeConsole: false
+    removeConsole: process.env.NODE_ENV === 'production'
   },
   env: {
     NEXT_PUBLIC_KAKAO_API_KEY: process.env.NEXT_PUBLIC_KAKAO_API_KEY || '',
@@ -71,6 +72,10 @@ const nextConfig = {
         source: '/api/:path*',
         destination: '/api/:path*',
       },
+      {
+        source: '/farmers',
+        destination: '/api/farmers',
+      }
     ];
   },
   generateBuildId: async () => {
