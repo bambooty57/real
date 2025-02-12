@@ -349,7 +349,7 @@ export default function TradePage() {
         { header: '부착물', key: 'attachments', width: 30 },
         { header: '매매유형', key: 'tradeType', width: 10 },
         { header: '희망가격', key: 'desiredPrice', width: 15 },
-        { header: '상태', key: 'tradeStatus', width: 10 },
+        { header: '상태', key: 'saleStatus', width: 10 },
       ];
 
       farmers.forEach((farmer) => {
@@ -367,7 +367,7 @@ export default function TradePage() {
             attachments: getAttachmentText(eq.attachments),
             tradeType: eq.tradeType,
             desiredPrice: eq.desiredPrice,
-            tradeStatus: eq.tradeStatus,
+            saleStatus: eq.saleStatus,
           });
         });
       });

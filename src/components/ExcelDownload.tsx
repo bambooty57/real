@@ -82,7 +82,7 @@ export default function ExcelDownload({ farmers, filteredEquipments }: ExcelDown
         { header: '부착물', key: 'attachments', width: 30 },
         { header: '매매유형', key: 'tradeType', width: 10 },
         { header: '희망가격', key: 'desiredPrice', width: 15 },
-        { header: '상태', key: 'tradeStatus', width: 10 },
+        { header: '상태', key: 'saleStatus', width: 10 },
       ];
 
       filteredEquipments.forEach(({ farmer, equipment }) => {
@@ -99,7 +99,7 @@ export default function ExcelDownload({ farmers, filteredEquipments }: ExcelDown
           attachments: getAttachmentText(equipment.attachments),
           tradeType: equipment.tradeType,
           desiredPrice: equipment.desiredPrice,
-          tradeStatus: equipment.saleStatus,
+          saleStatus: equipment.saleStatus,
         });
       });
 
