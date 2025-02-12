@@ -89,7 +89,7 @@ export default function ExcelDownload({ farmers, filteredEquipments }: ExcelDown
         worksheet.addRow({
           name: farmer.name,
           phone: farmer.phone,
-          address: farmer.address,
+          address: farmer.jibunAddress || farmer.roadAddress || '',
           type: equipment.type,
           manufacturer: equipment.manufacturer,
           model: equipment.model,

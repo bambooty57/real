@@ -13,7 +13,7 @@ export interface Equipment {
   saleType: 'new' | 'used' | null;
   tradeType: string;
   desiredPrice: string;
-  saleStatus: string;
+  saleStatus: 'available' | 'reserved' | 'completed';
   images?: (string | File)[];
   
   // 이앙기 관련

@@ -12,7 +12,6 @@ import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getK
 import ExcelDownload from '@/components/ExcelDownload'
 
 interface Equipment extends BaseEquipment {
-  tradeStatus?: 'available' | 'reserved' | 'completed';
 }
 
 interface Farmer {
