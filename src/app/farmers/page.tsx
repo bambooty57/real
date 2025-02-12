@@ -1,13 +1,25 @@
-'use client';
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 
-export const dynamic = 'force-dynamic';
-
-import FarmersClient from './FarmersClient';
+const FarmersClient = dynamic(() => import('./FarmersClient'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+    </div>
+  ),
+});
 
 export default function FarmersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <FarmersClient />
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }>
+        <FarmersClient />
+      </Suspense>
     </div>
   );
 }
