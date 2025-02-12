@@ -1,3 +1,5 @@
+'use client';
+
 import { Suspense } from 'react';
 import dynamicImport from 'next/dynamic';
 
@@ -7,10 +9,8 @@ const FarmersClient = dynamicImport(() => import('./FarmersClient'), {
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
     </div>
   ),
+  ssr: true
 });
-
-export const dynamic = 'force-static';
-export const revalidate = 3600; // 1시간마다 재검증
 
 export default function FarmersPage() {
   return (
