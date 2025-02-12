@@ -1,7 +1,14 @@
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import { lazy } from 'next/dynamic';
 
-const FarmersClient = dynamic(() => import('./FarmersClient'), {
+// 페이지 설정
+export const config = {
+  dynamic: 'force-dynamic',
+  fetchCache: 'force-no-store'
+};
+
+// 컴포넌트 동적 임포트
+const FarmersClient = lazy(() => import('./FarmersClient'), {
   loading: () => (
     <div className="flex items-center justify-center min-h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
@@ -9,9 +16,6 @@ const FarmersClient = dynamic(() => import('./FarmersClient'), {
   ),
   ssr: false
 });
-
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
 
 export default function FarmersPage() {
   return (
