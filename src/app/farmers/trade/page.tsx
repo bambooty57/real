@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -7,8 +8,11 @@ import Link from 'next/link'
 import { Equipment as BaseEquipment } from '@/types/farmer'
 import { MainCrop, FarmingTypes } from '@/types/farmer'
 import { MANUFACTURERS } from '@/constants/manufacturers'
-import FarmerDetailModal from '@/components/FarmerDetailModal'
 import { getFarmingTypeDisplay, getMainCropDisplay, getKoreanEquipmentType, getKoreanManufacturer } from '@/utils/mappings'
+
+const FarmerDetailModal = dynamic(() => import('@/components/FarmerDetailModal'), {
+  ssr: false
+})
 
 interface Equipment extends BaseEquipment {
 }
@@ -51,7 +55,11 @@ function isAttachmentInfo(value: any): value is AttachmentInfo {
 
 export const dynamic = 'force-dynamic';
 
-export default function TradePage() {
+export default dynamic(() => Promise.resolve(TradePage), {
+  ssr: false
+});
+
+function TradePage() {
   const [farmers, setFarmers] = useState<Farmer[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
