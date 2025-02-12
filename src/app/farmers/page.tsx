@@ -8,8 +8,10 @@ const FarmersClient = dynamic(() => import('./FarmersClient'), {
 });
 
 // Next.js 13 페이지 설정
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
+export const metadata = {
+  dynamic: 'force-dynamic',
+  fetchCache: 'force-no-store'
+};
 
 export default function FarmersPage() {
   return (
