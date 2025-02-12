@@ -2,11 +2,22 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
+import { auth } from '@/lib/firebase';
+import { signOut as firebaseSignOut } from 'firebase/auth';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { user, loading } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await firebaseSignOut(auth);
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('로그아웃 중 오류 발생:', error);
+    }
+  };
 
   return (
     <nav className="bg-gray-800 text-white">
@@ -47,13 +58,13 @@ export default function Navigation() {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            {status === 'loading' ? (
+            {loading ? (
               <div className="text-sm">로딩중...</div>
-            ) : session ? (
+            ) : user ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm">{session.user?.name || session.user?.email}</span>
+                <span className="text-sm">{user.email}</span>
                 <button
-                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  onClick={handleSignOut}
                   className="px-3 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700"
                 >
                   로그아웃

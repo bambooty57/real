@@ -1,0 +1,106 @@
+[33mf6edd52[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: 농기계 거래 상태 표시 오류 수정
+[33m196db26[m fix: 페이지 동적 렌더링 설정 수정
+[33mc1f509a[m fix: ExcelJS를 클라이언트 사이드에서만 로드하도록 수정
+[33m1a3ac80[m fix: Next.js 정적 생성 비활성화 설정 수정
+[33mefbb0b8[m fix: 정적 생성 비활성화 설정 추가 - next.config.js, vercel.json 수정
+[33mdd7e07f[m fix: Excel 컴포넌트 dynamic import 최적화
+[33m4ac91f1[m fix: dynamic import 변수명 충돌 해결
+[33m4961a3e[m fix: 정적 페이지 생성 비활성화
+[33m1bf49d3[m fix: Excel 컴포넌트 클라이언트 사이드 렌더링 수정
+[33m9882935[m fix: 엑셀 내보내기 컴포넌트를 동적 import로 변경
+[33m9504e29[m fix: TradeExcelExportButton 타입 오류 수정
+[33m0c148c4[m fix: SessionProvider 컴포넌트 제거
+[33m0fde951[m fix: NextAuth 제거 및 Firebase Auth로 변경
+[33m6e904c8[m fix: Farmer 타입에 맞게 엑셀 내보내기 필드 수정
+[33ma6479ee[m feat: ExcelExportButton 컴포넌트 구현
+[33m6828369[m fix: 엑셀 내보내기 기능을 별도의 클라이언트 컴포넌트로 분리
+[33mdbd7abf[m fix: ExcelJS와 file-saver 라이브러리 동적 import 수정
+[33ma7b94fa[m fix: file-saver를 동적 import로 변경하여 SSR 오류 해결
+[33ma390c2b[m fix: XLSX와 ExcelJS를 동적 import로 변경하여 SSR 오류 해결
+[33m19ff9ea[m fix: 컴포넌트 import 경로 수정
+[33m8aa068c[m fix: farmers 페이지들을 클라이언트 컴포넌트로 변경
+[33m5e30884[m fix: Navigation 컴포넌트에서 NextAuth 제거 및 useAuth 훅 사용
+[33mfe2e602[m fix: NextAuth 제거 및 Firebase Auth만 사용하도록 수정
+[33m55b8f43[m fix: 로그인 페이지 로직 단순화 및 AuthProvider 설정 수정
+[33m5d7545d[m fix: 로그인 후 리다이렉션 로직 개선
+[33mf996cfa[m feat: Add login page
+[33m7d81b32[m fix: use window.location.href for direct page navigation after login
+[33m7af238e[m fix: enhance login page with auth state monitoring and page refresh
+[33me9f92f3[m fix: change login method from popup to redirect
+[33me8bf407[m refactor: remove NextAuth and use Firebase Auth directly
+[33mfda3872[m fix: improve firebase auth integration with nextauth
+[33m69e954a[m fix: hardcode firebase config for testing
+[33meb1c0a8[m fix: add missing Firestore imports
+[33m35e238f[m fix: update NEXTAUTH_URL to real-kappa-wheat.vercel.app
+[33mef29270[m chore: update .env.example with production URL
+[33m7daf59a[m chore: add .gitignore and .env.example for Vercel deployment
+[33mf028d6f[m fix: improve Firebase initialization and error handling
+[33m42630f5[m fix: update Node.js engine requirement to be more flexible
+[33m6c51d10[m fix: improve type safety in FarmingInfo component with proper optional chaining
+[33m90ceede[m fix: improve type safety in FarmingInfo component
+[33m4eb9c89[m fix: update handleGoogleSheetSync error handling
+[33mf7037c5[m fix: add return type to attemptSync function
+[33m8a89158[m fix: lock all dependency versions
+[33m611d0e3[m chore: update pnpm-lock.yaml
+[33mf3e3b89[m fix: lock next-auth version
+[33md1a71cf[m fix: reinstall dependencies with pnpm
+[33mb0a3700[m fix: add next.js dependency
+[33m90e6696[m Update: pnpm lock file
+[33m7682884[m Update: Firebase auth and dependencies
+[33m636c2df[m fix: TypeScript 설정 및 타입 오류 수정
+[33m4ebf00f[m fix: Next.js 의존성 문제 해결 및 인증 상태 관리 최적화
+[33m5c54182[m fix: update firebase storage upload and auth state management
+[33mc7c5a8f[m chore: update dependencies and pnpm-lock.yaml
+[33m960a962[m fix: Firebase Admin SDK initialization and auth token generation
+[33mf1a7a69[m fix: Firebase Admin SDK 초기화 수정
+[33mc5d2c20[m fix: 전체 인증 관련 개선사항 적용 - NextAuth, Firebase Admin SDK, 인증 상태 관리, 토큰 갱신
+[33m903143a[m fix: 이미지 업로드 시 인증 토큰 갱신 로직 개선
+[33m49edbfd[m fix: Firebase Admin SDK 초기화 디버그 로깅 추가
+[33me76fbed[m fix: Firebase Storage 보안 규칙 경로 패턴 수정
+[33m0cfc796[m fix: Firebase Admin SDK 초기화에 storageBucket 설정 추가
+[33m2768ad0[m fix: Firebase Storage 버킷 접근 방식 수정
+[33m9e47c17[m fix: Firebase Admin SDK 초기화 방식을 base64 디코딩 방식으로 변경
+[33m6a6d829[m chore: update pnpm-lock.yaml
+[33mb9f35eb[m fix: Firebase Admin SDK 초기화 및 인증 오류 수정
+[33mc6c6aa2[m feat: Firebase 인증 및 이미지 업로드 기능 추가
+[33m4a6332e[m feat: 이미지 업로드 디버깅 로그 추가
+[33mae1ed7b[m fix: 이미지 업로드 인증 토큰 갱신 및 에러 처리 개선
+[33mdd3825d[m fix: 이미지 업로드 인증 로직 강화
+[33ma50e76f[m fix: Firebase 환경 변수 설정 추가
+[33m1110a3e[m fix: 이미지 업로드 시 인증 상태 체크 추가
+[33m1f6fb10[m docs: Update .env.example with service account key format
+[33m4423165[m feat: Add test API endpoint
+[33maeae62a[m Fix: Google Sheets API service account key parsing
+[33mdf7f3dd[m Add .env.example for environment variables structure
+[33m6d6c5b6[m fix: update google service account key and configuration
+[33m106dbf0[m fix: Next-Auth 설정 추가 및 구글 OAuth 인증 구현
+[33m95a7baa[m fix: Vercel 서버리스 함수 실행 시간 제한 수정
+[33mc01e390[m fix: Google OAuth 인증 설정 수정
+[33me390cd0[m fix: 구글 시트 API 인증 방식을 서비스 계정으로 변경
+[33mb13bf72[m feat: 구글 시트 동기화 청크 단위 처리 및 진행 상황 표시 추가
+[33m50f110f[m fix: auth.ts의 image 속성을 선택적으로 변경
+[33mb783be7[m fix: image 속성 타입 정의 일관성 수정
+[33mab8c17a[m fix: 불필요한 getSession import 제거
+[33m4c7da39[m feat: 구글 시트 동기화 기능 개선
+[33m1bd6078[m fix: TypeScript 타입 에러 수정
+[33mf1fba1c[m fix: Google OAuth 클라이언트 ID 업데이트, 이미지 다운로드 기능 개선, 불필요한 console.log 제거
+[33mb568895[m feat: 이미지 다중 선택 및 일괄 다운로드 기능 추가, 다운로드 완료 후 대화창 자동 닫기, 불필요한 콘솔 로그 제거
+[33m1b9cfd2[m feat: 이미지 갤러리 팝업 모달 및 JPG 다운로드 기능 추가
+[33m4e5753b[m fix: Vercel 도메인 CORS 설정 수정
+[33m42d819b[m fix: Firebase Storage CORS 설정 업데이트
+[33m93f7fd5[m fix: Image 생성자 window.Image로 변경하여 타입 에러 해결
+[33mada8275[m fix: ImageDownloadModal 컴포넌트에 handleImageDownload 함수 props 전달 추가
+[33m91f68b0[m fix: 이미지 처리 개선 1. 이미지 로딩 속도 개선 2. JPG 형식 다운로드 기능 복구 3. PDF 생성 시 이미지 표시 문제 해결
+[33mf51504f[m fix: PDF 다운로드 시 이미지 표시 문제 해결 - Base64 이미지 데이터 저장 키 변경, 매칭 로직 개선
+[33m978c658[m fix: PDF 다운로드 시 이미지 CORS 문제 해결 - Base64 변환 처리 추가
+[33mc1fee2a[m fix: PDF 다운로드 시 이미지 처리 로직 개선
+[33mc16480a[m fix: 이미지 표시 문제 해결 - Firebase Storage URL을 다운로드 URL로 변환하여 사용
+[33m4e46024[m fix: onclone 함수의 clonedDoc 파라미터에 Document 타입 추가
+[33m6dcf43b[m fix: Image 객체 생성 시 window.Image() 사용하도록 수정
+[33m8bacd54[m fix: PDF 다운로드 시 이미지 표시 문제 해결
+[33m12736cf[m fix: 농기계 거래관리 페이지 개선 1. 장비 타입 한글 표시 수정 2. 거래유형과 거래방식 표시 수정 3. PDF 페이지 구성 개선
+[33mc918644[m fix: 농기계 거래유형과 거래방식 표시 수정 및 PDF 페이지 구성 개선
+[33m176bfe1[m fix: Firebase Storage 이미지 다운로드 CORS 오류 해결
+[33m053990a[m fix: 이미지 다운로드 로직 수정 - Blob 객체를 통한 직접 다운로드 방식으로 변경
+[33m7fa2cc8[m chore: html2pdf.js 타입 선언 추가
+[33mf78e551[m chore: html2pdf.js 

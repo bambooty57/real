@@ -7,14 +7,14 @@ interface FarmerFilterProps {
   availableCities: Set<string>;
   districtsByCity: Map<string, Set<string>>;
   villagesByDistrict: Map<string, Set<string>>;
-  onUpdateQueryParams: (params: Record<string, string>) => void;
+  updateQueryParams: (params: Record<string, string>) => void;
 }
 
 export default function FarmerFilter({
   availableCities,
   districtsByCity,
   villagesByDistrict,
-  onUpdateQueryParams
+  updateQueryParams
 }: FarmerFilterProps) {
   const { filterState, setFilterState } = useSearchFilter();
 
@@ -41,7 +41,7 @@ export default function FarmerFilter({
       selectedDistrict: '',
       selectedVillage: ''
     }));
-    onUpdateQueryParams({ city, district: '', village: '' });
+    updateQueryParams({ city, district: '', village: '' });
   };
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -51,7 +51,7 @@ export default function FarmerFilter({
       selectedDistrict: district,
       selectedVillage: ''
     }));
-    onUpdateQueryParams({ district, village: '' });
+    updateQueryParams({ district, village: '' });
   };
 
   const handleVillageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -60,7 +60,7 @@ export default function FarmerFilter({
       ...prev,
       selectedVillage: village
     }));
-    onUpdateQueryParams({ village });
+    updateQueryParams({ village });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +69,7 @@ export default function FarmerFilter({
       ...prev,
       searchTerm: search
     }));
-    onUpdateQueryParams({ search });
+    updateQueryParams({ search });
   };
 
   const handleFarmingTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -78,7 +78,7 @@ export default function FarmerFilter({
       ...prev,
       selectedFarmingType: farmingType
     }));
-    onUpdateQueryParams({ farmingType });
+    updateQueryParams({ farmingType });
   };
 
   const handleMailOptionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -87,7 +87,7 @@ export default function FarmerFilter({
       ...prev,
       selectedMailOption: mailOption
     }));
-    onUpdateQueryParams({ mailOption });
+    updateQueryParams({ mailOption });
   };
 
   const handleSaleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -96,7 +96,7 @@ export default function FarmerFilter({
       ...prev,
       selectedSaleType: saleType
     }));
-    onUpdateQueryParams({ saleType });
+    updateQueryParams({ saleType });
   };
 
   const handleEquipmentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -105,7 +105,7 @@ export default function FarmerFilter({
       ...prev,
       selectedEquipmentType: equipmentType
     }));
-    onUpdateQueryParams({ equipmentType });
+    updateQueryParams({ equipmentType });
   };
 
   const handleManufacturerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -114,7 +114,7 @@ export default function FarmerFilter({
       ...prev,
       selectedManufacturer: manufacturer
     }));
-    onUpdateQueryParams({ manufacturer });
+    updateQueryParams({ manufacturer });
   };
 
   return (

@@ -1,19 +1,19 @@
-import { Inter } from 'next/font/google'
 import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import Navigation from '@/components/Navigation'
 import Script from 'next/script'
-import { getServerSession } from 'next-auth'
-import SessionProvider from './components/SessionProvider'
-import { authOptions } from '@/auth'
+// import { getServerSession } from 'next-auth'
+// import { authOptions } from '@/auth'
 import { Toaster } from 'react-hot-toast'
 import { SearchFilterProvider } from '@/contexts/SearchFilterContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
-  title: '농민 관리 시스템',
-  description: '농민 정보 관리 시스템',
+export const metadata: Metadata = {
+  title: '농기계 거래 플랫폼',
+  description: '농기계 거래 플랫폼',
 }
 
 export default async function RootLayout({
@@ -21,7 +21,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const session = await getServerSession(authOptions)
+  // const session = await getServerSession(authOptions)
 
   return (
     <html lang="ko">
@@ -33,16 +33,16 @@ export default async function RootLayout({
         <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async />
       </head>
       <body className={`${inter.className} bg-white`}>
-        <SessionProvider session={session}>
-          <AuthProvider>
+        <AuthProvider>
+          {/* <SessionProvider session={session}> */}
             <SearchFilterProvider>
               <Navigation />
               <main className="container mx-auto px-4 py-8">
                 {children}
               </main>
             </SearchFilterProvider>
-          </AuthProvider>
-        </SessionProvider>
+          {/* </SessionProvider> */}
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

@@ -1,16 +1,16 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { use } from 'react';
+import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import NewFarmer from '../../new/NewFarmer';
 import { FormData } from '@/types/farmer';
+import EditFarmerClient from './EditFarmerClient';
+import { useRouter } from 'next/navigation';
 
 interface PageProps {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 interface MainCrop {
@@ -60,17 +60,21 @@ interface Equipment {
 }
 
 export default function EditFarmerPage({ params }: PageProps) {
-  const { id } = use(params);
+  const { id } = params;
   const [initialData, setInitialData] = useState<FormData | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchFarmer = async () => {
-      const docRef = doc(db, 'farmers', id);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const data = docSnap.data() as FormData;
-        setInitialData(data);
+      try {
+        const farmerDoc = await getDoc(doc(db, 'farmers', id));
+        if (farmerDoc.exists()) {
+          setInitialData(farmerDoc.data() as FormData);
+        } else {
+          console.error('농민 데이터를 찾을 수 없습니다.');
+        }
+      } catch (error) {
+        console.error('농민 데이터 로딩 중 오류 발생:', error);
       }
     };
 
@@ -78,19 +82,14 @@ export default function EditFarmerPage({ params }: PageProps) {
   }, [id]);
 
   if (!initialData) {
-    return (
-      <div className="p-8">
-        <div className="animate-pulse text-center">데이터를 불러오는 중...</div>
-      </div>
-    );
+    return <div>로딩 중...</div>;
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">농민 정보 수정</h1>
-      <Suspense fallback={<div>Loading...</div>}>
-        <NewFarmer mode="edit" farmerId={id} initialData={initialData} />
-      </Suspense>
-    </div>
+    <EditFarmerClient 
+      farmerId={id} 
+      onClose={() => router.push('/farmers')}
+      onUpdate={() => router.refresh()}
+    />
   );
 } 
