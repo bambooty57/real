@@ -1,0 +1,5 @@
+[33m277d7de[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: Firebase 초기화 로직 개선 및 환경 변수 검증 추가
+[33m6d8b4ff[m fix: 로그인 버튼 클릭 시 로그인 모달 표시되도록 수정
+[33mc1475ca[m fix: 인증 상태 관리 및 네비게이션 로직 개선
+[33mbe367ef[m fix: 로그인 보안 강화 및 인증 상태 관리 개선
+[33m7e818dc[m fix: farmers 페이지 동적 임포트 적용
