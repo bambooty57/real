@@ -63,6 +63,15 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'no-store' }
         ],
       },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
     ];
   },
   output: 'standalone',
@@ -90,7 +99,8 @@ const nextConfig = {
   },
   publicRuntimeConfig: {
     API_URL: process.env.API_URL
-  }
+  },
+  optimizeFonts: false
 }
 
 module.exports = nextConfig 
