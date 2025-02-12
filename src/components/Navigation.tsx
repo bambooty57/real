@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, showLoginModal } = useAuth();
 
   const handleSignOut = async () => {
     try {
@@ -90,7 +90,7 @@ export default function Navigation() {
               </>
             ) : (
               <button
-                onClick={() => window.location.reload()}
+                onClick={showLoginModal}
                 className="px-3 py-2 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700"
               >
                 로그인
