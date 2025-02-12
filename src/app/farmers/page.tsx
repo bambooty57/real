@@ -5,10 +5,8 @@ import { lazy } from 'react';
 const FarmersClient = lazy(() => import('./FarmersClient'));
 
 // Next.js 13 페이지 설정
-export const config = {
-  runtime: 'edge',
-  regions: ['iad1'],
-};
+export const runtime = "edge";
+export const preferredRegion = ["iad1"];
 
 export default async function FarmersPage() {
   return (
