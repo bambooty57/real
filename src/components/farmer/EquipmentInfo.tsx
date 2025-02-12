@@ -33,7 +33,6 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
 
   const handleImageUpload = async (index: number, equipment: Equipment) => {
     try {
-      // 이미지 파일 체크 및 업로드
       if (equipment.images) {
         const uploadPromises = equipment.images.map(async (img) => {
           if (img instanceof File) {
@@ -48,13 +47,28 @@ export default function EquipmentInfo({ formData, setFormData }: EquipmentInfoPr
               const cleanFileName = img.name.replace(/[^a-zA-Z0-9.]/g, '_');
               const storageRef = ref(storage, `farmers/${equipment.id}/equipment/${timestamp}-${cleanFileName}`);
               
-              const snapshot = await uploadBytes(storageRef, img);
+              // 메타데이터 설정
+              const metadata = {
+                contentType: img.type,
+                customMetadata: {
+                  'originalName': img.name,
+                  'uploadedAt': new Date().toISOString()
+                }
+              };
+              
+              const snapshot = await uploadBytes(storageRef, img, metadata);
               const downloadURL = await getDownloadURL(snapshot.ref);
               
               return downloadURL;
-            } catch (error) {
+            } catch (error: any) {
               console.error('Image upload error:', error);
-              alert('이미지 업로드 중 오류가 발생했습니다.');
+              if (error.code === 'storage/unauthorized') {
+                alert('이미지 업로드 권한이 없습니다. 로그인 상태를 확인해주세요.');
+              } else if (error.code === 'storage/canceled') {
+                alert('이미지 업로드가 취소되었습니다.');
+              } else {
+                alert('이미지 업로드 중 오류가 발생했습니다.');
+              }
               return undefined;
             }
           }
