@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { toast } from 'react-hot-toast'
-import NewFarmer from '@/app/farmers/new/NewFarmer'
 import { FormData } from '@/types/farmer'
+import { useRouter } from 'next/navigation'
+import NewFarmer from '@/app/farmers/new/NewFarmer'
 
 interface EditFarmerClientProps {
   farmerId: string
@@ -34,12 +34,10 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
           })
         } else {
           setError('농민 정보를 찾을 수 없습니다.')
-          toast.error('농민 정보를 찾을 수 없습니다.')
         }
       } catch (err) {
         console.error('Error fetching farmer data:', err)
         setError('데이터를 불러오는 중 오류가 발생했습니다.')
-        toast.error('데이터를 불러오는 중 오류가 발생했습니다.')
       } finally {
         setLoading(false)
       }
@@ -55,11 +53,9 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
         ...data,
         updatedAt: serverTimestamp()
       })
-      
       toast.success('농민 정보가 수정되었습니다.')
       onUpdate()
       onClose()
-      
       router.push('/farmers')
     } catch (error) {
       console.error('Error updating farmer:', error)
@@ -68,34 +64,15 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        <span className="ml-2">데이터를 불러오는 중...</span>
-      </div>
-    )
+    return <div className="p-4">데이터를 불러오는 중...</div>
   }
 
   if (error) {
-    return (
-      <div className="p-4">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-          <strong className="font-bold">오류 발생!</strong>
-          <span className="block sm:inline"> {error}</span>
-        </div>
-      </div>
-    )
+    return <div className="p-4 text-red-500">{error}</div>
   }
 
   if (!initialData) {
-    return (
-      <div className="p-4">
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative">
-          <strong className="font-bold">알림:</strong>
-          <span className="block sm:inline"> 데이터를 찾을 수 없습니다.</span>
-        </div>
-      </div>
-    )
+    return <div className="p-4">데이터를 찾을 수 없습니다.</div>
   }
 
   return (
