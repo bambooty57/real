@@ -49,7 +49,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_KAKAO_API_KEY: process.env.NEXT_PUBLIC_KAKAO_API_KEY || '',
   },
-  headers: async () => {
+  async headers() {
     return [
       {
         source: '/api/:path*',
@@ -63,6 +63,20 @@ const nextConfig = {
     ];
   },
   output: 'standalone',
+  trailingSlash: true,
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*/',
+        },
+      ],
+    };
+  },
+  generateBuildId: async () => {
+    return 'build-' + Date.now();
+  },
 }
 
 module.exports = nextConfig 
