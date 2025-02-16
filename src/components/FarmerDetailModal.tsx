@@ -584,11 +584,57 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                   {/* 기본 정보 */}
                   <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none print:break-inside-avoid mb-6">
                     <h2 className="text-lg font-semibold mb-4">기본 정보</h2>
-                    <dl className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4 print:gap-2">
+                    <dl className="grid grid-cols-1 gap-4">
                       <div>
                         <dt className="text-gray-600">이름</dt>
                         <dd className="font-medium">{farmer.name}</dd>
                       </div>
+                      <div>
+                        <dt className="text-gray-600">전화번호</dt>
+                        <dd className="font-medium">{formatPhoneNumber(farmer.phone)}</dd>
+                      </div>
+                      {farmer.roadAddress && (
+                        <div>
+                          <dt className="text-gray-600">도로명주소</dt>
+                          <dd className="font-medium">
+                            <a
+                              href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.roadAddress)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {farmer.roadAddress}
+                            </a>
+                          </dd>
+                        </div>
+                      )}
+                      {farmer.jibunAddress && (
+                        <div>
+                          <dt className="text-gray-600">지번주소</dt>
+                          <dd className="font-medium">
+                            <a
+                              href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.jibunAddress)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              [지번] {farmer.jibunAddress}
+                            </a>
+                          </dd>
+                        </div>
+                      )}
+                      {farmer.addressDetail && (
+                        <div>
+                          <dt className="text-gray-600">상세주소</dt>
+                          <dd className="font-medium">{farmer.addressDetail}</dd>
+                        </div>
+                      )}
+                      {farmer.zipCode && (
+                        <div>
+                          <dt className="text-gray-600">우편번호</dt>
+                          <dd className="font-medium">{farmer.zipCode}</dd>
+                        </div>
+                      )}
                       {/* 농민 평가 */}
                       <div>
                         <dt className="text-gray-600">농민 평가</dt>
@@ -602,50 +648,6 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                         <div>
                           <dt className="text-gray-600">상호명</dt>
                           <dd className="font-medium">{farmer.businessName}</dd>
-                        </div>
-                      )}
-                      <div>
-                        <dt className="text-gray-600">전화번호</dt>
-                        <dd className="font-medium">
-                          <a 
-                            href={`tel:${farmer.phone}`}
-                            className="text-blue-600 hover:text-blue-800 hover:underline print:text-black print:no-underline"
-                          >
-                            {formatPhoneNumber(farmer.phone)}
-                          </a>
-                        </dd>
-                      </div>
-                      {farmer.roadAddress && (
-                        <div className="col-span-2">
-                          <dt className="text-gray-600">주소</dt>
-                          <dd className="font-medium">
-                            {farmer.zipCode && <div>({farmer.zipCode})</div>}
-                            <div>
-                              <a 
-                                href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.roadAddress)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 hover:underline print:text-black print:no-underline flex items-center gap-1"
-                              >
-                                {farmer.roadAddress}
-                                <span role="img" aria-label="지도" className="print:hidden">🗺️</span>
-                              </a>
-                            </div>
-                            {farmer.jibunAddress && (
-                              <div>
-                                <a 
-                                  href={`https://map.kakao.com/link/search/${encodeURIComponent(farmer.jibunAddress)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 hover:underline print:text-black print:no-underline flex items-center gap-1"
-                                >
-                                  [지번] {farmer.jibunAddress}
-                                  <span role="img" aria-label="지도" className="print:hidden">🗺️</span>
-                                </a>
-                              </div>
-                            )}
-                            {farmer.addressDetail && <div>{farmer.addressDetail}</div>}
-                          </dd>
                         </div>
                       )}
                       <div>
