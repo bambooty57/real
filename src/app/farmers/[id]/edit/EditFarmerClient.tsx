@@ -15,60 +15,20 @@ interface EditFarmerClientProps {
 }
 
 export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFarmerClientProps) {
-  const [initialData, setInitialData] = useState<FormData>({
-    name: '',
-    businessName: '',
-    zipCode: '',
-    roadAddress: '',
-    jibunAddress: '',
-    addressDetail: '',
-    canReceiveMail: false,
-    phone: '',
-    ageGroup: '',
-    memo: '',
-    farmerImages: [],
-    mainCrop: {
-      foodCrops: false,
-      facilityHort: false,
-      fieldVeg: false,
-      fruits: false,
-      specialCrops: false,
-      flowers: false,
-      livestock: false,
-      foodCropsDetails: [],
-      facilityHortDetails: [],
-      fieldVegDetails: [],
-      fruitsDetails: [],
-      specialCropsDetails: [],
-      flowersDetails: [],
-      livestockDetails: []
-    },
-    farmingTypes: {
-      waterPaddy: false,
-      fieldFarming: false,
-      orchard: false,
-      livestock: false,
-      forageCrop: false
-    },
-    equipments: [],
-    rating: 0
-  })
+  const [initialData, setInitialData] = useState<FormData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    async function fetchFarmerData() {
+    const fetchFarmer = async () => {
       try {
         const docRef = doc(db, 'farmers', farmerId)
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
           const data = docSnap.data() as FormData
-          setInitialData({
-            ...data,
-            id: docSnap.id
-          })
+          setInitialData(data)
         } else {
           setError('농민 정보를 찾을 수 없습니다.')
         }
@@ -80,7 +40,7 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
       }
     }
 
-    fetchFarmerData()
+    fetchFarmer()
   }, [farmerId])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,7 +67,11 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
   }
 
   if (loading) {
-    return <div className="p-4">데이터를 불러오는 중...</div>
+    return (
+      <div className="p-8">
+        <div className="animate-pulse text-center">데이터를 불러오는 중...</div>
+      </div>
+    );
   }
 
   if (error) {

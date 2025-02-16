@@ -8,9 +8,9 @@ import NewFarmer from '../../new/NewFarmer';
 import { FormData } from '@/types/farmer';
 
 interface PageProps {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 interface MainCrop {
@@ -60,37 +60,10 @@ interface Equipment {
 }
 
 export default function EditFarmerPage({ params }: PageProps) {
-  const { id } = use(params);
-  const [initialData, setInitialData] = useState<FormData | null>(null);
-
-  useEffect(() => {
-    const fetchFarmer = async () => {
-      const docRef = doc(db, 'farmers', id);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const data = docSnap.data() as FormData;
-        setInitialData(data);
-      }
-    };
-
-    fetchFarmer();
-  }, [id]);
-
-  if (!initialData) {
-    return (
-      <div className="p-8">
-        <div className="animate-pulse text-center">데이터를 불러오는 중...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">농민 정보 수정</h1>
-      <Suspense fallback={<div>Loading...</div>}>
-        <NewFarmer mode="edit" farmerId={id} initialData={initialData} />
-      </Suspense>
+      <EditFarmerClient farmerId={params.id} />
     </div>
   );
 } 
