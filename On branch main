@@ -1,0 +1,20 @@
+[33md5043bc[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m restore: 농민 정보 수정 페이지 복구
+[33mddc5bb5[m fix: EditFarmerClient 컴포넌트 수정
+[33meab212a[m fix: NewFarmer 컴포넌트 import 경로 수정
+[33m53647e1[m fix: 농민 정보 수정 페이지 라우팅 및 청크 최적화
+[33madfcefd[m fix: FarmerForm을 NewFarmer로 교체
+[33m6a60967[m fix: EditFarmerClient 컴포넌트 타입 오류 수정 - EditFarmerClientProps에 onClose, onUpdate props 추가 - 취소/제출 시 콜백 함수 호출 로직 추가
+[33m7b8eb64[m feat: 농민 정보 표시 및 필터 기능 개선 - 프린트 스타일 수정, 주작물 표시 로직 개선, 필터 상태 유지 기능 추가
+[33m83a19fb[m fix: handleSubmit 함수 파라미터 타입 수정
+[33md4f78f5[m fix: isSubmitting state 추가
+[33m7970006[m fix: 농민 정보 수정 후 목록 페이지로 이동하도록 수정
+[33md2005af[m fix: 농민 정보 수정 페이지를 새 창에서 열리도록 수정
+[33md319d56[m fix: 농민 정보 수정 모달 기능 개선 및 이미지 비율 4:3 적용
+[33mcb921ae[m fix: FormData 타입 충돌 해결
+[33m18864cf[m feat: 농민 정보 수정을 모달로 변경
+[33ma9a2539[m fix: 농민 수정 페이지에서 영농형태 데이터가 제대로 표시되도록 수정
+[33m6ff05a6[m fix: 농민 수정 페이지에서 영농형태 체크박스가 항상 표시되도록 수정
+[33mb2be0a4[m fix: 농민 수정 페이지에서 영농형태 데이터가 제대로 표시되도록 수정
+[33m0e2202a[m fix: 농민 수정 페이지에서 영농형태 데이터가 제대로 표시되도록 수정
+[33m1559963[m fix: MainCrop 타입 구조 단순화 및 관련 코드 수정
+[33m18bd51f[m Initial commit
