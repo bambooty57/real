@@ -15,7 +15,7 @@ export default function BasicInfo({ formData, setFormData }: BasicInfoProps) {
   return (
     <div className="space-y-4 bg-white shadow rounded-lg p-6">
       <h2 className="text-xl font-semibold">기본 정보</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* 이름 */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -187,7 +187,7 @@ export default function BasicInfo({ formData, setFormData }: BasicInfoProps) {
           {/* 도로명 주소 */}
           <div>
             <label htmlFor="roadAddress" className="block text-sm font-medium text-gray-700">도로명 주소</label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2">
               <input
                 type="text"
                 id="roadAddress"
@@ -203,7 +203,7 @@ export default function BasicInfo({ formData, setFormData }: BasicInfoProps) {
                   href={`https://map.kakao.com/link/search/${encodeURIComponent(formData.roadAddress)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-fit"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
