@@ -88,7 +88,35 @@ export default function NewFarmer({
           const farmerData = farmerDoc.data();
           setFormData((prev: FormData) => ({
             ...prev,
-            name: farmerData.name
+            // 1. 기본 정보
+            name: farmerData.name,
+            phone: farmerData.phone,
+            businessName: farmerData.businessName,
+            zipCode: farmerData.zipCode,
+            roadAddress: farmerData.roadAddress,
+            jibunAddress: farmerData.jibunAddress,
+            addressDetail: farmerData.addressDetail,
+            canReceiveMail: farmerData.canReceiveMail,
+            ageGroup: farmerData.ageGroup,
+            memo: farmerData.memo,
+            rating: farmerData.rating || 0,
+
+            // 2. 영농 정보
+            mainCrop: farmerData.mainCrop,
+            farmingTypes: farmerData.farmingTypes,
+
+            // 3. 이미지 관련
+            farmerImages: farmerData.farmerImages || [], // 농민 이미지
+
+            // 4. 장비 정보 (장비 이미지 포함)
+            equipments: (farmerData.equipments || []).map(equipment => ({
+              ...equipment,
+              images: equipment.images || [], // 장비 이미지
+              attachments: (equipment.attachments || []).map(attachment => ({
+                ...attachment,
+                images: attachment.images || [] // 부착장비 이미지
+              }))
+            }))
           }));
         }
       } catch (error) {
