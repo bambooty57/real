@@ -147,6 +147,12 @@ export default function FarmersClient() {
               const address = farmer.jibunAddress;
               if (!address?.startsWith('전라남도')) return;
 
+              // 영암군 주소 디버깅
+              if (address.includes('영암군')) {
+                console.log('영암군 주소:', address);
+                console.log('주소 파트:', address.split(' '));
+              }
+
               const parts = address.split(' ');
               if (parts.length < 3) return;
 
@@ -157,10 +163,21 @@ export default function FarmersClient() {
                 index > 1 && (part.endsWith('읍') || part.endsWith('면') || part.endsWith('동'))
               );
 
-              // 리(里) 추출 - "리"로 끝나는 부분 찾기
-              const village = parts.find((part, index) => 
-                index > parts.findIndex(p => p === district) && part.endsWith('리')
-              );
+              // 영암군 district 디버깅
+              if (city === '영암군') {
+                console.log('영암군 district:', district);
+              }
+
+              // 리(里) 추출 - district 이후의 "리"로 끝나는 부분 찾기
+              const districtIndex = district ? parts.indexOf(district) : -1;
+              const village = districtIndex > -1 ? parts.find((part, index) => 
+                index > districtIndex && part.endsWith('리')
+              ) : null;
+
+              // 영암군 village 디버깅
+              if (city === '영암군') {
+                console.log('영암군 village:', village);
+              }
 
               if (city && district) {
                 const cityDistricts = districtsByCity.get(city) || new Set<string>();
