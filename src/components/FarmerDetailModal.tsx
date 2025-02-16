@@ -287,6 +287,22 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
                 img.removeAttribute('crossorigin');
               }
             }
+
+            // PDF 출력 시 줄 간격 조정을 위한 스타일 추가
+            const style = clonedDoc.createElement('style');
+            style.textContent = `
+              @media print {
+                dl.space-y-2 { margin: 1.5rem 0 !important; }
+                dt { margin-top: 1rem !important; }
+                dd { margin-bottom: 1rem !important; line-height: 1.8 !important; }
+                .grid { row-gap: 1.5rem !important; }
+                .space-y-4 > * { margin-top: 1.5rem !important; margin-bottom: 1.5rem !important; }
+                .space-y-6 > * { margin-top: 2rem !important; margin-bottom: 2rem !important; }
+                h2 { margin-top: 2rem !important; margin-bottom: 1.5rem !important; }
+                .print-spacing > * { margin-top: 1rem !important; margin-bottom: 1rem !important; }
+              }
+            `;
+            clonedDoc.head.appendChild(style);
           }
         },
         jsPDF: { 
