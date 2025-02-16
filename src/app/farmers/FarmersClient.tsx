@@ -143,15 +143,18 @@ export default function FarmersClient() {
 
             // 주소에서 읍면동, 리 추출
             farmersData.forEach(farmer => {
-              const address = farmer.jibunAddress || farmer.roadAddress;
+              // 지번주소가 있는 경우 우선 사용
+              const address = farmer.jibunAddress;
               if (!address?.startsWith('전라남도')) return;
 
               const parts = address.split(' ');
               if (parts.length < 3) return;
 
-              const city = parts[1];
-              const district = parts[2];
-              const village = parts[3];
+              const city = parts[1];     // 시/군
+              const district = parts[2];  // 읍/면/동
+              
+              // 리(里) 추출 - "리"로 끝나는 부분 찾기
+              const village = parts.find(part => part.endsWith('리'));
 
               if (city && district) {
                 const cityDistricts = districtsByCity.get(city) || new Set<string>();
@@ -220,12 +223,13 @@ export default function FarmersClient() {
 
     // 2. 주소 필터
     if (filterState.selectedCity || filterState.selectedDistrict || filterState.selectedVillage) {
-      const address = farmer.jibunAddress || farmer.roadAddress
-      if (!address) return false
+      // 리 검색 시에는 지번주소만 사용
+      const address = filterState.selectedVillage ? farmer.jibunAddress : (farmer.jibunAddress || farmer.roadAddress);
+      if (!address) return false;
 
-      if (filterState.selectedCity && !address.includes(filterState.selectedCity)) return false
-      if (filterState.selectedDistrict && !address.includes(filterState.selectedDistrict)) return false
-      if (filterState.selectedVillage && !address.includes(filterState.selectedVillage)) return false
+      if (filterState.selectedCity && !address.includes(filterState.selectedCity)) return false;
+      if (filterState.selectedDistrict && !address.includes(filterState.selectedDistrict)) return false;
+      if (filterState.selectedVillage && !address.includes(filterState.selectedVillage)) return false;
     }
 
     // 3. 영농형태 필터
