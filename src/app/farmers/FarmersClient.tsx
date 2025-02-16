@@ -143,40 +143,24 @@ export default function FarmersClient() {
 
             // 주소에서 읍면동, 리 추출
             farmersData.forEach(farmer => {
-              // 지번주소가 있는 경우 우선 사용
               const address = farmer.jibunAddress;
               if (!address?.startsWith('전라남도')) return;
 
-              // 영암군 주소 디버깅
-              if (address.includes('영암군')) {
-                console.log('영암군 주소:', address);
-                console.log('주소 파트:', address.split(' '));
-              }
-
-              const parts = address.split(' ');
-              if (parts.length < 3) return;
+              const parts = address.split(' ').filter(part => part.trim() !== '');
 
               const city = parts[1];     // 시/군
-
-              // 읍/면/동 추출 - "읍", "면", "동"으로 끝나는 부분 찾기
-              const district = parts.find((part, index) => 
-                index > 1 && (part.endsWith('읍') || part.endsWith('면') || part.endsWith('동'))
-              );
-
-              // 영암군 district 디버깅
-              if (city === '영암군') {
-                console.log('영암군 district:', district);
-              }
-
-              // 리(里) 추출 - district 이후의 "리"로 끝나는 부분 찾기
-              const districtIndex = district ? parts.indexOf(district) : -1;
-              const village = districtIndex > -1 ? parts.find((part, index) => 
-                index > districtIndex && part.endsWith('리')
-              ) : null;
-
-              // 영암군 village 디버깅
-              if (city === '영암군') {
-                console.log('영암군 village:', village);
+              
+              // 읍/면/동 추출 - 더 정확한 방식으로 수정
+              let district = '';
+              let village = '';
+              
+              for (let i = 2; i < parts.length; i++) {
+                if (parts[i].endsWith('읍') || parts[i].endsWith('면') || parts[i].endsWith('동')) {
+                  district = parts[i];
+                } else if (parts[i].endsWith('리')) {
+                  village = parts[i];
+                  break;
+                }
               }
 
               if (city && district) {
@@ -184,7 +168,7 @@ export default function FarmersClient() {
                 cityDistricts.add(district);
                 districtsByCity.set(city, cityDistricts);
 
-                if (district && village) {
+                if (village) {
                   const districtVillages = villagesByDistrict.get(district) || new Set<string>();
                   districtVillages.add(village);
                   villagesByDistrict.set(district, districtVillages);
@@ -246,13 +230,25 @@ export default function FarmersClient() {
 
     // 2. 주소 필터
     if (filterState.selectedCity || filterState.selectedDistrict || filterState.selectedVillage) {
-      // 리 검색 시에는 지번주소만 사용
-      const address = filterState.selectedVillage ? farmer.jibunAddress : (farmer.jibunAddress || farmer.roadAddress);
+      const address = farmer.jibunAddress;
       if (!address) return false;
 
-      if (filterState.selectedCity && !address.includes(filterState.selectedCity)) return false;
-      if (filterState.selectedDistrict && !address.includes(filterState.selectedDistrict)) return false;
-      if (filterState.selectedVillage && !address.includes(filterState.selectedVillage)) return false;
+      const parts = address.split(' ').filter(part => part.trim() !== '');
+      
+      // 시/군 필터
+      if (filterState.selectedCity && !address.includes(filterState.selectedCity)) {
+        return false;
+      }
+
+      // 읍/면/동 필터
+      if (filterState.selectedDistrict && !address.includes(filterState.selectedDistrict)) {
+        return false;
+      }
+
+      // 리 필터
+      if (filterState.selectedVillage && !address.includes(filterState.selectedVillage)) {
+        return false;
+      }
     }
 
     // 3. 영농형태 필터
