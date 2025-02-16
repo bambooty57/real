@@ -514,7 +514,7 @@ export default function FarmerDetailModal({ farmer, isOpen, onClose }: FarmerDet
   };
 
   const handleEdit = async () => {
-    await router.push(`/farmers/${farmer.id}/edit`);
+    router.push(`/farmers/${farmer.id}/edit2`);
     onClose();
   };
 
