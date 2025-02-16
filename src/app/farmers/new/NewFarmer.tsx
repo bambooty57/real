@@ -11,7 +11,6 @@ import FarmingInfo from '@/components/farmer/FarmingInfo'
 import EquipmentInfo from '@/components/farmer/EquipmentInfo'
 import { FormData, MainCrop, FarmingTypes, Equipment } from '@/types/farmer'
 import { toast } from 'react-hot-toast'
-import DuplicateCheckModal from '@/components/DuplicateCheckModal'
 
 interface Props {
   mode?: 'new' | 'edit'
@@ -80,9 +79,6 @@ export default function NewFarmer({
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
-  const [duplicatedFarmerId, setDuplicatedFarmerId] = useState<string>('');
-  const [isNameVerified, setIsNameVerified] = useState(false);
 
   useEffect(() => {
     const loadFarmerData = async () => {
@@ -128,7 +124,9 @@ export default function NewFarmer({
       }
     };
 
-    loadFarmerData();
+    if (id) {
+      loadFarmerData();
+    }
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,16 +137,6 @@ export default function NewFarmer({
       // 데이터 유효성 검사
       if (!String(formData.name).trim()) {
         toast.error('이름은 필수 입력 항목입니다.')
-        setIsSubmitting(false)
-        return
-      }
-
-      // 중복확인 여부 체크
-      const basicInfoComponent = document.querySelector('input[name="name"]');
-      const isVerified = basicInfoComponent?.classList.contains('border-green-500');
-      
-      if (!isVerified && mode === 'new') {
-        toast.error('이름 중복확인이 필요합니다.')
         setIsSubmitting(false)
         return
       }
@@ -256,9 +244,9 @@ export default function NewFarmer({
       if (onSubmit) {
         await onSubmit(saveData)
       } else {
-        if (mode === 'edit' && farmerId) {
+        if (id) {
           // 수정 모드
-          const docRef = doc(db, 'farmers', farmerId)
+          const docRef = doc(db, 'farmers', id)
           await updateDoc(docRef, saveData)
           toast.success('수정이 완료되었습니다.')
           // 현재 URL의 쿼리 파라미터 유지
@@ -281,51 +269,14 @@ export default function NewFarmer({
     }
   }
 
-  // 중복 확인 로직 수정
-  const handleDuplicateCheck = async (name: string) => {
-    try {
-      const q = query(collection(db, 'farmers'), where('name', '==', name));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const duplicatedFarmer = querySnapshot.docs[0];
-        setDuplicatedFarmerId(duplicatedFarmer.id);
-        setIsDuplicateModalOpen(true);
-      } else {
-        setIsNameVerified(true);
-        const input = document.querySelector('input[name="name"]');
-        if (input) {
-          input.classList.add('border-green-500');
-        }
-      }
-    } catch (error) {
-      console.error('중복 확인 중 오류 발생:', error);
-    }
-  };
-
-  // 모달 핸들러 함수들
-  const handleEdit = () => {
-    router.push(`/farmers/new?id=${duplicatedFarmerId}`);
-  };
-
-  const handleNewRegister = () => {
-    setIsNameVerified(true);
-    setIsDuplicateModalOpen(false);
-    const input = document.querySelector('input[name="name"]');
-    if (input) {
-      input.classList.add('border-green-500');
-    }
-  };
-
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">{mode === 'edit' ? '농민 정보 수정' : '새 농민 등록'}</h1>
+      <h1 className="text-2xl font-bold mb-6">{id ? '농민 정보 수정' : '새 농민 등록'}</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* 기본 정보 */}
         <BasicInfo 
           formData={formData} 
-          setFormData={setFormData} 
-          handleDuplicateCheck={handleDuplicateCheck}
+          setFormData={setFormData}
         />
 
         {/* 영농 정보 */}
@@ -409,19 +360,10 @@ export default function NewFarmer({
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             disabled={isSubmitting}
           >
-            {isSubmitting ? '처리중...' : (mode === 'edit' ? '수정' : '등록')}
+            {isSubmitting ? '처리중...' : (id ? '수정' : '등록')}
           </button>
         </div>
       </form>
-
-      {/* DuplicateCheckModal 추가 */}
-      <DuplicateCheckModal
-        isOpen={isDuplicateModalOpen}
-        onClose={() => setIsDuplicateModalOpen(false)}
-        onEdit={handleEdit}
-        onNewRegister={handleNewRegister}
-        farmerName={formData.name}
-      />
     </div>
   );
 } 

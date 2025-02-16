@@ -1,79 +1,27 @@
 'use client';
 
 import { FormData } from '@/types/farmer';
-import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useState } from 'react';
 import AddressSearch from '@/components/AddressSearch';
 
 interface BasicInfoProps {
   formData: FormData;
   setFormData: (data: FormData) => void;
-  handleDuplicateCheck?: (name: string) => Promise<void>;
 }
 
-export default function BasicInfo({ formData, setFormData, handleDuplicateCheck }: BasicInfoProps) {
-  const [isDuplicateChecking, setIsDuplicateChecking] = useState(false);
-  const [duplicateMessage, setDuplicateMessage] = useState<string | null>(null);
-  const [isNameVerified, setIsNameVerified] = useState(false);
+export default function BasicInfo({ formData, setFormData }: BasicInfoProps) {
   const [isManualAddressMode, setIsManualAddressMode] = useState(false);
-
-  const checkDuplicate = async () => {
-    if (!formData.name || !formData.phone) {
-      setDuplicateMessage('이름과 전화번호를 모두 입력해주세요.');
-      setIsNameVerified(false);
-      return;
-    }
-
-    setIsDuplicateChecking(true);
-    try {
-      const farmersRef = collection(db, 'farmers');
-      const phoneWithoutHyphen = formData.phone.replace(/-/g, '');
-      
-      const q = query(
-        farmersRef,
-        where('name', '==', formData.name.trim()),
-        where('phone', '==', phoneWithoutHyphen)
-      );
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        setDuplicateMessage('이미 등록된 농민입니다.');
-        setIsNameVerified(false);
-      } else {
-        setDuplicateMessage('등록 가능한 농민입니다.');
-        setIsNameVerified(true);
-        // 중복확인 통과 시 폼 데이터 업데이트
-        setFormData(prev => ({
-          ...prev,
-          name: formData.name.trim(),
-          phone: phoneWithoutHyphen
-        }));
-      }
-    } catch (error) {
-      console.error('Error checking duplicate:', error);
-      setDuplicateMessage('중복 확인 중 오류가 발생했습니다.');
-      setIsNameVerified(false);
-    } finally {
-      setIsDuplicateChecking(false);
-    }
-  };
-
-  // 이름이나 전화번호가 변경될 때마다 중복 메시지와 검증 상태 초기화
-  useEffect(() => {
-    setDuplicateMessage(null);
-    setIsNameVerified(false);
-  }, [formData.name, formData.phone]);
 
   return (
     <div className="space-y-4 bg-white shadow rounded-lg p-6">
       <h2 className="text-xl font-semibold">기본 정보</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 이름 */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             이름 *
           </label>
-          <div className="mt-1 flex gap-2">
+          <div className="mt-1">
             <input
               type="text"
               name="name"
@@ -83,20 +31,10 @@ export default function BasicInfo({ formData, setFormData, handleDuplicateCheck 
                   ...formData,
                   name: e.target.value
                 });
-                // 이름이 변경되면 중복 확인 상태 초기화
-                e.target.classList.remove('border-green-500');
-                e.target.classList.remove('border-red-500');
               }}
               className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
               required
             />
-            <button
-              type="button"
-              onClick={() => handleDuplicateCheck?.(formData.name)}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              중복확인
-            </button>
           </div>
         </div>
         
