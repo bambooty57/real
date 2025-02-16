@@ -151,10 +151,16 @@ export default function FarmersClient() {
               if (parts.length < 3) return;
 
               const city = parts[1];     // 시/군
-              const district = parts[2];  // 읍/면/동
-              
-              // 리(里) 추출 - 주소의 모든 부분에서 "리"로 끝나는 부분 찾기
-              const village = parts.find((part, index) => index > 2 && part.endsWith('리'));
+
+              // 읍/면/동 추출 - "읍", "면", "동"으로 끝나는 부분 찾기
+              const district = parts.find((part, index) => 
+                index > 1 && (part.endsWith('읍') || part.endsWith('면') || part.endsWith('동'))
+              );
+
+              // 리(里) 추출 - "리"로 끝나는 부분 찾기
+              const village = parts.find((part, index) => 
+                index > parts.findIndex(p => p === district) && part.endsWith('리')
+              );
 
               if (city && district) {
                 const cityDistricts = districtsByCity.get(city) || new Set<string>();

@@ -23,6 +23,10 @@ interface Farmer {
   name: string;
   phone: string;
   address: string;
+  roadAddress: string;
+  jibunAddress: string;
+  addressDetail: string;
+  zipCode: string;
   equipments: Equipment[];
   canReceiveMail: boolean;
   farmerImages: string[];
@@ -195,6 +199,10 @@ function TradePage() {
             name: data.name || '',
             phone: data.phone || '',
             address: data.jibunAddress || '',
+            roadAddress: data.roadAddress || '',
+            jibunAddress: data.jibunAddress || '',
+            addressDetail: data.addressDetail || '',
+            zipCode: data.zipCode || '',
             equipments: data.equipments || [],
             canReceiveMail: data.canReceiveMail ?? false,
             farmerImages: data.farmerImages ?? [],
@@ -618,6 +626,63 @@ function TradePage() {
           setSelectedFarmer(null);
         }}
       />
+
+      {/* 기본 정보 */}
+      <div className="bg-white shadow rounded-lg p-6 print:p-2 print:shadow-none print:break-inside-avoid mb-6">
+        <h2 className="text-lg font-semibold mb-4">기본 정보</h2>
+        <dl className="grid grid-cols-1 gap-4">
+          <div>
+            <dt className="text-gray-600">이름</dt>
+            <dd className="font-medium">{selectedFarmer?.name}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-600">전화번호</dt>
+            <dd className="font-medium">{selectedFarmer?.phone}</dd>
+          </div>
+          {selectedFarmer?.roadAddress && (
+            <div>
+              <dt className="text-gray-600">도로명주소</dt>
+              <dd className="font-medium">
+                <a
+                  href={`https://map.kakao.com/link/search/${encodeURIComponent(selectedFarmer.roadAddress)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {selectedFarmer.roadAddress}
+                </a>
+              </dd>
+            </div>
+          )}
+          {selectedFarmer?.jibunAddress && (
+            <div>
+              <dt className="text-gray-600">지번주소</dt>
+              <dd className="font-medium">
+                <a
+                  href={`https://map.kakao.com/link/search/${encodeURIComponent(selectedFarmer.jibunAddress)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  [지번] {selectedFarmer.jibunAddress}
+                </a>
+              </dd>
+            </div>
+          )}
+          {selectedFarmer?.addressDetail && (
+            <div>
+              <dt className="text-gray-600">상세주소</dt>
+              <dd className="font-medium">{selectedFarmer.addressDetail}</dd>
+            </div>
+          )}
+          {selectedFarmer?.zipCode && (
+            <div>
+              <dt className="text-gray-600">우편번호</dt>
+              <dd className="font-medium">{selectedFarmer.zipCode}</dd>
+            </div>
+          )}
+        </dl>
+      </div>
     </div>
   )
 }
