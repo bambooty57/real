@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { collection, addDoc, doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore'
 import { db, storage } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { v4 as uuidv4 } from 'uuid'
@@ -28,6 +28,8 @@ export default function NewFarmer({
   onCancel
 }: Props) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id')
   
   const [formData, setFormData] = useState<FormData>(() => {
     if (initialData) {
@@ -77,6 +79,25 @@ export default function NewFarmer({
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    const loadFarmerData = async () => {
+      try {
+        const farmerDoc = await getDoc(doc(db, 'farmers', id!));
+        if (farmerDoc.exists()) {
+          const farmerData = farmerDoc.data();
+          setFormData((prev: FormData) => ({
+            ...prev,
+            name: farmerData.name
+          }));
+        }
+      } catch (error) {
+        console.error('농민 정보 로딩 실패:', error);
+      }
+    };
+
+    loadFarmerData();
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
