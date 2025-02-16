@@ -1,11 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import NewFarmer from '../../new/NewFarmer';
+import dynamic from 'next/dynamic';
 import { FormData } from '@/types/farmer';
 import { toast } from 'react-hot-toast';
+
+// 동적 import로 NewFarmer 컴포넌트 로드
+const NewFarmer = dynamic(() => import('../../new/NewFarmer'), {
+  loading: () => (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+    </div>
+  ),
+  ssr: false
+});
 
 interface PageProps {
   params: {
@@ -70,11 +80,17 @@ export default function EditFarmerPage({ params }: PageProps) {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">농민 정보 수정</h1>
-      <NewFarmer 
-        mode="edit"
-        farmerId={params.id}
-        initialData={initialData}
-      />
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }>
+        <NewFarmer 
+          mode="edit"
+          farmerId={params.id}
+          initialData={initialData}
+        />
+      </Suspense>
     </div>
   );
 } 
