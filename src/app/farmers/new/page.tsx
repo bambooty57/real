@@ -1,10 +1,8 @@
-'use client'
-
 import NewFarmer from './NewFarmer';
 
 interface PageProps {
-  params: Promise<{}>;
-  searchParams: Promise<{}>;
+  params: Record<string, string>;
+  searchParams: Record<string, string>;
 }
 
 export default function NewFarmerPage({ params, searchParams }: PageProps) {
