@@ -147,21 +147,42 @@ export default function FarmersClient() {
               if (!address?.startsWith('전라남도')) return;
 
               const parts = address.split(' ').filter(part => part.trim() !== '');
+              
+              // 디버깅을 위한 로그
+              console.log('주소 파싱:', {
+                address,
+                parts
+              });
 
               const city = parts[1];     // 시/군
               
-              // 읍/면/동 추출 - 더 정확한 방식으로 수정
+              // 읍/면/동과 리 추출 로직 개선
               let district = '';
               let village = '';
               
-              for (let i = 2; i < parts.length; i++) {
-                if (parts[i].endsWith('읍') || parts[i].endsWith('면') || parts[i].endsWith('동')) {
-                  district = parts[i];
-                } else if (parts[i].endsWith('리')) {
-                  village = parts[i];
-                  break;
+              // 읍/면/동 찾기
+              const districtIndex = parts.findIndex((part, idx) => 
+                idx > 1 && (part.endsWith('읍') || part.endsWith('면') || part.endsWith('동'))
+              );
+              
+              if (districtIndex !== -1) {
+                district = parts[districtIndex];
+                
+                // 리는 읍/면/동 다음에 오는 '리'로 끝나는 부분
+                for (let i = districtIndex + 1; i < parts.length; i++) {
+                  if (parts[i].endsWith('리')) {
+                    village = parts[i];
+                    break;
+                  }
                 }
               }
+
+              // 디버깅을 위한 로그
+              console.log('파싱 결과:', {
+                city,
+                district,
+                village
+              });
 
               if (city && district) {
                 const cityDistricts = districtsByCity.get(city) || new Set<string>();
@@ -236,18 +257,20 @@ export default function FarmersClient() {
       const parts = address.split(' ').filter(part => part.trim() !== '');
       
       // 시/군 필터
-      if (filterState.selectedCity && !address.includes(filterState.selectedCity)) {
+      if (filterState.selectedCity && parts[1] !== filterState.selectedCity) {
         return false;
       }
 
       // 읍/면/동 필터
-      if (filterState.selectedDistrict && !address.includes(filterState.selectedDistrict)) {
-        return false;
+      if (filterState.selectedDistrict) {
+        const hasDistrict = parts.some(part => part === filterState.selectedDistrict);
+        if (!hasDistrict) return false;
       }
 
       // 리 필터
-      if (filterState.selectedVillage && !address.includes(filterState.selectedVillage)) {
-        return false;
+      if (filterState.selectedVillage) {
+        const hasVillage = parts.some(part => part === filterState.selectedVillage);
+        if (!hasVillage) return false;
       }
     }
 
