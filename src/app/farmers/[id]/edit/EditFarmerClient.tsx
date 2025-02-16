@@ -3,19 +3,56 @@
 import { useEffect, useState } from 'react'
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import NewFarmer from '../../new/NewFarmer'
 import { toast } from 'react-hot-toast'
 import { FormData } from '@/types/farmer'
 import { useRouter } from 'next/navigation'
-import NewFarmer from '@/app/farmers/new/NewFarmer'
 
 interface EditFarmerClientProps {
   farmerId: string
   onClose: () => void
-  onUpdate: () => void
+  onUpdate?: () => void
 }
 
 export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFarmerClientProps) {
-  const [initialData, setInitialData] = useState<FormData | null>(null)
+  const [initialData, setInitialData] = useState<FormData>({
+    name: '',
+    businessName: '',
+    zipCode: '',
+    roadAddress: '',
+    jibunAddress: '',
+    addressDetail: '',
+    canReceiveMail: false,
+    phone: '',
+    ageGroup: '',
+    memo: '',
+    farmerImages: [],
+    mainCrop: {
+      foodCrops: false,
+      facilityHort: false,
+      fieldVeg: false,
+      fruits: false,
+      specialCrops: false,
+      flowers: false,
+      livestock: false,
+      foodCropsDetails: [],
+      facilityHortDetails: [],
+      fieldVegDetails: [],
+      fruitsDetails: [],
+      specialCropsDetails: [],
+      flowersDetails: [],
+      livestockDetails: []
+    },
+    farmingTypes: {
+      waterPaddy: false,
+      fieldFarming: false,
+      orchard: false,
+      livestock: false,
+      forageCrop: false
+    },
+    equipments: [],
+    rating: 0
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -46,20 +83,26 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
     fetchFarmerData()
   }, [farmerId])
 
-  const handleSubmit = async (data: FormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     try {
       const docRef = doc(db, 'farmers', farmerId)
       await updateDoc(docRef, {
-        ...data,
+        ...initialData,
         updatedAt: serverTimestamp()
       })
       toast.success('농민 정보가 수정되었습니다.')
-      onUpdate()
-      onClose()
+      if (onUpdate) {
+        onUpdate()
+      }
       router.push('/farmers')
     } catch (error) {
       console.error('Error updating farmer:', error)
       toast.error('농민 정보 수정 중 오류가 발생했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -71,12 +114,8 @@ export default function EditFarmerClient({ farmerId, onClose, onUpdate }: EditFa
     return <div className="p-4 text-red-500">{error}</div>
   }
 
-  if (!initialData) {
-    return <div className="p-4">데이터를 찾을 수 없습니다.</div>
-  }
-
   return (
-    <div className="bg-white p-4">
+    <div className="bg-white">
       <NewFarmer 
         mode="edit"
         farmerId={farmerId}
