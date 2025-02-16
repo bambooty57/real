@@ -1,0 +1,5 @@
+[33mcommit d26e61cded188c6394fa6310619b2c36548a3ff5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Admin <admin@example.com>
+Date:   Sun Feb 16 22:51:41 2025 +0900
+
+    feat: 농민 정보 수정 페이지 동적 로딩 방식으로 변경

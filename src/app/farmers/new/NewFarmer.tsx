@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { collection, addDoc, doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc, serverTimestamp, getDoc, query, where, getDocs } from 'firebase/firestore'
 import { db, storage } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { v4 as uuidv4 } from 'uuid'
@@ -11,6 +11,7 @@ import FarmingInfo from '@/components/farmer/FarmingInfo'
 import EquipmentInfo from '@/components/farmer/EquipmentInfo'
 import { FormData, MainCrop, FarmingTypes, Equipment } from '@/types/farmer'
 import { toast } from 'react-hot-toast'
+import DuplicateCheckModal from '@/components/DuplicateCheckModal'
 
 interface Props {
   mode?: 'new' | 'edit'
@@ -79,6 +80,9 @@ export default function NewFarmer({
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [duplicatedFarmerId, setDuplicatedFarmerId] = useState<string>('');
+  const [isNameVerified, setIsNameVerified] = useState(false);
 
   useEffect(() => {
     const loadFarmerData = async () => {
@@ -277,12 +281,52 @@ export default function NewFarmer({
     }
   }
 
+  // 중복 확인 로직 수정
+  const handleDuplicateCheck = async (name: string) => {
+    try {
+      const q = query(collection(db, 'farmers'), where('name', '==', name));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const duplicatedFarmer = querySnapshot.docs[0];
+        setDuplicatedFarmerId(duplicatedFarmer.id);
+        setIsDuplicateModalOpen(true);
+      } else {
+        setIsNameVerified(true);
+        const input = document.querySelector('input[name="name"]');
+        if (input) {
+          input.classList.add('border-green-500');
+        }
+      }
+    } catch (error) {
+      console.error('중복 확인 중 오류 발생:', error);
+    }
+  };
+
+  // 모달 핸들러 함수들
+  const handleEdit = () => {
+    router.push(`/farmers/new?id=${duplicatedFarmerId}`);
+  };
+
+  const handleNewRegister = () => {
+    setIsNameVerified(true);
+    setIsDuplicateModalOpen(false);
+    const input = document.querySelector('input[name="name"]');
+    if (input) {
+      input.classList.add('border-green-500');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">{mode === 'edit' ? '농민 정보 수정' : '새 농민 등록'}</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* 기본 정보 */}
-        <BasicInfo formData={formData} setFormData={setFormData} />
+        <BasicInfo 
+          formData={formData} 
+          setFormData={setFormData} 
+          handleDuplicateCheck={handleDuplicateCheck}
+        />
 
         {/* 영농 정보 */}
         <FarmingInfo formData={formData} setFormData={setFormData} />
@@ -369,6 +413,15 @@ export default function NewFarmer({
           </button>
         </div>
       </form>
+
+      {/* DuplicateCheckModal 추가 */}
+      <DuplicateCheckModal
+        isOpen={isDuplicateModalOpen}
+        onClose={() => setIsDuplicateModalOpen(false)}
+        onEdit={handleEdit}
+        onNewRegister={handleNewRegister}
+        farmerName={formData.name}
+      />
     </div>
   );
 } 
